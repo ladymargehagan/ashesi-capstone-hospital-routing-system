@@ -1,0 +1,182 @@
+'use client';
+
+import { useState } from 'react';
+import Link from 'next/link';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table';
+import { mockReferrals } from '@/lib/mock-data';
+import { Search, Eye, Plus } from 'lucide-react';
+
+export default function ReferralsPage() {
+    const [searchQuery, setSearchQuery] = useState('');
+    const [statusFilter, setStatusFilter] = useState<string>('all');
+    const [urgencyFilter, setUrgencyFilter] = useState<string>('all');
+
+    // Filter referrals for this physician
+    const physicianReferrals = mockReferrals.filter(r => r.referring_physician_id === 'user-3');
+
+    // Apply filters
+    const filteredReferrals = physicianReferrals.filter(referral => {
+        const matchesSearch =
+            referral.patient_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            referral.hospital_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            referral.condition.toLowerCase().includes(searchQuery.toLowerCase());
+
+        const matchesStatus = statusFilter === 'all' || referral.status === statusFilter;
+        const matchesUrgency = urgencyFilter === 'all' || referral.urgency === urgencyFilter;
+
+        return matchesSearch && matchesStatus && matchesUrgency;
+    });
+
+    const formatDateTime = (dateStr: string) => {
+        return new Date(dateStr).toLocaleString('en-US', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    };
+
+    const getUrgencyBadge = (urgency: string) => {
+        const styles = {
+            Emergency: 'bg-red-100 text-red-700 border-red-200',
+            Urgent: 'bg-amber-100 text-amber-700 border-amber-200',
+            Routine: 'bg-green-100 text-green-700 border-green-200',
+        };
+        return styles[urgency as keyof typeof styles] || styles.Routine;
+    };
+
+    const getStatusBadge = (status: string) => {
+        const styles = {
+            Pending: 'bg-amber-100 text-amber-700',
+            Accepted: 'bg-green-100 text-green-700',
+            Rejected: 'bg-red-100 text-red-700',
+        };
+        return styles[status as keyof typeof styles] || styles.Pending;
+    };
+
+    return (
+        <div>
+            {/* Header */}
+            <div className="flex items-center justify-between mb-6">
+                <div>
+                    <h1 className="text-2xl font-bold text-gray-900">Referral Management</h1>
+                    <p className="text-gray-500">Track and manage your patient referrals</p>
+                </div>
+                <Link href="/physician/referral">
+                    <Button className="bg-blue-600 hover:bg-blue-700">
+                        <Plus className="h-4 w-4 mr-2" />
+                        New Referral
+                    </Button>
+                </Link>
+            </div>
+
+            {/* Referrals Card */}
+            <Card>
+                <CardHeader>
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <CardTitle className="text-lg">All Referrals</CardTitle>
+                            <CardDescription>{filteredReferrals.length} referrals found</CardDescription>
+                        </div>
+                    </div>
+
+                    {/* Filters */}
+                    <div className="flex items-center gap-4 mt-4">
+                        <div className="relative flex-1 max-w-sm">
+                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                            <Input
+                                placeholder="Search referrals..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="pl-9"
+                            />
+                        </div>
+                        <Select value={statusFilter} onValueChange={setStatusFilter}>
+                            <SelectTrigger className="w-36">
+                                <SelectValue placeholder="Status" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All Status</SelectItem>
+                                <SelectItem value="Pending">Pending</SelectItem>
+                                <SelectItem value="Accepted">Accepted</SelectItem>
+                                <SelectItem value="Rejected">Rejected</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <Select value={urgencyFilter} onValueChange={setUrgencyFilter}>
+                            <SelectTrigger className="w-36">
+                                <SelectValue placeholder="Urgency" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All Urgency</SelectItem>
+                                <SelectItem value="Emergency">Emergency</SelectItem>
+                                <SelectItem value="Urgent">Urgent</SelectItem>
+                                <SelectItem value="Routine">Routine</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                </CardHeader>
+                <CardContent>
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Patient</TableHead>
+                                <TableHead>Hospital</TableHead>
+                                <TableHead>Condition</TableHead>
+                                <TableHead>Urgency</TableHead>
+                                <TableHead>Requested</TableHead>
+                                <TableHead>Status</TableHead>
+                                <TableHead>Actions</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {filteredReferrals.length === 0 ? (
+                                <TableRow>
+                                    <TableCell colSpan={7} className="text-center text-gray-500 py-8">
+                                        No referrals found matching your criteria
+                                    </TableCell>
+                                </TableRow>
+                            ) : (
+                                filteredReferrals.map((referral) => (
+                                    <TableRow key={referral.id}>
+                                        <TableCell className="font-medium">{referral.patient_name}</TableCell>
+                                        <TableCell>{referral.hospital_name}</TableCell>
+                                        <TableCell>{referral.condition}</TableCell>
+                                        <TableCell>
+                                            <Badge className={getUrgencyBadge(referral.urgency)} variant="outline">
+                                                {referral.urgency}
+                                            </Badge>
+                                        </TableCell>
+                                        <TableCell>{formatDateTime(referral.requested_at)}</TableCell>
+                                        <TableCell>
+                                            <Badge className={getStatusBadge(referral.status)}>
+                                                {referral.status}
+                                            </Badge>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Button variant="ghost" size="sm">
+                                                <Eye className="h-4 w-4" />
+                                            </Button>
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            )}
+                        </TableBody>
+                    </Table>
+                </CardContent>
+            </Card>
+        </div>
+    );
+}
