@@ -215,6 +215,8 @@ function ReferralFormContent() {
         try {
             const payload = {
                 patient_id: formData.patient_id,
+                referring_physician_id: user?.physician_id || user?.id,
+                referring_hospital_id: user?.hospital_id,
                 receiving_hospital_id: formData.receiving_hospital_id,
                 emergency_type: formData.emergency_type,
                 severity: formData.severity,

@@ -9,6 +9,7 @@ export interface User {
     role: UserRole;
     phone_number?: string;
     hospital_id?: string;
+    physician_id?: string;
     hospital_name?: string;
     hospital_address?: string;
     contact_phone?: string;

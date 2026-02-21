@@ -41,7 +41,7 @@ from routes_specialists import router as specialists_router
 # App setup
 # ---------------------------------------------------------------------------
 
-GOOGLE_MAPS_API_KEY = os.getenv("GOOGLE_MAPS_API_KEY", "")
+GOOGLE_MAPS_API_KEY = os.getenv("GOOGLE_MAPS_API_KEY", "AIzaSyBjXsHqpAHUOBZaULcgJCsEPD7TVWkx79w")
 
 app = FastAPI(
     title="HRS Referral Engine API",

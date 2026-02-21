@@ -20,6 +20,11 @@ class UserStatusUpdate(BaseModel):
     status: str = Field(..., pattern="^(active|rejected)$")
 
 
+class UserProfileUpdate(BaseModel):
+    full_name: Optional[str] = None
+    phone_number: Optional[str] = None
+
+
 # ---- helpers ----
 
 def _row_to_user(row) -> dict:
@@ -117,3 +122,31 @@ def list_physicians(hospital_id: Optional[int] = None, status: Optional[str] = N
         cur.execute(query, params)
         rows = cur.fetchall()
     return [_row_to_physician(r) for r in rows]
+
+
+@router.put("/{user_id}/profile")
+def update_user_profile(user_id: int, req: UserProfileUpdate):
+    """Update user profile fields (name, phone)."""
+    with db_cursor() as cur:
+        updates = []
+        params = []
+        if req.full_name is not None:
+            updates.append("full_name = %s")
+            params.append(req.full_name)
+        if req.phone_number is not None:
+            updates.append("phone_number = %s")
+            params.append(req.phone_number)
+
+        if not updates:
+            raise HTTPException(status_code=400, detail="No fields to update")
+
+        updates.append("updated_at = CURRENT_TIMESTAMP")
+        params.append(user_id)
+        cur.execute(
+            f"UPDATE users SET {', '.join(updates)} WHERE user_id = %s RETURNING user_id",
+            params,
+        )
+        if not cur.fetchone():
+            raise HTTPException(status_code=404, detail="User not found")
+
+    return {"success": True, "user_id": str(user_id)}

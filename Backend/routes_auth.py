@@ -68,6 +68,18 @@ def login(req: LoginRequest, response: Response):
     if row["status"] == "rejected":
         return {"success": False, "status": "rejected"}
 
+    # Look up physician_id if the user is a physician
+    physician_id = None
+    if row["role_name"] == "physician":
+        with db_cursor() as cur:
+            cur.execute(
+                "SELECT physician_id FROM physicians WHERE user_id = %s",
+                (row["user_id"],),
+            )
+            phys_row = cur.fetchone()
+            if phys_row:
+                physician_id = str(phys_row["physician_id"])
+
     user = {
         "id": str(row["user_id"]),
         "email": row["email"],
@@ -76,6 +88,7 @@ def login(req: LoginRequest, response: Response):
         "hospital_id": str(row["hospital_id"]) if row["hospital_id"] else None,
         "phone_number": row["phone_number"],
         "status": row["status"],
+        "physician_id": physician_id,
         "created_at": row["created_at"].isoformat() if row["created_at"] else None,
     }
 
@@ -107,6 +120,18 @@ def me(request: Request):
     if not row:
         return {"user": None}
 
+    # Look up physician_id if the user is a physician
+    physician_id = None
+    if row["role_name"] == "physician":
+        with db_cursor() as cur2:
+            cur2.execute(
+                "SELECT physician_id FROM physicians WHERE user_id = %s",
+                (int(user_id),),
+            )
+            phys_row = cur2.fetchone()
+            if phys_row:
+                physician_id = str(phys_row["physician_id"])
+
     return {
         "user": {
             "id": str(row["user_id"]),
@@ -116,6 +141,7 @@ def me(request: Request):
             "hospital_id": str(row["hospital_id"]) if row["hospital_id"] else None,
             "phone_number": row["phone_number"],
             "status": row["status"],
+            "physician_id": physician_id,
             "created_at": row["created_at"].isoformat() if row["created_at"] else None,
         }
     }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Input } from '@/components/ui/input';
 import { StatsCard } from '@/components/stats-card';
 import { HospitalsTable } from '@/components/admin/hospitals-table';
@@ -15,12 +15,16 @@ export default function HospitalsPage() {
     const [hospitals, setHospitals] = useState<Hospital[]>([]);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
+    const fetchHospitals = useCallback(() => {
         hospitalsApi.list()
             .then((data) => setHospitals(data as unknown as Hospital[]))
             .catch((err) => console.error('Failed to load hospitals:', err))
             .finally(() => setLoading(false));
     }, []);
+
+    useEffect(() => {
+        fetchHospitals();
+    }, [fetchHospitals]);
 
     const pendingHospitals = hospitals.filter(h => h.status === 'pending');
     const activeHospitals = hospitals.filter(h => h.status === 'active');
@@ -109,13 +113,13 @@ export default function HospitalsPage() {
                     </div>
 
                     <TabsContent value="all" className="mt-0">
-                        <HospitalsTable hospitals={getFilteredHospitals()} />
+                        <HospitalsTable hospitals={getFilteredHospitals()} onStatusChanged={fetchHospitals} />
                     </TabsContent>
                     <TabsContent value="pending" className="mt-0">
-                        <HospitalsTable hospitals={getFilteredHospitals()} />
+                        <HospitalsTable hospitals={getFilteredHospitals()} onStatusChanged={fetchHospitals} />
                     </TabsContent>
                     <TabsContent value="active" className="mt-0">
-                        <HospitalsTable hospitals={getFilteredHospitals()} />
+                        <HospitalsTable hospitals={getFilteredHospitals()} onStatusChanged={fetchHospitals} />
                     </TabsContent>
                 </Tabs>
             </div>

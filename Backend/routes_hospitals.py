@@ -165,3 +165,23 @@ def update_hospital_status(hospital_id: int, req: StatusUpdate):
         )
 
     return {"success": True, "hospital_id": str(hospital_id), "status": req.status}
+
+
+@router.delete("/{hospital_id}")
+def delete_hospital(hospital_id: int):
+    """Remove a hospital and all associated data (super admin)."""
+    with db_cursor() as cur:
+        # Verify hospital exists
+        cur.execute("SELECT hospital_id FROM hospitals WHERE hospital_id = %s", (hospital_id,))
+        if not cur.fetchone():
+            raise HTTPException(status_code=404, detail="Hospital not found")
+
+        # Delete in dependency order
+        cur.execute("DELETE FROM referrals WHERE referring_hospital_id = %s OR receiving_hospital_id = %s", (hospital_id, hospital_id))
+        cur.execute("DELETE FROM hospital_resources WHERE hospital_id = %s", (hospital_id,))
+        cur.execute("DELETE FROM specialists WHERE hospital_id = %s", (hospital_id,))
+        cur.execute("DELETE FROM physicians WHERE hospital_id = %s", (hospital_id,))
+        cur.execute("DELETE FROM users WHERE hospital_id = %s", (hospital_id,))
+        cur.execute("DELETE FROM hospitals WHERE hospital_id = %s", (hospital_id,))
+
+    return {"success": True, "hospital_id": str(hospital_id)}
