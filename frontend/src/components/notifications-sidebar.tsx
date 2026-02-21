@@ -37,7 +37,7 @@ export function NotificationsSidebar({ open, onClose }: NotificationsSidebarProp
                                     className={`p-3 rounded-lg border ${notification.is_read ? 'bg-white' : 'bg-blue-50 border-blue-100'
                                         }`}
                                 >
-                                    <p className="font-medium text-sm">{notification.title}</p>
+                                    <p className="font-medium text-sm">{notification.type.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</p>
                                     <p className="text-sm text-gray-600 mt-1">{notification.message}</p>
                                     <p className="text-xs text-gray-400 mt-2">
                                         {new Date(notification.created_at).toLocaleDateString()}
