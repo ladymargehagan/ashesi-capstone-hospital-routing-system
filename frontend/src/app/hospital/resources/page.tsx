@@ -1,9 +1,33 @@
 'use client';
 
+import { useState, useEffect } from 'react';
+import { useAuth } from '@/hooks/use-auth';
+import { resourcesApi } from '@/lib/api-client';
 import { ResourcesTab } from '@/components/hospital/resources-tab';
-import { mockResources } from '@/lib/mock-data';
+import { Resource } from '@/types';
+import { Loader2 } from 'lucide-react';
 
 export default function HospitalResourcesPage() {
+    const { user } = useAuth();
+    const [resources, setResources] = useState<Resource[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        if (!user?.hospital_id) return;
+        resourcesApi.list(user.hospital_id)
+            .then((data) => setResources(data as unknown as Resource[]))
+            .catch((err) => console.error('Failed to load resources:', err))
+            .finally(() => setLoading(false));
+    }, [user?.hospital_id]);
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+            </div>
+        );
+    }
+
     return (
         <div>
             <div className="mb-6">
@@ -11,7 +35,7 @@ export default function HospitalResourcesPage() {
                 <p className="text-gray-500">Update bed availability and facility resources</p>
             </div>
 
-            <ResourcesTab resources={mockResources} />
+            <ResourcesTab resources={resources} />
         </div>
     );
 }

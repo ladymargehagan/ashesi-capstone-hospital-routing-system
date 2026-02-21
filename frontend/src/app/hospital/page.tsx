@@ -1,29 +1,78 @@
 'use client';
 
-import { useState } from 'react';
-import Link from 'next/link';
+import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { StatsCard } from '@/components/stats-card';
 import { HospitalReferralsTable } from '@/components/hospital/referrals-table';
 import { ResourcesTab } from '@/components/hospital/resources-tab';
 import { SpecialistsTab } from '@/components/hospital/specialists-tab';
-import { mockHospitalStats, mockReferrals, mockResources, mockSpecialists } from '@/lib/mock-data';
-import { Bed, Heart, Users, Clock } from 'lucide-react';
+import { useAuth } from '@/hooks/use-auth';
+import { referralsApi, resourcesApi, specialistsApi, statsApi } from '@/lib/api-client';
+import { Referral, Resource, Specialist } from '@/types';
+import { Bed, Heart, Users, Clock, Loader2 } from 'lucide-react';
 
 export default function HospitalDashboard() {
+    const { user } = useAuth();
     const [activeTab, setActiveTab] = useState('referrals');
-    const stats = mockHospitalStats;
+    const [referrals, setReferrals] = useState<Referral[]>([]);
+    const [resources, setResources] = useState<Resource[]>([]);
+    const [specialists, setSpecialists] = useState<Specialist[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [stats, setStats] = useState({
+        total_beds: 0,
+        available_beds: 0,
+        icu_capacity: 0,
+        icu_available: 0,
+        specialists_available: 0,
+        specialists_total: 0,
+    });
 
-    // Filter referrals for this hospital (using receiving_hospital_id)
-    const hospitalReferrals = mockReferrals.filter(r => r.receiving_hospital_id === 'hosp-1');
-    const pendingReferrals = hospitalReferrals.filter(r => r.status === 'pending');
+    useEffect(() => {
+        if (!user?.hospital_id) return;
+        const hospitalId = user.hospital_id;
+
+        Promise.all([
+            referralsApi.list({ hospital_id: hospitalId }).catch(() => []),
+            resourcesApi.list(hospitalId).catch(() => []),
+            specialistsApi.list(hospitalId).catch(() => []),
+        ]).then(([refs, res, specs]) => {
+            setReferrals(refs as unknown as Referral[]);
+            setResources(res as unknown as Resource[]);
+            setSpecialists(specs as unknown as Specialist[]);
+
+            // Compute stats from real data
+            const resList = res as unknown as Resource[];
+            const generalBeds = resList.find(r => r.resource_type === 'general_beds');
+            const icuBeds = resList.find(r => r.resource_type === 'icu_beds');
+            setStats({
+                total_beds: generalBeds?.total_count || 0,
+                available_beds: generalBeds?.available_count || 0,
+                icu_capacity: icuBeds?.total_count || 0,
+                icu_available: icuBeds?.available_count || 0,
+                specialists_total: specs.length,
+                specialists_available: (specs as unknown as Specialist[]).filter(
+                    s => s.on_call_available
+                ).length,
+            });
+        }).finally(() => setLoading(false));
+    }, [user?.hospital_id]);
+
+    const pendingReferrals = referrals.filter(r => r.status === 'pending');
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+            </div>
+        );
+    }
 
     return (
         <div>
             {/* Header */}
             <div className="mb-6">
                 <h1 className="text-2xl font-bold text-gray-900">Hospital Dashboard</h1>
-                <p className="text-gray-500">City General Hospital - Resource and Referral Management</p>
+                <p className="text-gray-500">{user?.hospital_name || 'Hospital'} - Resource and Referral Management</p>
             </div>
 
             {/* Stats Cards */}
@@ -62,7 +111,7 @@ export default function HospitalDashboard() {
             <Tabs value={activeTab} onValueChange={setActiveTab}>
                 <TabsList>
                     <TabsTrigger value="referrals">
-                        Referrals ({hospitalReferrals.length})
+                        Referrals ({referrals.length})
                     </TabsTrigger>
                     <TabsTrigger value="resources">Resources</TabsTrigger>
                     <TabsTrigger value="specialists">Specialists</TabsTrigger>
@@ -72,16 +121,16 @@ export default function HospitalDashboard() {
                     <div className="bg-white rounded-lg border p-6">
                         <h2 className="text-lg font-semibold mb-1">Patient Referrals</h2>
                         <p className="text-sm text-gray-500 mb-4">Review and manage incoming patient referrals</p>
-                        <HospitalReferralsTable referrals={hospitalReferrals} />
+                        <HospitalReferralsTable referrals={referrals} />
                     </div>
                 </TabsContent>
 
                 <TabsContent value="resources" className="mt-4">
-                    <ResourcesTab resources={mockResources} />
+                    <ResourcesTab resources={resources} />
                 </TabsContent>
 
                 <TabsContent value="specialists" className="mt-4">
-                    <SpecialistsTab specialists={mockSpecialists} />
+                    <SpecialistsTab specialists={specialists} />
                 </TabsContent>
             </Tabs>
         </div>
