@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { mockHospitals } from '@/lib/mock-data';
+
 import { User, Mail, Building2, Shield, Calendar, Loader2, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
@@ -52,11 +52,7 @@ export default function ProfilePage() {
     };
 
     const getHospitalName = () => {
-        if (user.hospital_id) {
-            const hospital = mockHospitals.find(h => h.id === user.hospital_id);
-            return hospital?.name || 'Unknown Hospital';
-        }
-        return null;
+        return user.hospital_name || null;
     };
 
     const getDashboardLink = () => {

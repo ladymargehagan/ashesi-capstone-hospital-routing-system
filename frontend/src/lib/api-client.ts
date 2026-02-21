@@ -240,6 +240,21 @@ export const mapsApi = {
 };
 
 // ---------------------------------------------------------------------------
+// Notifications
+// ---------------------------------------------------------------------------
+
+export const notificationsApi = {
+    list: () =>
+        apiFetch<Record<string, unknown>[]>('/api/notifications'),
+
+    markRead: (id: string) =>
+        apiFetch<{ success: boolean }>(
+            `/api/notifications/${id}/read`,
+            { method: 'PUT' },
+        ),
+};
+
+// ---------------------------------------------------------------------------
 // Resource display name helper (pure client-side — no API call)
 // ---------------------------------------------------------------------------
 

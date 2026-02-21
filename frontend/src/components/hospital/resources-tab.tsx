@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Resource } from '@/types';
 import { ResourceUpdateModal } from '@/components/hospital/resource-update-modal';
-import { getResourceDisplayName } from '@/lib/mock-data';
+import { getResourceDisplayName } from '@/lib/api-client';
 
 interface ResourcesTabProps {
     resources: Resource[];

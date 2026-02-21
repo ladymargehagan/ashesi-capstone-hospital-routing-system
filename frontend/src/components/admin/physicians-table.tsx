@@ -1,7 +1,6 @@
 'use client';
 
 import { Physician } from '@/types';
-import { mockHospitals } from '@/lib/mock-data';
 import {
     Table,
     TableBody,
@@ -25,10 +24,9 @@ export function PhysiciansTable({ physicians }: PhysiciansTableProps) {
         });
     };
 
-    const getHospitalName = (hospitalId?: string) => {
-        if (!hospitalId) return 'Unaffiliated';
-        const hospital = mockHospitals.find(h => h.id === hospitalId);
-        return hospital?.name || 'Unknown';
+    const getHospitalName = (physician: Physician) => {
+        // The API returns hospital_name as a joined field
+        return (physician as unknown as Record<string, unknown>).hospital_name as string || 'Unaffiliated';
     };
 
     const getStatusBadge = (status: string) => {
@@ -67,7 +65,7 @@ export function PhysiciansTable({ physicians }: PhysiciansTableProps) {
                                     {physician.specialization || '-'}
                                 </Badge>
                             </TableCell>
-                            <TableCell>{getHospitalName(physician.hospital_id)}</TableCell>
+                            <TableCell>{getHospitalName(physician)}</TableCell>
                             <TableCell>
                                 <Badge className={getStatusBadge(physician.status)}>
                                     {physician.status}

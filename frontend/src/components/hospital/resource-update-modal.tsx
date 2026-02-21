@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Resource } from '@/types';
-import { getResourceDisplayName } from '@/lib/mock-data';
+import { getResourceDisplayName } from '@/lib/api-client';
 
 interface ResourceUpdateModalProps {
     resource: Resource | null;

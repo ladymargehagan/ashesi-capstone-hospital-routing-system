@@ -1,8 +1,10 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { mockNotifications } from '@/lib/mock-data';
-import { Clock } from 'lucide-react';
+import { notificationsApi } from '@/lib/api-client';
+import { Notification } from '@/types';
+import { Clock, Loader2 } from 'lucide-react';
 
 interface NotificationsSidebarProps {
     open: boolean;
@@ -10,7 +12,18 @@ interface NotificationsSidebarProps {
 }
 
 export function NotificationsSidebar({ open, onClose }: NotificationsSidebarProps) {
-    const notifications = mockNotifications;
+    const [notifications, setNotifications] = useState<Notification[]>([]);
+    const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        if (!open) return;
+        setLoading(true);
+        notificationsApi.list()
+            .then((data) => setNotifications(data as unknown as Notification[]))
+            .catch(() => setNotifications([]))
+            .finally(() => setLoading(false));
+    }, [open]);
+
     const unreadCount = notifications.filter(n => !n.is_read).length;
 
     return (
@@ -24,7 +37,11 @@ export function NotificationsSidebar({ open, onClose }: NotificationsSidebarProp
                 </SheetHeader>
 
                 <div className="mt-6">
-                    {notifications.length === 0 ? (
+                    {loading ? (
+                        <div className="flex items-center justify-center py-12">
+                            <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+                        </div>
+                    ) : notifications.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-12 text-gray-400">
                             <Clock className="h-12 w-12 mb-4" />
                             <p>No notifications</p>

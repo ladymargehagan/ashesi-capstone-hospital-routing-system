@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { StatsCard } from '@/components/stats-card';
 import { Badge } from '@/components/ui/badge';
-import { mockPhysicianApplications, mockHospitals } from '@/lib/mock-data';
-import { Users, Stethoscope, Search } from 'lucide-react';
+import { usersApi } from '@/lib/api-client';
+import { Physician } from '@/types';
+import { Users, Stethoscope, Search, Loader2 } from 'lucide-react';
 import {
     Table,
     TableBody,
@@ -17,21 +18,30 @@ import {
 
 export default function PhysiciansPage() {
     const [searchQuery, setSearchQuery] = useState('');
+    const [physicians, setPhysicians] = useState<Physician[]>([]);
+    const [loading, setLoading] = useState(true);
 
-    const physicians = mockPhysicianApplications;
+    useEffect(() => {
+        usersApi.listPhysicians()
+            .then((data) => setPhysicians(data as unknown as Physician[]))
+            .catch((err) => console.error('Failed to load physicians:', err))
+            .finally(() => setLoading(false));
+    }, []);
 
     const filteredPhysicians = physicians.filter(p =>
         p.license_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (p.specialization?.toLowerCase() || '').includes(searchQuery.toLowerCase())
     );
 
-    const getHospitalName = (hospitalId?: string) => {
-        if (!hospitalId) return 'Unaffiliated';
-        const hospital = mockHospitals.find(h => h.id === hospitalId);
-        return hospital?.name || 'Unknown';
-    };
-
     const uniqueSpecialties = new Set(physicians.map(p => p.specialization).filter(Boolean));
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+            </div>
+        );
+    }
 
     return (
         <div>
@@ -112,7 +122,7 @@ export default function PhysiciansPage() {
                                             {physician.specialization || '-'}
                                         </Badge>
                                     </TableCell>
-                                    <TableCell>{getHospitalName(physician.hospital_id)}</TableCell>
+                                    <TableCell>{(physician as unknown as Record<string, unknown>).hospital_name as string || 'Unaffiliated'}</TableCell>
                                     <TableCell>
                                         <Badge className={
                                             physician.status === 'active' ? 'bg-green-100 text-green-700' :

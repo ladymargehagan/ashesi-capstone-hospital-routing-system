@@ -12,7 +12,7 @@ import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { Building2, User, ClipboardCheck, Loader2, CheckCircle2, ArrowLeft, ArrowRight, MapPin } from 'lucide-react';
 import { HospitalRegistrationData } from '@/types';
-import { registerHospital } from '@/lib/mock-data';
+import { hospitalsApi } from '@/lib/api-client';
 
 const STEPS = [
     { id: 1, title: 'Hospital Details', icon: Building2 },
@@ -166,27 +166,31 @@ export default function RegisterPage() {
 
     const handleSubmit = async () => {
         setLoading(true);
-        // Simulate API call delay
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        try {
+            await hospitalsApi.register({
+                hospital_name: formData.hospital_name,
+                license_number: formData.license_number,
+                address: formData.address,
+                tier: formData.tier,
+                type: formData.type,
+                ownership: formData.ownership,
+                operating_hours: formData.operating_hours,
+                contact_phone: formData.contact_phone,
+                gps_lat: formData.gps_lat,
+                gps_lng: formData.gps_lng,
+                admin_full_name: formData.admin_full_name,
+                admin_email: formData.admin_email,
+                admin_phone: formData.admin_phone,
+                admin_password: formData.admin_password,
+            });
 
-        registerHospital({
-            hospital_name: formData.hospital_name,
-            license_number: formData.license_number,
-            address: formData.address,
-            tier: formData.tier,
-            type: formData.type,
-            ownership: formData.ownership,
-            operating_hours: formData.operating_hours,
-            contact_phone: formData.contact_phone,
-            gps_lat: formData.gps_lat,
-            gps_lng: formData.gps_lng,
-            admin_full_name: formData.admin_full_name,
-            admin_email: formData.admin_email,
-            admin_phone: formData.admin_phone,
-        });
-
-        setLoading(false);
-        setSubmitted(true);
+            setSubmitted(true);
+        } catch (err) {
+            console.error('Registration failed:', err);
+            alert(err instanceof Error ? err.message : 'Registration failed. Please try again.');
+        } finally {
+            setLoading(false);
+        }
     };
 
     const tierLabels: Record<string, string> = {

@@ -1,34 +1,52 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { StatsCard } from '@/components/stats-card';
 import { HospitalsTable } from '@/components/admin/hospitals-table';
-import { mockHospitals } from '@/lib/mock-data';
-import { Building2, CheckCircle, Clock, Search } from 'lucide-react';
+import { hospitalsApi } from '@/lib/api-client';
+import { Hospital } from '@/types';
+import { Building2, CheckCircle, Clock, Search, Loader2 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function HospitalsPage() {
     const [searchQuery, setSearchQuery] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
+    const [hospitals, setHospitals] = useState<Hospital[]>([]);
+    const [loading, setLoading] = useState(true);
 
-    const pendingHospitals = mockHospitals.filter(h => h.status === 'pending');
-    const activeHospitals = mockHospitals.filter(h => h.status === 'active');
+    useEffect(() => {
+        hospitalsApi.list()
+            .then((data) => setHospitals(data as unknown as Hospital[]))
+            .catch((err) => console.error('Failed to load hospitals:', err))
+            .finally(() => setLoading(false));
+    }, []);
+
+    const pendingHospitals = hospitals.filter(h => h.status === 'pending');
+    const activeHospitals = hospitals.filter(h => h.status === 'active');
 
     const getFilteredHospitals = () => {
-        let hospitals = mockHospitals;
-        if (statusFilter === 'pending') hospitals = pendingHospitals;
-        if (statusFilter === 'active') hospitals = activeHospitals;
+        let list = hospitals;
+        if (statusFilter === 'pending') list = pendingHospitals;
+        if (statusFilter === 'active') list = activeHospitals;
 
         if (searchQuery) {
-            hospitals = hospitals.filter(h =>
+            list = list.filter(h =>
                 h.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 h.type.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 h.address.toLowerCase().includes(searchQuery.toLowerCase())
             );
         }
-        return hospitals;
+        return list;
     };
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+            </div>
+        );
+    }
 
     return (
         <div>
@@ -42,7 +60,7 @@ export default function HospitalsPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 <StatsCard
                     title="Total Hospitals"
-                    value={mockHospitals.length}
+                    value={hospitals.length}
                     description="All registered hospitals"
                     icon={Building2}
                     iconColor="text-blue-600"
@@ -69,7 +87,7 @@ export default function HospitalsPage() {
                     <div className="flex items-center justify-between mb-4">
                         <TabsList>
                             <TabsTrigger value="all">
-                                All ({mockHospitals.length})
+                                All ({hospitals.length})
                             </TabsTrigger>
                             <TabsTrigger value="pending">
                                 Pending ({pendingHospitals.length})
