@@ -1,127 +1,189 @@
 // User roles in the system
 export type UserRole = 'physician' | 'hospital_admin' | 'super_admin';
 
-// User interface
+// User interface (maps to USERS table)
 export interface User {
     id: string;
     email: string;
-    name: string;
+    full_name: string;
     role: UserRole;
+    phone_number?: string;
     hospital_id?: string;
-    phone?: string;
-    specialty?: string;
-    license_number?: string;
-    years_of_experience?: number;
+    status: 'active' | 'pending' | 'rejected';
     created_at: string;
+    updated_at?: string;
 }
 
-// Hospital types
-export type HospitalType = 'General Hospital' | 'Medical Center' | 'Specialty Hospital' | 'Clinic';
-export type HospitalStatus = 'Pending' | 'Approved' | 'Rejected';
+// Physician interface (maps to PHYSICIANS table - separate from users)
+export interface Physician {
+    id: string;
+    user_id: string;
+    hospital_id: string;
+    license_number: string;
+    specialization?: string;
+    work_schedule?: Record<string, unknown>;
+    digital_signature_path?: string;
+    status: 'active' | 'pending' | 'rejected';
+    created_at: string;
+    updated_at?: string;
+    // Derived from user join
+    full_name?: string;
+    email?: string;
+    phone_number?: string;
+}
+
+// Hospital types (maps to HOSPITALS table)
+export type HospitalTier = 'tier_1' | 'tier_2' | 'tier_3';
+export type HospitalType = 'polyclinic' | 'district' | 'regional' | 'teaching' | 'specialist';
+export type HospitalOwnership = 'public' | 'private' | 'faith_based' | 'military';
+export type HospitalStatus = 'active' | 'pending' | 'rejected';
 
 // Hospital interface
 export interface Hospital {
     id: string;
     name: string;
-    type: HospitalType;
+    license_number: string;
+    gps_coordinates?: { lat: number; lng: number };
     address: string;
-    latitude?: number;
-    longitude?: number;
-    total_beds: number;
-    icu_capacity: number;
-    contact_person: string;
-    contact_email: string;
-    contact_phone: string;
+    tier: HospitalTier;
+    type: HospitalType;
+    ownership: HospitalOwnership;
+    operating_hours?: string;
+    contact_phone?: string;
     status: HospitalStatus;
     created_at: string;
+    updated_at?: string;
 }
 
-// Patient interface
+// Patient interface (maps to PATIENTS table)
 export interface Patient {
     id: string;
-    name: string;
-    age: number;
-    date_of_birth: string;
-    gender: 'Male' | 'Female';
-    address: string;
-    nhis_status: 'Active' | 'Expired' | 'None';
-    diagnosis: string;
     physician_id: string;
-    last_visit: string;
-    created_at: string;
+    patient_identifier: string;
+    full_name: string;
+    date_of_birth?: string;
+    sex?: 'male' | 'female' | 'other';
+    nhis_number?: string;
+    nhis_status?: 'Active' | 'Expired' | 'None';
+    contact_number?: string;
+    address?: string;
+    next_of_kin_name?: string;
+    next_of_kin_contact?: string;
+    registered_at: string;
+    // Derived fields for display
+    diagnosis?: string;
+    last_visit?: string;
 }
 
-// Referral urgency and status
-export type ReferralUrgency = 'Emergency' | 'Urgent' | 'Routine';
-export type ReferralStatus = 'Pending' | 'Accepted' | 'Rejected';
+// Referral severity and status (maps to REFERRALS table)
+export type ReferralSeverity = 'critical' | 'high' | 'medium' | 'low';
+export type ReferralStability = 'stable' | 'unstable';
+export type ReferralStatus = 'pending' | 'approved' | 'rejected' | 'en_route' | 'completed' | 'cancelled';
 
 // Referral interface
 export interface Referral {
     id: string;
     patient_id: string;
-    patient_name: string;
-    patient_age: number;
-    condition: string;
-    urgency: ReferralUrgency;
-    hospital_id: string;
-    hospital_name: string;
     referring_physician_id: string;
-    referring_physician_name: string;
-    referring_facility: string;
+    referring_hospital_id: string;
+    receiving_hospital_id: string;
     status: ReferralStatus;
-    response_notes?: string;
-    requested_at: string;
-    responded_at?: string;
+    severity: ReferralSeverity;
+    stability: ReferralStability;
+    submitted_at: string;
+    approved_at?: string;
+    rejected_at?: string;
+    completed_at?: string;
+    cancelled_at?: string;
+    rejection_reason?: string;
+    cancellation_reason?: string;
+    estimated_arrival_minutes?: number;
+    // Derived fields for display
+    patient_name?: string;
+    patient_age?: number;
+    referring_physician_name?: string;
+    referring_hospital_name?: string;
+    receiving_hospital_name?: string;
 }
 
-// Referral form data (NHIS/MOH compliant)
+// Referral details (maps to REFERRAL_DETAILS table)
+export interface ReferralDetails {
+    id: string;
+    referral_id: string;
+    presenting_complaint: string;
+    clinical_history?: string;
+    initial_diagnosis?: string;
+    current_condition?: string;
+    clinical_summary?: string;
+    examination_findings?: string;
+    working_diagnosis?: string;
+    reason_for_referral?: string;
+    investigations_done?: string;
+    treatment_given?: string;
+    additional_notes?: string;
+    required_specialist?: string;
+    required_facility?: string;
+}
+
+// Referral form data (combines REFERRALS + REFERRAL_DETAILS for form submission)
 export interface ReferralFormData {
     // Patient Details
     patient_id: string;
     full_name: string;
-    age: number;
     date_of_birth: string;
-    sex: 'Male' | 'Female';
+    sex: 'male' | 'female' | 'other';
     address: string;
+    nhis_number: string;
     nhis_status: 'Active' | 'Expired' | 'None';
+    contact_number: string;
 
-    // Clinical Details
+    // Clinical Details (REFERRAL_DETAILS)
     presenting_complaint: string;
     clinical_history: string;
     examination_findings: string;
-    investigations_results: string;
-    diagnosis: string;
+    working_diagnosis: string;
+    investigations_done: string;
     treatment_given: string;
-
-    // Referral Details
     reason_for_referral: string;
-    urgency: ReferralUrgency;
+
+    // Referral Details (REFERRALS)
+    severity: ReferralSeverity;
+    stability: ReferralStability;
     referral_datetime: string;
 
     // Hospital Selection
-    hospital_id?: string;
+    receiving_hospital_id?: string;
 }
 
-// Specialist interface
+// Specialist interface (maps to SPECIALISTS table)
 export interface Specialist {
     id: string;
-    name: string;
-    specialty: string;
     hospital_id: string;
-    available: boolean;
+    specialty: string;
+    specialist_name?: string;
+    availability_schedule?: Record<string, unknown>;
+    on_call_available: boolean;
+    created_at?: string;
+    updated_at?: string;
 }
 
-// Resource types
-export type ResourceType = 'General Beds' | 'ICU Beds' | 'Emergency Beds';
+// Resource types (maps to HOSPITAL_RESOURCES table)
+export type ResourceType =
+    | 'general_beds' | 'icu_beds' | 'pediatric_beds' | 'maternity_beds'
+    | 'theatre' | 'blood_bank' | 'lab' | 'xray' | 'ct_scan'
+    | 'mri' | 'ultrasound' | 'dialysis' | 'ventilators' | 'oxygen';
 
 // Resource interface
 export interface Resource {
     id: string;
     hospital_id: string;
-    type: ResourceType;
-    total: number;
-    available: number;
-    reserved: number;
+    resource_type: ResourceType;
+    total_count?: number;
+    available_count?: number;
+    is_available?: boolean;
+    operator_required: boolean;
+    operator_specialty?: string;
+    availability_schedule?: Record<string, unknown>;
     last_updated: string;
 }
 
@@ -137,15 +199,15 @@ export interface HospitalRecommendation {
     data_freshness: 'Fresh' | 'Stale' | 'Outdated';
 }
 
-// Notification interface
+// Notification interface (maps to NOTIFICATIONS table)
 export interface Notification {
     id: string;
     user_id: string;
-    title: string;
     message: string;
-    type: 'referral' | 'approval' | 'system';
+    type: 'hospital_approval' | 'hospital_rejection' | 'physician_verification' | 'physician_rejection' | 'referral_approved' | 'referral_rejected' | 'referral_completed' | 'patient_arrived' | 'data_flagged';
     is_read: boolean;
     created_at: string;
+    read_at?: string;
 }
 
 // Dashboard stats

@@ -3,8 +3,10 @@
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Resource } from '@/types';
 import { ResourceUpdateModal } from '@/components/hospital/resource-update-modal';
+import { getResourceDisplayName } from '@/lib/mock-data';
 
 interface ResourcesTabProps {
     resources: Resource[];
@@ -24,7 +26,10 @@ export function ResourcesTab({ resources }: ResourcesTabProps) {
     };
 
     const getAvailabilityPercentage = (resource: Resource) => {
-        return Math.round((resource.available / resource.total) * 100);
+        const total = resource.total_count || 0;
+        const available = resource.available_count || 0;
+        if (total === 0) return 0;
+        return Math.round((available / total) * 100);
     };
 
     const getProgressColor = (percentage: number) => {
@@ -43,13 +48,24 @@ export function ResourcesTab({ resources }: ResourcesTabProps) {
                 <CardContent className="space-y-6">
                     {resources.map((resource) => {
                         const percentage = getAvailabilityPercentage(resource);
-                        const occupied = resource.total - resource.available - resource.reserved;
+                        const total = resource.total_count || 0;
+                        const available = resource.available_count || 0;
+                        const occupied = total - available;
 
                         return (
                             <div key={resource.id} className="p-4 border rounded-lg">
                                 <div className="flex items-center justify-between mb-4">
                                     <div>
-                                        <h3 className="font-semibold text-lg">{resource.type}</h3>
+                                        <div className="flex items-center gap-2">
+                                            <h3 className="font-semibold text-lg">
+                                                {getResourceDisplayName(resource.resource_type)}
+                                            </h3>
+                                            {resource.operator_required && (
+                                                <Badge variant="outline" className="text-xs bg-amber-50 text-amber-700 border-amber-200">
+                                                    Operator Required
+                                                </Badge>
+                                            )}
+                                        </div>
                                         <p className="text-sm text-gray-500">
                                             Last updated: {formatDate(resource.last_updated)}
                                         </p>
@@ -64,18 +80,14 @@ export function ResourcesTab({ resources }: ResourcesTabProps) {
                                 </div>
 
                                 {/* Stats Grid */}
-                                <div className="grid grid-cols-3 gap-4 mb-4">
+                                <div className="grid grid-cols-2 gap-4 mb-4">
                                     <div>
                                         <p className="text-sm text-gray-500">Total</p>
-                                        <p className="text-2xl font-bold">{resource.total}</p>
+                                        <p className="text-2xl font-bold">{total}</p>
                                     </div>
                                     <div>
                                         <p className="text-sm text-gray-500">Available</p>
-                                        <p className="text-2xl font-bold text-green-600">{resource.available}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm text-gray-500">Reserved</p>
-                                        <p className="text-2xl font-bold text-red-600">{resource.reserved}</p>
+                                        <p className="text-2xl font-bold text-green-600">{available}</p>
                                     </div>
                                 </div>
 

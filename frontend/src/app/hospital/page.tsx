@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { StatsCard } from '@/components/stats-card';
 import { HospitalReferralsTable } from '@/components/hospital/referrals-table';
@@ -13,9 +14,9 @@ export default function HospitalDashboard() {
     const [activeTab, setActiveTab] = useState('referrals');
     const stats = mockHospitalStats;
 
-    // Filter referrals for this hospital
-    const hospitalReferrals = mockReferrals.filter(r => r.hospital_id === 'hosp-1');
-    const pendingReferrals = hospitalReferrals.filter(r => r.status === 'Pending');
+    // Filter referrals for this hospital (using receiving_hospital_id)
+    const hospitalReferrals = mockReferrals.filter(r => r.receiving_hospital_id === 'hosp-1');
+    const pendingReferrals = hospitalReferrals.filter(r => r.status === 'pending');
 
     return (
         <div>

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Resource } from '@/types';
+import { getResourceDisplayName } from '@/lib/mock-data';
 
 interface ResourceUpdateModalProps {
     resource: Resource | null;
@@ -14,20 +15,19 @@ interface ResourceUpdateModalProps {
 }
 
 export function ResourceUpdateModal({ resource, open, onClose }: ResourceUpdateModalProps) {
-    const [available, setAvailable] = useState(0);
-    const [reserved, setReserved] = useState(0);
+    const [availableCount, setAvailableCount] = useState(0);
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
         if (resource) {
-            setAvailable(resource.available);
-            setReserved(resource.reserved);
+            setAvailableCount(resource.available_count || 0);
         }
     }, [resource]);
 
     if (!resource) return null;
 
-    const occupied = resource.total - available - reserved;
+    const totalCount = resource.total_count || 0;
+    const occupied = totalCount - availableCount;
 
     const handleSave = async () => {
         setLoading(true);
@@ -42,7 +42,7 @@ export function ResourceUpdateModal({ resource, open, onClose }: ResourceUpdateM
         <Dialog open={open} onOpenChange={onClose}>
             <DialogContent className="max-w-sm">
                 <DialogHeader>
-                    <DialogTitle>Update {resource.type}</DialogTitle>
+                    <DialogTitle>Update {getResourceDisplayName(resource.resource_type)}</DialogTitle>
                     <DialogDescription>
                         Update resource availability
                     </DialogDescription>
@@ -55,7 +55,7 @@ export function ResourceUpdateModal({ resource, open, onClose }: ResourceUpdateM
                         <Input
                             id="total"
                             type="number"
-                            value={resource.total}
+                            value={totalCount}
                             disabled
                             className="bg-gray-100"
                         />
@@ -67,23 +67,10 @@ export function ResourceUpdateModal({ resource, open, onClose }: ResourceUpdateM
                         <Input
                             id="available"
                             type="number"
-                            value={available}
-                            onChange={(e) => setAvailable(Math.max(0, parseInt(e.target.value) || 0))}
+                            value={availableCount}
+                            onChange={(e) => setAvailableCount(Math.max(0, parseInt(e.target.value) || 0))}
                             min={0}
-                            max={resource.total - reserved}
-                        />
-                    </div>
-
-                    {/* Reserved */}
-                    <div className="space-y-2">
-                        <Label htmlFor="reserved">Reserved</Label>
-                        <Input
-                            id="reserved"
-                            type="number"
-                            value={reserved}
-                            onChange={(e) => setReserved(Math.max(0, parseInt(e.target.value) || 0))}
-                            min={0}
-                            max={resource.total - available}
+                            max={totalCount}
                         />
                     </div>
 
@@ -91,6 +78,15 @@ export function ResourceUpdateModal({ resource, open, onClose }: ResourceUpdateM
                     <div>
                         <p className="text-sm text-blue-600">Occupied: {Math.max(0, occupied)}</p>
                     </div>
+
+                    {/* Operator Info */}
+                    {resource.operator_required && (
+                        <div className="p-2 bg-amber-50 rounded-md">
+                            <p className="text-xs text-amber-700">
+                                Operator required{resource.operator_specialty ? `: ${resource.operator_specialty}` : ''}
+                            </p>
+                        </div>
+                    )}
 
                     {/* Action Buttons */}
                     <div className="flex gap-3 pt-2">

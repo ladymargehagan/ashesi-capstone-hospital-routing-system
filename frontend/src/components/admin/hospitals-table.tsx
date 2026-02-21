@@ -31,12 +31,12 @@ export function HospitalsTable({ hospitals }: HospitalsTableProps) {
     };
 
     const getStatusBadge = (status: string) => {
-        const styles = {
-            Pending: 'bg-amber-100 text-amber-700',
-            Approved: 'bg-green-100 text-green-700',
-            Rejected: 'bg-red-100 text-red-700',
+        const styles: Record<string, string> = {
+            pending: 'bg-amber-100 text-amber-700',
+            active: 'bg-green-100 text-green-700',
+            rejected: 'bg-red-100 text-red-700',
         };
-        return styles[status as keyof typeof styles] || styles.Pending;
+        return styles[status] || styles.pending;
     };
 
     const handleQuickAction = async (hospital: Hospital, action: 'approve' | 'reject') => {
@@ -51,8 +51,8 @@ export function HospitalsTable({ hospitals }: HospitalsTableProps) {
                     <TableRow>
                         <TableHead>Hospital Name</TableHead>
                         <TableHead>Type</TableHead>
-                        <TableHead>Contact</TableHead>
-                        <TableHead>Beds</TableHead>
+                        <TableHead>Contact Phone</TableHead>
+                        <TableHead>Tier</TableHead>
                         <TableHead>Applied</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead>Actions</TableHead>
@@ -70,8 +70,8 @@ export function HospitalsTable({ hospitals }: HospitalsTableProps) {
                             <TableRow key={hospital.id}>
                                 <TableCell className="font-medium">{hospital.name}</TableCell>
                                 <TableCell>{hospital.type}</TableCell>
-                                <TableCell>{hospital.contact_person}</TableCell>
-                                <TableCell>{hospital.total_beds}</TableCell>
+                                <TableCell>{hospital.contact_phone || '—'}</TableCell>
+                                <TableCell>{hospital.tier.replace('_', ' ').toUpperCase()}</TableCell>
                                 <TableCell>{formatDate(hospital.created_at)}</TableCell>
                                 <TableCell>
                                     <Badge className={getStatusBadge(hospital.status)}>
@@ -87,7 +87,7 @@ export function HospitalsTable({ hospitals }: HospitalsTableProps) {
                                         >
                                             <Eye className="h-4 w-4" />
                                         </Button>
-                                        {hospital.status === 'Pending' && (
+                                        {hospital.status === 'pending' && (
                                             <>
                                                 <Button
                                                     variant="ghost"

@@ -15,18 +15,22 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { mockPatients } from '@/lib/mock-data';
+import { Patient } from '@/types';
+import { PatientDetailsModal } from '@/components/physician/patient-details-modal';
 import { Search, Eye, Plus } from 'lucide-react';
 
 export default function PatientsPage() {
     const [searchQuery, setSearchQuery] = useState('');
+    const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
 
-    // Filter patients based on search
     const filteredPatients = mockPatients.filter(patient =>
-        patient.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        patient.diagnosis.toLowerCase().includes(searchQuery.toLowerCase())
+        patient.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (patient.diagnosis || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        patient.patient_identifier.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
-    const formatDate = (dateStr: string) => {
+    const formatDate = (dateStr?: string) => {
+        if (!dateStr) return '-';
         return new Date(dateStr).toLocaleDateString('en-US', {
             day: '2-digit',
             month: '2-digit',
@@ -34,13 +38,24 @@ export default function PatientsPage() {
         });
     };
 
-    const getNHISBadge = (status: string) => {
-        const styles = {
+    const getAge = (dob?: string) => {
+        if (!dob) return '-';
+        const today = new Date();
+        const birth = new Date(dob);
+        let age = today.getFullYear() - birth.getFullYear();
+        const m = today.getMonth() - birth.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+        return age;
+    };
+
+    const getNHISBadge = (status?: string) => {
+        if (!status) return 'bg-gray-100 text-gray-700 border-gray-200';
+        const styles: Record<string, string> = {
             Active: 'bg-green-100 text-green-700 border-green-200',
             Expired: 'bg-amber-100 text-amber-700 border-amber-200',
             None: 'bg-gray-100 text-gray-700 border-gray-200',
         };
-        return styles[status as keyof typeof styles] || styles.None;
+        return styles[status] || styles.None;
     };
 
     return (
@@ -82,9 +97,10 @@ export default function PatientsPage() {
                     <Table>
                         <TableHeader>
                             <TableRow>
+                                <TableHead>Patient ID</TableHead>
                                 <TableHead>Name</TableHead>
                                 <TableHead>Age</TableHead>
-                                <TableHead>Gender</TableHead>
+                                <TableHead>Sex</TableHead>
                                 <TableHead>Diagnosis</TableHead>
                                 <TableHead>NHIS Status</TableHead>
                                 <TableHead>Last Visit</TableHead>
@@ -94,26 +110,32 @@ export default function PatientsPage() {
                         <TableBody>
                             {filteredPatients.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={7} className="text-center text-gray-500 py-8">
+                                    <TableCell colSpan={8} className="text-center text-gray-500 py-8">
                                         No patients found matching your search
                                     </TableCell>
                                 </TableRow>
                             ) : (
                                 filteredPatients.map((patient) => (
                                     <TableRow key={patient.id}>
-                                        <TableCell className="font-medium">{patient.name}</TableCell>
-                                        <TableCell>{patient.age}</TableCell>
-                                        <TableCell>{patient.gender}</TableCell>
-                                        <TableCell className="text-blue-600">{patient.diagnosis}</TableCell>
+                                        <TableCell className="text-gray-500 text-sm">{patient.patient_identifier}</TableCell>
+                                        <TableCell className="font-medium">{patient.full_name}</TableCell>
+                                        <TableCell>{getAge(patient.date_of_birth)}</TableCell>
+                                        <TableCell className="capitalize">{patient.sex || '-'}</TableCell>
+                                        <TableCell className="text-blue-600">{patient.diagnosis || '-'}</TableCell>
                                         <TableCell>
                                             <Badge className={getNHISBadge(patient.nhis_status)} variant="outline">
-                                                {patient.nhis_status}
+                                                {patient.nhis_status || 'None'}
                                             </Badge>
                                         </TableCell>
                                         <TableCell>{formatDate(patient.last_visit)}</TableCell>
                                         <TableCell>
                                             <div className="flex items-center gap-2">
-                                                <Button variant="ghost" size="sm" className="text-gray-600">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className="text-gray-600 hover:text-blue-600"
+                                                    onClick={() => setSelectedPatient(patient)}
+                                                >
                                                     <Eye className="h-4 w-4" />
                                                 </Button>
                                                 <Link href={`/physician/referral?patient=${patient.id}`}>
@@ -130,6 +152,12 @@ export default function PatientsPage() {
                     </Table>
                 </CardContent>
             </Card>
+
+            <PatientDetailsModal
+                patient={selectedPatient}
+                open={!!selectedPatient}
+                onClose={() => setSelectedPatient(null)}
+            />
         </div>
     );
 }

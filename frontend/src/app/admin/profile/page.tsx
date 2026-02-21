@@ -18,7 +18,7 @@ export default function AdminProfilePage() {
     const [loading, setLoading] = useState(false);
     const [editing, setEditing] = useState(false);
 
-    const [name, setName] = useState(user?.name || '');
+    const [name, setName] = useState(user?.full_name || '');
     const [email, setEmail] = useState(user?.email || '');
 
     if (!user) {
@@ -65,11 +65,11 @@ export default function AdminProfilePage() {
                     <div className="flex items-center gap-6">
                         <Avatar className="h-20 w-20">
                             <AvatarFallback className="bg-amber-100 text-amber-700 text-2xl">
-                                {getInitials(user.name)}
+                                {getInitials(user.full_name)}
                             </AvatarFallback>
                         </Avatar>
                         <div className="flex-1">
-                            <h2 className="text-2xl font-bold text-gray-900">{user.name}</h2>
+                            <h2 className="text-2xl font-bold text-gray-900">{user.full_name}</h2>
                             <p className="text-gray-500">{user.email}</p>
                             <div className="flex items-center gap-2 mt-2">
                                 <Badge className="bg-amber-100 text-amber-700 border-amber-200" variant="outline">
@@ -138,7 +138,7 @@ export default function AdminProfilePage() {
                                 <User className="h-5 w-5 text-gray-400" />
                                 <div>
                                     <p className="text-sm text-gray-500">Full Name</p>
-                                    <p className="font-medium">{user.name}</p>
+                                    <p className="font-medium">{user.full_name}</p>
                                 </div>
                             </div>
                             <Separator />

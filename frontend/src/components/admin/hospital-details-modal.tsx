@@ -26,7 +26,7 @@ export function HospitalDetailsModal({ hospital, open, onClose }: HospitalDetail
         onClose();
     };
 
-    const isPending = hospital.status === 'Pending';
+    const isPending = hospital.status === 'pending';
 
     return (
         <Dialog open={open} onOpenChange={onClose}>
@@ -57,27 +57,27 @@ export function HospitalDetailsModal({ hospital, open, onClose }: HospitalDetail
                         <p className="font-semibold">{hospital.address}</p>
                     </div>
 
-                    {/* Contact & Beds */}
+                    {/* Contact & Tier */}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <p className="text-sm text-gray-500">Contact Person</p>
-                            <p className="font-semibold">{hospital.contact_person}</p>
+                            <p className="text-sm text-gray-500">Contact Phone</p>
+                            <p className="font-semibold">{hospital.contact_phone || '—'}</p>
                         </div>
                         <div>
-                            <p className="text-sm text-gray-500">Total Beds</p>
-                            <p className="font-semibold">{hospital.total_beds}</p>
+                            <p className="text-sm text-gray-500">Tier</p>
+                            <p className="font-semibold">{hospital.tier.replace('_', ' ').toUpperCase()}</p>
                         </div>
                     </div>
 
-                    {/* Email & Phone */}
+                    {/* Ownership & License */}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <p className="text-sm text-gray-500">Email</p>
-                            <p className="font-semibold text-sm">{hospital.contact_email}</p>
+                            <p className="text-sm text-gray-500">Ownership</p>
+                            <p className="font-semibold">{hospital.ownership}</p>
                         </div>
                         <div>
-                            <p className="text-sm text-gray-500">Phone</p>
-                            <p className="font-semibold">{hospital.contact_phone}</p>
+                            <p className="text-sm text-gray-500">License Number</p>
+                            <p className="font-semibold text-sm">{hospital.license_number}</p>
                         </div>
                     </div>
 

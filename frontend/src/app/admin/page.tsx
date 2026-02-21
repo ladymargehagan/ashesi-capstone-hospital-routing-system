@@ -15,7 +15,7 @@ export default function AdminDashboard() {
     const stats = mockAdminStats;
 
     // Filter hospitals by status
-    const pendingHospitals = mockHospitals.filter(h => h.status === 'Pending');
+    const pendingHospitals = mockHospitals.filter(h => h.status === 'pending');
 
     // Filter based on search
     const filteredHospitals = mockHospitals.filter(h =>
@@ -24,8 +24,8 @@ export default function AdminDashboard() {
     );
 
     const filteredPhysicians = mockPhysicianApplications.filter(p =>
-        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (p.specialty?.toLowerCase() || '').includes(searchQuery.toLowerCase())
+        p.license_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (p.specialization?.toLowerCase() || '').includes(searchQuery.toLowerCase())
     );
 
     return (

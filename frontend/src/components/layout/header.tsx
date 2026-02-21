@@ -32,7 +32,7 @@ export function Header() {
 
     const getRoleLabel = () => {
         switch (user?.role) {
-            case 'physician': return user.specialty || 'Physician';
+            case 'physician': return 'Physician';
             case 'hospital_admin': return 'Hospital Admin';
             case 'super_admin': return 'System Admin';
             default: return 'User';
@@ -78,11 +78,11 @@ export function Header() {
                                 <Button variant="ghost" className="flex items-center gap-3 h-auto py-2">
                                     <Avatar className="h-8 w-8">
                                         <AvatarFallback className="bg-blue-100 text-blue-700 text-sm">
-                                            {user ? getInitials(user.name) : 'U'}
+                                            {user ? getInitials(user.full_name) : 'U'}
                                         </AvatarFallback>
                                     </Avatar>
                                     <div className="text-left hidden sm:block">
-                                        <p className="text-sm font-medium">{user?.name || 'User'}</p>
+                                        <p className="text-sm font-medium">{user?.full_name || 'User'}</p>
                                         <p className="text-xs text-gray-500">{getHospitalName() || getRoleLabel()}</p>
                                     </div>
                                 </Button>

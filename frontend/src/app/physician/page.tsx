@@ -15,7 +15,7 @@ export default function PhysicianDashboard() {
     const stats = mockPhysicianStats;
 
     // Filter referrals for this physician
-    const physicianReferrals = mockReferrals.filter(r => r.referring_physician_id === 'user-3');
+    const physicianReferrals = mockReferrals.filter(r => r.referring_physician_id === 'phys-1');
 
     return (
         <div>

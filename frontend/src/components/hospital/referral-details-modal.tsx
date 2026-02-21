@@ -21,34 +21,36 @@ export function ReferralDetailsModal({ referral, open, onClose }: ReferralDetail
 
     if (!referral) return null;
 
-    const getUrgencyBadge = (urgency: string) => {
-        const styles = {
-            Emergency: 'bg-red-100 text-red-700 border-red-200',
-            Urgent: 'bg-amber-100 text-amber-700 border-amber-200',
-            Routine: 'bg-green-100 text-green-700 border-green-200',
+    const getSeverityBadge = (severity: string) => {
+        const styles: Record<string, string> = {
+            critical: 'bg-red-100 text-red-700 border-red-200',
+            high: 'bg-orange-100 text-orange-700 border-orange-200',
+            medium: 'bg-amber-100 text-amber-700 border-amber-200',
+            low: 'bg-green-100 text-green-700 border-green-200',
         };
-        return styles[urgency as keyof typeof styles] || styles.Routine;
+        return styles[severity] || styles.low;
     };
 
     const getStatusBadge = (status: string) => {
-        const styles = {
-            Pending: 'bg-amber-100 text-amber-700',
-            Accepted: 'bg-green-100 text-green-700',
-            Rejected: 'bg-red-100 text-red-700',
+        const styles: Record<string, string> = {
+            pending: 'bg-amber-100 text-amber-700',
+            approved: 'bg-green-100 text-green-700',
+            rejected: 'bg-red-100 text-red-700',
+            en_route: 'bg-blue-100 text-blue-700',
+            completed: 'bg-gray-100 text-gray-700',
         };
-        return styles[status as keyof typeof styles] || styles.Pending;
+        return styles[status] || styles.pending;
     };
 
     const handleAction = async (action: 'accept' | 'reject') => {
         setLoading(true);
-        // Simulate API call
         await new Promise(resolve => setTimeout(resolve, 1000));
         alert(`Referral ${action}ed successfully!`);
         setLoading(false);
         onClose();
     };
 
-    const isPending = referral.status === 'Pending';
+    const isPending = referral.status === 'pending';
 
     return (
         <Dialog open={open} onOpenChange={onClose}>
@@ -73,39 +75,49 @@ export function ReferralDetailsModal({ referral, open, onClose }: ReferralDetail
                         </div>
                     </div>
 
-                    {/* Condition */}
-                    <div>
-                        <p className="text-sm text-gray-500">Condition</p>
-                        <p className="font-semibold">{referral.condition}</p>
-                    </div>
-
-                    {/* Urgency & Status */}
+                    {/* Severity & Stability */}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <p className="text-sm text-gray-500">Urgency</p>
-                            <Badge className={getUrgencyBadge(referral.urgency)} variant="outline">
-                                {referral.urgency}
+                            <p className="text-sm text-gray-500">Severity</p>
+                            <Badge className={getSeverityBadge(referral.severity)} variant="outline">
+                                {referral.severity}
                             </Badge>
                         </div>
                         <div>
-                            <p className="text-sm text-gray-500">Status</p>
-                            <Badge className={getStatusBadge(referral.status)}>
-                                {referral.status}
+                            <p className="text-sm text-gray-500">Stability</p>
+                            <Badge className={referral.stability === 'stable' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'} variant="outline">
+                                {referral.stability}
                             </Badge>
                         </div>
                     </div>
 
-                    {/* Referring Physician */}
+                    {/* Status */}
+                    <div>
+                        <p className="text-sm text-gray-500">Status</p>
+                        <Badge className={getStatusBadge(referral.status)}>
+                            {referral.status}
+                        </Badge>
+                    </div>
+
+                    {/* Referring Info */}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <p className="text-sm text-gray-500">Referring Physician</p>
                             <p className="font-semibold">{referral.referring_physician_name}</p>
                         </div>
                         <div>
-                            <p className="text-sm text-gray-500">Referring Clinic</p>
-                            <p className="font-semibold">{referral.referring_facility}</p>
+                            <p className="text-sm text-gray-500">Referring Hospital</p>
+                            <p className="font-semibold">{referral.referring_hospital_name}</p>
                         </div>
                     </div>
+
+                    {/* Estimated Arrival */}
+                    {referral.estimated_arrival_minutes && (
+                        <div>
+                            <p className="text-sm text-gray-500">Estimated Arrival</p>
+                            <p className="font-semibold">{referral.estimated_arrival_minutes} minutes</p>
+                        </div>
+                    )}
 
                     {/* Response Notes */}
                     {isPending && (
@@ -118,13 +130,6 @@ export function ReferralDetailsModal({ referral, open, onClose }: ReferralDetail
                                 onChange={(e) => setResponseNotes(e.target.value)}
                                 rows={3}
                             />
-                        </div>
-                    )}
-
-                    {referral.response_notes && (
-                        <div>
-                            <p className="text-sm text-gray-500">Response Notes</p>
-                            <p className="text-sm">{referral.response_notes}</p>
                         </div>
                     )}
 

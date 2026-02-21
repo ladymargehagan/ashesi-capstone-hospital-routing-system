@@ -12,13 +12,13 @@ export default function HospitalsPage() {
     const [searchQuery, setSearchQuery] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
 
-    const pendingHospitals = mockHospitals.filter(h => h.status === 'Pending');
-    const approvedHospitals = mockHospitals.filter(h => h.status === 'Approved');
+    const pendingHospitals = mockHospitals.filter(h => h.status === 'pending');
+    const activeHospitals = mockHospitals.filter(h => h.status === 'active');
 
     const getFilteredHospitals = () => {
         let hospitals = mockHospitals;
         if (statusFilter === 'pending') hospitals = pendingHospitals;
-        if (statusFilter === 'approved') hospitals = approvedHospitals;
+        if (statusFilter === 'active') hospitals = activeHospitals;
 
         if (searchQuery) {
             hospitals = hospitals.filter(h =>
@@ -55,8 +55,8 @@ export default function HospitalsPage() {
                     iconColor="text-amber-600"
                 />
                 <StatsCard
-                    title="Approved"
-                    value={approvedHospitals.length}
+                    title="Active"
+                    value={activeHospitals.length}
                     description="Currently active"
                     icon={CheckCircle}
                     iconColor="text-green-600"
@@ -74,8 +74,8 @@ export default function HospitalsPage() {
                             <TabsTrigger value="pending">
                                 Pending ({pendingHospitals.length})
                             </TabsTrigger>
-                            <TabsTrigger value="approved">
-                                Approved ({approvedHospitals.length})
+                            <TabsTrigger value="active">
+                                Active ({activeHospitals.length})
                             </TabsTrigger>
                         </TabsList>
 
@@ -96,7 +96,7 @@ export default function HospitalsPage() {
                     <TabsContent value="pending" className="mt-0">
                         <HospitalsTable hospitals={getFilteredHospitals()} />
                     </TabsContent>
-                    <TabsContent value="approved" className="mt-0">
+                    <TabsContent value="active" className="mt-0">
                         <HospitalsTable hospitals={getFilteredHospitals()} />
                     </TabsContent>
                 </Tabs>

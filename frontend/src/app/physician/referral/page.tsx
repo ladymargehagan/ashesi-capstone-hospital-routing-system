@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, Suspense } from 'react';
+import { useState, useMemo, useRef, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,10 +9,11 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/components/ui/badge';
 import { RecommendationsModal } from '@/components/physician/recommendations-modal';
-import { mockPatients, mockRecommendations } from '@/lib/mock-data';
-import { ReferralFormData, Patient, HospitalRecommendation } from '@/types';
-import { ArrowLeft, TrendingUp, Loader2 } from 'lucide-react';
+import { mockPatients, mockRecommendations, getActiveHospitals, mockResources } from '@/lib/mock-data';
+import { ReferralFormData, Patient, Hospital, HospitalRecommendation } from '@/types';
+import { ArrowLeft, TrendingUp, Loader2, Search, Building2, Bed, Heart, Users, CheckCircle, X } from 'lucide-react';
 import Link from 'next/link';
 
 function ReferralFormContent() {
@@ -24,27 +25,66 @@ function ReferralFormContent() {
     const [selectedHospital, setSelectedHospital] = useState<HospitalRecommendation | null>(null);
     const [loading, setLoading] = useState(false);
 
+    // Hospital search state
+    const [hospitalSearch, setHospitalSearch] = useState('');
+    const [showHospitalDropdown, setShowHospitalDropdown] = useState(false);
+    const [chosenHospital, setChosenHospital] = useState<Hospital | null>(null);
+    const dropdownRef = useRef<HTMLDivElement>(null);
+
+    // Get active hospitals for the searchable dropdown
+    const activeHospitals = useMemo(() => getActiveHospitals(), []);
+    const filteredHospitals = useMemo(() => {
+        if (!hospitalSearch) return activeHospitals;
+        return activeHospitals.filter(h =>
+            h.name.toLowerCase().includes(hospitalSearch.toLowerCase()) ||
+            h.address.toLowerCase().includes(hospitalSearch.toLowerCase())
+        );
+    }, [hospitalSearch, activeHospitals]);
+
+    // Close dropdown on outside click
+    useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+                setShowHospitalDropdown(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
     // Find preselected patient
     const preselectedPatient = preselectedPatientId
         ? mockPatients.find(p => p.id === preselectedPatientId)
         : null;
 
+    const getAge = (dob?: string) => {
+        if (!dob) return 0;
+        const today = new Date();
+        const birth = new Date(dob);
+        let age = today.getFullYear() - birth.getFullYear();
+        const m = today.getMonth() - birth.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+        return age;
+    };
+
     const [formData, setFormData] = useState<Partial<ReferralFormData>>({
         patient_id: preselectedPatient?.id || '',
-        full_name: preselectedPatient?.name || '',
-        age: preselectedPatient?.age || 0,
+        full_name: preselectedPatient?.full_name || '',
         date_of_birth: preselectedPatient?.date_of_birth || '',
-        sex: preselectedPatient?.gender || 'Male',
+        sex: preselectedPatient?.sex || 'male',
         address: preselectedPatient?.address || '',
+        nhis_number: preselectedPatient?.nhis_number || '',
         nhis_status: preselectedPatient?.nhis_status || 'None',
+        contact_number: preselectedPatient?.contact_number || '',
         presenting_complaint: preselectedPatient?.diagnosis || '',
         clinical_history: '',
         examination_findings: '',
-        investigations_results: '',
-        diagnosis: preselectedPatient?.diagnosis || '',
+        working_diagnosis: preselectedPatient?.diagnosis || '',
+        investigations_done: '',
         treatment_given: '',
         reason_for_referral: '',
-        urgency: 'Routine',
+        severity: 'medium',
+        stability: 'stable',
         referral_datetime: new Date().toISOString().slice(0, 16),
     });
 
@@ -54,14 +94,15 @@ function ReferralFormContent() {
             setFormData({
                 ...formData,
                 patient_id: patient.id,
-                full_name: patient.name,
-                age: patient.age,
-                date_of_birth: patient.date_of_birth,
-                sex: patient.gender,
-                address: patient.address,
-                nhis_status: patient.nhis_status,
-                presenting_complaint: patient.diagnosis,
-                diagnosis: patient.diagnosis,
+                full_name: patient.full_name,
+                date_of_birth: patient.date_of_birth || '',
+                sex: patient.sex || 'male',
+                address: patient.address || '',
+                nhis_number: patient.nhis_number || '',
+                nhis_status: patient.nhis_status || 'None',
+                contact_number: patient.contact_number || '',
+                presenting_complaint: patient.diagnosis || '',
+                working_diagnosis: patient.diagnosis || '',
             });
         }
     };
@@ -70,26 +111,63 @@ function ReferralFormContent() {
         setFormData({ ...formData, [field]: value });
     };
 
+    const handleHospitalSelect = (hospital: Hospital) => {
+        setChosenHospital(hospital);
+        setHospitalSearch('');
+        setShowHospitalDropdown(false);
+        setFormData({ ...formData, receiving_hospital_id: hospital.id });
+        // Clear any previously algorithm-selected hospital
+        setSelectedHospital(null);
+    };
+
+    const handleClearHospital = () => {
+        setChosenHospital(null);
+        setSelectedHospital(null);
+        setFormData({ ...formData, receiving_hospital_id: undefined });
+    };
+
     const handleGetRecommendations = () => {
         setShowRecommendations(true);
     };
 
-    const handleSelectHospital = (recommendation: HospitalRecommendation) => {
+    const handleSelectRecommendation = (recommendation: HospitalRecommendation) => {
         setSelectedHospital(recommendation);
-        setFormData({ ...formData, hospital_id: recommendation.hospital.id });
+        setChosenHospital(recommendation.hospital);
+        setFormData({ ...formData, receiving_hospital_id: recommendation.hospital.id });
         setShowRecommendations(false);
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
-
-        // Simulate API call
         await new Promise(resolve => setTimeout(resolve, 1000));
-
-        // In a real app, this would submit to the API
         alert('Referral submitted successfully!');
         router.push('/physician');
+    };
+
+    // Get hospital status preview data
+    const getHospitalPreview = (hospital: Hospital) => {
+        // In a real app this would come from the API
+        const hospitalResources = mockResources.filter(r => r.hospital_id === hospital.id);
+        const generalBeds = hospitalResources.find(r => r.resource_type === 'general_beds');
+        const icuBeds = hospitalResources.find(r => r.resource_type === 'icu_beds');
+
+        return {
+            generalBeds: generalBeds ? `${generalBeds.available_count}/${generalBeds.total_count}` : 'N/A',
+            icuBeds: icuBeds ? `${icuBeds.available_count}/${icuBeds.total_count}` : 'N/A',
+            tier: hospital.tier.replace('_', ' ').toUpperCase(),
+            type: hospital.type.charAt(0).toUpperCase() + hospital.type.slice(1),
+            ownership: hospital.ownership.replace('_', ' ').charAt(0).toUpperCase() + hospital.ownership.replace('_', ' ').slice(1),
+        };
+    };
+
+    const getTierBadgeStyle = (tier: string) => {
+        const styles: Record<string, string> = {
+            tier_3: 'bg-blue-100 text-blue-700 border-blue-200',
+            tier_2: 'bg-purple-100 text-purple-700 border-purple-200',
+            tier_1: 'bg-gray-100 text-gray-700 border-gray-200',
+        };
+        return styles[tier] || styles.tier_1;
     };
 
     return (
@@ -115,7 +193,6 @@ function ReferralFormContent() {
                         <CardDescription>Select a patient or enter details manually</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        {/* Patient Selection */}
                         <div className="space-y-2">
                             <Label htmlFor="patient">Select Patient</Label>
                             <Select
@@ -128,7 +205,7 @@ function ReferralFormContent() {
                                 <SelectContent>
                                     {mockPatients.map((patient) => (
                                         <SelectItem key={patient.id} value={patient.id}>
-                                            {patient.name} - {patient.diagnosis}
+                                            {patient.full_name} — {patient.patient_identifier}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
@@ -144,16 +221,6 @@ function ReferralFormContent() {
                                     id="fullName"
                                     value={formData.full_name}
                                     onChange={(e) => handleInputChange('full_name', e.target.value)}
-                                    required
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="age">Age *</Label>
-                                <Input
-                                    id="age"
-                                    type="number"
-                                    value={formData.age}
-                                    onChange={(e) => handleInputChange('age', parseInt(e.target.value))}
                                     required
                                 />
                             </div>
@@ -177,10 +244,19 @@ function ReferralFormContent() {
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="Male">Male</SelectItem>
-                                        <SelectItem value="Female">Female</SelectItem>
+                                        <SelectItem value="male">Male</SelectItem>
+                                        <SelectItem value="female">Female</SelectItem>
+                                        <SelectItem value="other">Other</SelectItem>
                                     </SelectContent>
                                 </Select>
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="contact">Contact Number</Label>
+                                <Input
+                                    id="contact"
+                                    value={formData.contact_number}
+                                    onChange={(e) => handleInputChange('contact_number', e.target.value)}
+                                />
                             </div>
                             <div className="md:col-span-2 space-y-2">
                                 <Label htmlFor="address">Address *</Label>
@@ -192,7 +268,16 @@ function ReferralFormContent() {
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="nhis">NHIS Insurance Status *</Label>
+                                <Label htmlFor="nhis_number">NHIS Number</Label>
+                                <Input
+                                    id="nhis_number"
+                                    value={formData.nhis_number}
+                                    onChange={(e) => handleInputChange('nhis_number', e.target.value)}
+                                    placeholder="e.g. NHIS-100234"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="nhis_status">NHIS Insurance Status *</Label>
                                 <Select
                                     value={formData.nhis_status}
                                     onValueChange={(v) => handleInputChange('nhis_status', v)}
@@ -254,19 +339,19 @@ function ReferralFormContent() {
                                 <Label htmlFor="investigations">Investigations Done & Results</Label>
                                 <Textarea
                                     id="investigations"
-                                    value={formData.investigations_results}
-                                    onChange={(e) => handleInputChange('investigations_results', e.target.value)}
+                                    value={formData.investigations_done}
+                                    onChange={(e) => handleInputChange('investigations_done', e.target.value)}
                                     placeholder="Lab tests, imaging, etc."
                                     rows={3}
                                 />
                             </div>
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="diagnosis">Diagnosis *</Label>
+                            <Label htmlFor="diagnosis">Working Diagnosis *</Label>
                             <Input
                                 id="diagnosis"
-                                value={formData.diagnosis}
-                                onChange={(e) => handleInputChange('diagnosis', e.target.value)}
+                                value={formData.working_diagnosis}
+                                onChange={(e) => handleInputChange('working_diagnosis', e.target.value)}
                                 required
                             />
                         </div>
@@ -287,7 +372,7 @@ function ReferralFormContent() {
                 <Card>
                     <CardHeader>
                         <CardTitle className="text-lg">Referral Details</CardTitle>
-                        <CardDescription>Specify referral reason and urgency</CardDescription>
+                        <CardDescription>Specify referral reason, severity, and stability</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div className="space-y-2">
@@ -301,25 +386,41 @@ function ReferralFormContent() {
                                 required
                             />
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div className="space-y-2">
-                                <Label htmlFor="urgency">Urgency of Referral *</Label>
+                                <Label htmlFor="severity">Severity *</Label>
                                 <Select
-                                    value={formData.urgency}
-                                    onValueChange={(v) => handleInputChange('urgency', v)}
+                                    value={formData.severity}
+                                    onValueChange={(v) => handleInputChange('severity', v)}
                                 >
                                     <SelectTrigger>
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="Routine">Routine</SelectItem>
-                                        <SelectItem value="Urgent">Urgent</SelectItem>
-                                        <SelectItem value="Emergency">Emergency</SelectItem>
+                                        <SelectItem value="critical">Critical</SelectItem>
+                                        <SelectItem value="high">High</SelectItem>
+                                        <SelectItem value="medium">Medium</SelectItem>
+                                        <SelectItem value="low">Low</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="datetime">Date and Time of Referral *</Label>
+                                <Label htmlFor="stability">Patient Stability *</Label>
+                                <Select
+                                    value={formData.stability}
+                                    onValueChange={(v) => handleInputChange('stability', v)}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="stable">Stable</SelectItem>
+                                        <SelectItem value="unstable">Unstable</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="datetime">Date and Time *</Label>
                                 <Input
                                     id="datetime"
                                     type="datetime-local"
@@ -350,7 +451,7 @@ function ReferralFormContent() {
                             </div>
                             <div>
                                 <p className="text-gray-500">Telephone</p>
-                                <p className="font-medium">+233 24 123 4567</p>
+                                <p className="font-medium">+233 30 277 2345</p>
                             </div>
                             <div>
                                 <p className="text-gray-500">Clinician Name</p>
@@ -363,45 +464,167 @@ function ReferralFormContent() {
                 {/* Hospital Selection Section */}
                 <Card>
                     <CardHeader>
-                        <CardTitle className="text-lg">Hospital Selection</CardTitle>
-                        <CardDescription>Get algorithm-based hospital recommendations</CardDescription>
+                        <CardTitle className="text-lg">Receiving Hospital</CardTitle>
+                        <CardDescription>
+                            Search for a hospital or get algorithm-based recommendations
+                        </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        {selectedHospital ? (
-                            <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <p className="font-semibold text-green-800">{selectedHospital.hospital.name}</p>
-                                        <p className="text-sm text-green-600">
+                        {/* Show chosen hospital with status preview */}
+                        {(chosenHospital || selectedHospital) ? (
+                            <div className="space-y-4">
+                                {/* Selected Hospital Card */}
+                                <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <div className="flex items-center gap-2">
+                                            <CheckCircle className="h-5 w-5 text-green-600" />
+                                            <div>
+                                                <p className="font-semibold text-green-800">
+                                                    {chosenHospital?.name || selectedHospital?.hospital.name}
+                                                </p>
+                                                <p className="text-sm text-green-600">
+                                                    {chosenHospital?.address || selectedHospital?.hospital.address}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={handleClearHospital}
+                                        >
+                                            <X className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+
+                                    {/* Hospital Status Preview */}
+                                    {chosenHospital && (
+                                        <div className="mt-3 pt-3 border-t border-green-200">
+                                            <p className="text-xs font-medium text-green-700 mb-2">CURRENT STATUS</p>
+                                            {(() => {
+                                                const preview = getHospitalPreview(chosenHospital);
+                                                return (
+                                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                                        <div className="bg-white rounded-md p-2 text-center">
+                                                            <Bed className="h-4 w-4 text-blue-500 mx-auto mb-1" />
+                                                            <p className="text-xs text-gray-500">General Beds</p>
+                                                            <p className="font-semibold text-sm">{preview.generalBeds}</p>
+                                                        </div>
+                                                        <div className="bg-white rounded-md p-2 text-center">
+                                                            <Heart className="h-4 w-4 text-red-500 mx-auto mb-1" />
+                                                            <p className="text-xs text-gray-500">ICU Beds</p>
+                                                            <p className="font-semibold text-sm">{preview.icuBeds}</p>
+                                                        </div>
+                                                        <div className="bg-white rounded-md p-2 text-center">
+                                                            <Building2 className="h-4 w-4 text-purple-500 mx-auto mb-1" />
+                                                            <p className="text-xs text-gray-500">Type</p>
+                                                            <p className="font-semibold text-sm">{preview.type}</p>
+                                                        </div>
+                                                        <div className="bg-white rounded-md p-2 text-center">
+                                                            <Badge className={`text-xs ${getTierBadgeStyle(chosenHospital.tier)}`} variant="outline">
+                                                                {preview.tier}
+                                                            </Badge>
+                                                            <p className="text-xs text-gray-500 mt-1">{preview.ownership}</p>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })()}
+                                        </div>
+                                    )}
+
+                                    {/* Match score if from recommendations */}
+                                    {selectedHospital && (
+                                        <p className="text-sm text-green-600 mt-2">
                                             {selectedHospital.match_score}% match • {selectedHospital.distance_km} km away
                                         </p>
-                                    </div>
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => setShowRecommendations(true)}
-                                    >
-                                        Change
-                                    </Button>
+                                    )}
                                 </div>
-                            </div>
-                        ) : (
-                            <div className="flex items-center gap-4">
-                                <Input
-                                    placeholder="Enter hospital name"
-                                    className="flex-1"
-                                    value={formData.hospital_id || ''}
-                                    onChange={(e) => handleInputChange('hospital_id', e.target.value)}
-                                />
+
+                                {/* Get Recommendations Button (always visible) */}
                                 <Button
                                     type="button"
                                     variant="outline"
                                     onClick={handleGetRecommendations}
-                                    className="whitespace-nowrap"
+                                    className="w-full"
                                 >
                                     <TrendingUp className="h-4 w-4 mr-2" />
-                                    Get Recommendations
+                                    View Algorithm Recommendations (Top 5)
+                                </Button>
+                            </div>
+                        ) : (
+                            <div className="space-y-3">
+                                {/* Searchable Hospital Input */}
+                                <div className="relative" ref={dropdownRef}>
+                                    <div className="relative">
+                                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                        <Input
+                                            placeholder="Search hospitals by name or location..."
+                                            value={hospitalSearch}
+                                            onChange={(e) => {
+                                                setHospitalSearch(e.target.value);
+                                                setShowHospitalDropdown(true);
+                                            }}
+                                            onFocus={() => setShowHospitalDropdown(true)}
+                                            className="pl-9"
+                                        />
+                                    </div>
+
+                                    {/* Dropdown */}
+                                    {showHospitalDropdown && (
+                                        <div className="absolute z-50 w-full mt-1 bg-white border rounded-lg shadow-lg max-h-64 overflow-y-auto">
+                                            {filteredHospitals.length === 0 ? (
+                                                <div className="p-3 text-sm text-gray-500 text-center">
+                                                    No hospitals found
+                                                </div>
+                                            ) : (
+                                                filteredHospitals.map((hospital) => {
+                                                    const preview = getHospitalPreview(hospital);
+                                                    return (
+                                                        <button
+                                                            key={hospital.id}
+                                                            type="button"
+                                                            className="w-full px-4 py-3 text-left hover:bg-blue-50 border-b last:border-b-0 transition-colors"
+                                                            onClick={() => handleHospitalSelect(hospital)}
+                                                        >
+                                                            <div className="flex items-center justify-between">
+                                                                <div>
+                                                                    <p className="font-medium text-gray-900">{hospital.name}</p>
+                                                                    <p className="text-xs text-gray-500">{hospital.address}</p>
+                                                                </div>
+                                                                <div className="flex items-center gap-2">
+                                                                    <Badge className={`text-xs ${getTierBadgeStyle(hospital.tier)}`} variant="outline">
+                                                                        {preview.tier}
+                                                                    </Badge>
+                                                                </div>
+                                                            </div>
+                                                            <div className="flex items-center gap-4 mt-1 text-xs text-gray-500">
+                                                                <span>Beds: {preview.generalBeds}</span>
+                                                                <span>ICU: {preview.icuBeds}</span>
+                                                                <span className="capitalize">{hospital.type}</span>
+                                                            </div>
+                                                        </button>
+                                                    );
+                                                })
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Get Recommendations */}
+                                <div className="flex items-center gap-2">
+                                    <div className="flex-1 h-px bg-gray-200"></div>
+                                    <span className="text-xs text-gray-400">or</span>
+                                    <div className="flex-1 h-px bg-gray-200"></div>
+                                </div>
+
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={handleGetRecommendations}
+                                    className="w-full"
+                                >
+                                    <TrendingUp className="h-4 w-4 mr-2" />
+                                    Get Algorithm Recommendations (Top 5)
                                 </Button>
                             </div>
                         )}
@@ -413,7 +636,7 @@ function ReferralFormContent() {
                     <Link href="/physician">
                         <Button type="button" variant="outline">Cancel</Button>
                     </Link>
-                    <Button type="submit" disabled={loading || !selectedHospital}>
+                    <Button type="submit" disabled={loading || (!chosenHospital && !selectedHospital)}>
                         {loading ? (
                             <>
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -431,7 +654,7 @@ function ReferralFormContent() {
                 open={showRecommendations}
                 onClose={() => setShowRecommendations(false)}
                 recommendations={mockRecommendations}
-                onSelect={handleSelectHospital}
+                onSelect={handleSelectRecommendation}
             />
         </div>
     );

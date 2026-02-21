@@ -16,27 +16,26 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { mockReferrals } from '@/lib/mock-data';
-import { Search, Eye, Plus } from 'lucide-react';
+import { Search, Plus } from 'lucide-react';
 
 export default function ReferralsPage() {
     const [searchQuery, setSearchQuery] = useState('');
     const [statusFilter, setStatusFilter] = useState<string>('all');
-    const [urgencyFilter, setUrgencyFilter] = useState<string>('all');
+    const [severityFilter, setSeverityFilter] = useState<string>('all');
 
     // Filter referrals for this physician
-    const physicianReferrals = mockReferrals.filter(r => r.referring_physician_id === 'user-3');
+    const physicianReferrals = mockReferrals.filter(r => r.referring_physician_id === 'phys-1');
 
     // Apply filters
     const filteredReferrals = physicianReferrals.filter(referral => {
         const matchesSearch =
-            referral.patient_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            referral.hospital_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            referral.condition.toLowerCase().includes(searchQuery.toLowerCase());
+            (referral.patient_name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (referral.receiving_hospital_name || '').toLowerCase().includes(searchQuery.toLowerCase());
 
         const matchesStatus = statusFilter === 'all' || referral.status === statusFilter;
-        const matchesUrgency = urgencyFilter === 'all' || referral.urgency === urgencyFilter;
+        const matchesSeverity = severityFilter === 'all' || referral.severity === severityFilter;
 
-        return matchesSearch && matchesStatus && matchesUrgency;
+        return matchesSearch && matchesStatus && matchesSeverity;
     });
 
     const formatDateTime = (dateStr: string) => {
@@ -49,22 +48,25 @@ export default function ReferralsPage() {
         });
     };
 
-    const getUrgencyBadge = (urgency: string) => {
-        const styles = {
-            Emergency: 'bg-red-100 text-red-700 border-red-200',
-            Urgent: 'bg-amber-100 text-amber-700 border-amber-200',
-            Routine: 'bg-green-100 text-green-700 border-green-200',
+    const getSeverityBadge = (severity: string) => {
+        const styles: Record<string, string> = {
+            critical: 'bg-red-100 text-red-700 border-red-200',
+            high: 'bg-orange-100 text-orange-700 border-orange-200',
+            medium: 'bg-amber-100 text-amber-700 border-amber-200',
+            low: 'bg-green-100 text-green-700 border-green-200',
         };
-        return styles[urgency as keyof typeof styles] || styles.Routine;
+        return styles[severity] || styles.low;
     };
 
     const getStatusBadge = (status: string) => {
-        const styles = {
-            Pending: 'bg-amber-100 text-amber-700',
-            Accepted: 'bg-green-100 text-green-700',
-            Rejected: 'bg-red-100 text-red-700',
+        const styles: Record<string, string> = {
+            pending: 'bg-amber-100 text-amber-700',
+            approved: 'bg-green-100 text-green-700',
+            rejected: 'bg-red-100 text-red-700',
+            en_route: 'bg-blue-100 text-blue-700',
+            completed: 'bg-gray-100 text-gray-700',
         };
-        return styles[status as keyof typeof styles] || styles.Pending;
+        return styles[status] || styles.pending;
     };
 
     return (
@@ -110,20 +112,23 @@ export default function ReferralsPage() {
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">All Status</SelectItem>
-                                <SelectItem value="Pending">Pending</SelectItem>
-                                <SelectItem value="Accepted">Accepted</SelectItem>
-                                <SelectItem value="Rejected">Rejected</SelectItem>
+                                <SelectItem value="pending">Pending</SelectItem>
+                                <SelectItem value="approved">Approved</SelectItem>
+                                <SelectItem value="rejected">Rejected</SelectItem>
+                                <SelectItem value="en_route">En Route</SelectItem>
+                                <SelectItem value="completed">Completed</SelectItem>
                             </SelectContent>
                         </Select>
-                        <Select value={urgencyFilter} onValueChange={setUrgencyFilter}>
+                        <Select value={severityFilter} onValueChange={setSeverityFilter}>
                             <SelectTrigger className="w-36">
-                                <SelectValue placeholder="Urgency" />
+                                <SelectValue placeholder="Severity" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="all">All Urgency</SelectItem>
-                                <SelectItem value="Emergency">Emergency</SelectItem>
-                                <SelectItem value="Urgent">Urgent</SelectItem>
-                                <SelectItem value="Routine">Routine</SelectItem>
+                                <SelectItem value="all">All Severity</SelectItem>
+                                <SelectItem value="critical">Critical</SelectItem>
+                                <SelectItem value="high">High</SelectItem>
+                                <SelectItem value="medium">Medium</SelectItem>
+                                <SelectItem value="low">Low</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
@@ -133,18 +138,17 @@ export default function ReferralsPage() {
                         <TableHeader>
                             <TableRow>
                                 <TableHead>Patient</TableHead>
-                                <TableHead>Hospital</TableHead>
-                                <TableHead>Condition</TableHead>
-                                <TableHead>Urgency</TableHead>
-                                <TableHead>Requested</TableHead>
+                                <TableHead>Receiving Hospital</TableHead>
+                                <TableHead>Severity</TableHead>
+                                <TableHead>Stability</TableHead>
+                                <TableHead>Submitted</TableHead>
                                 <TableHead>Status</TableHead>
-                                <TableHead>Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {filteredReferrals.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={7} className="text-center text-gray-500 py-8">
+                                    <TableCell colSpan={6} className="text-center text-gray-500 py-8">
                                         No referrals found matching your criteria
                                     </TableCell>
                                 </TableRow>
@@ -152,23 +156,25 @@ export default function ReferralsPage() {
                                 filteredReferrals.map((referral) => (
                                     <TableRow key={referral.id}>
                                         <TableCell className="font-medium">{referral.patient_name}</TableCell>
-                                        <TableCell>{referral.hospital_name}</TableCell>
-                                        <TableCell>{referral.condition}</TableCell>
+                                        <TableCell>{referral.receiving_hospital_name}</TableCell>
                                         <TableCell>
-                                            <Badge className={getUrgencyBadge(referral.urgency)} variant="outline">
-                                                {referral.urgency}
+                                            <Badge className={getSeverityBadge(referral.severity)} variant="outline">
+                                                {referral.severity}
                                             </Badge>
                                         </TableCell>
-                                        <TableCell>{formatDateTime(referral.requested_at)}</TableCell>
+                                        <TableCell>
+                                            <Badge
+                                                className={referral.stability === 'stable' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}
+                                                variant="outline"
+                                            >
+                                                {referral.stability}
+                                            </Badge>
+                                        </TableCell>
+                                        <TableCell>{formatDateTime(referral.submitted_at)}</TableCell>
                                         <TableCell>
                                             <Badge className={getStatusBadge(referral.status)}>
                                                 {referral.status}
                                             </Badge>
-                                        </TableCell>
-                                        <TableCell>
-                                            <Button variant="ghost" size="sm">
-                                                <Eye className="h-4 w-4" />
-                                            </Button>
                                         </TableCell>
                                     </TableRow>
                                 ))
