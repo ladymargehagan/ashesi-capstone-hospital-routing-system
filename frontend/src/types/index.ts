@@ -80,6 +80,9 @@ export type ReferralSeverity = 'critical' | 'high' | 'medium' | 'low';
 export type ReferralStability = 'stable' | 'unstable';
 export type ReferralStatus = 'pending' | 'approved' | 'rejected' | 'en_route' | 'completed' | 'cancelled';
 
+// Emergency types supported by the referral engine (referral_engine.py REQUIRED_RESOURCES keys)
+export type EmergencyType = 'cardiac' | 'trauma' | 'respiratory' | 'stroke' | 'obstetric' | 'seizure' | 'general';
+
 // Referral interface
 export interface Referral {
     id: string;
@@ -149,6 +152,7 @@ export interface ReferralFormData {
     // Referral Details (REFERRALS)
     severity: ReferralSeverity;
     stability: ReferralStability;
+    emergency_type: EmergencyType;
     referral_datetime: string;
 
     // Hospital Selection
@@ -187,16 +191,61 @@ export interface Resource {
     last_updated: string;
 }
 
-// Hospital recommendation from algorithm
-export interface HospitalRecommendation {
-    hospital: Hospital;
-    match_score: number;
+// --- Engine output types (mirror referral_engine.py ReferralEngine.rank() output) ---
+
+export interface ResourceAvailability {
+    resource: string;
+    available: boolean;
+    details: {
+        available?: number;
+        quantity?: number;
+        on_call?: boolean;
+        operational?: boolean;
+        weight?: number;
+    };
+}
+
+export interface EngineRecommendation {
+    rank: number;
+    hospital_name: string;
+    hospital_id: string;
+    hospital_type: string;
+    contact: string;
     distance_km: number;
-    estimated_wait: string;
-    available_beds: number;
-    acceptance_rate: number;
-    available_specialists: number;
-    data_freshness: 'Fresh' | 'Stale' | 'Outdated';
+    travel_time_minutes: number;
+    composite_score: number;
+    resource_score: number;
+    proximity_score: number;
+    freshness_factor: number;
+    last_update_hours_ago: number;
+    resource_availability: ResourceAvailability[];
+    distance_band_density_estimate?: number;
+}
+
+export interface EngineResponse {
+    input_summary: {
+        emergency_type: string;
+        severity: string;
+        stability: string;
+        time: string;
+        radius_km: number;
+    };
+    debug: {
+        counts: {
+            total: number;
+            nearby: number;
+            open_now: number;
+            capable: number;
+            partial_fallback_used: boolean;
+        };
+        weights: {
+            alpha_capability: number;
+            beta_proximity: number;
+        };
+        tmax_minutes: number;
+    };
+    warnings: string[];
+    recommendations: EngineRecommendation[];
 }
 
 // Notification interface (maps to NOTIFICATIONS table)
