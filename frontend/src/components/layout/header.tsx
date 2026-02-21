@@ -88,7 +88,11 @@ export function Header() {
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-48">
-                                <Link href="/profile">
+                                <Link href={
+                                    user?.role === 'super_admin' ? '/admin/profile' :
+                                        user?.role === 'hospital_admin' ? '/hospital/profile' :
+                                            '/physician/profile'
+                                }>
                                     <DropdownMenuItem>
                                         <User className="mr-2 h-4 w-4" />
                                         Profile
