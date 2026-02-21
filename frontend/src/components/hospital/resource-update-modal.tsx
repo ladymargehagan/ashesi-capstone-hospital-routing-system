@@ -17,19 +17,20 @@ interface ResourceUpdateModalProps {
 
 export function ResourceUpdateModal({ resource, open, onClose, onSaved }: ResourceUpdateModalProps) {
     const [availableCount, setAvailableCount] = useState(0);
+    const [totalCount, setTotalCount] = useState(0);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         if (resource) {
             setAvailableCount(resource.available_count || 0);
+            setTotalCount(resource.total_count || 0);
             setError(null);
         }
     }, [resource]);
 
     if (!resource) return null;
 
-    const totalCount = resource.total_count || 0;
     const occupied = totalCount - availableCount;
 
     const handleSave = async () => {
@@ -37,7 +38,8 @@ export function ResourceUpdateModal({ resource, open, onClose, onSaved }: Resour
         setError(null);
         try {
             await resourcesApi.update(resource.id, {
-                available_count: availableCount,
+                total_count: totalCount,
+                available_count: Math.min(availableCount, totalCount),
                 is_available: availableCount > 0,
             });
             onSaved?.();
@@ -55,7 +57,7 @@ export function ResourceUpdateModal({ resource, open, onClose, onSaved }: Resour
                 <DialogHeader>
                     <DialogTitle>Update {getResourceDisplayName(resource.resource_type)}</DialogTitle>
                     <DialogDescription>
-                        Update resource availability
+                        Update resource capacity and availability
                     </DialogDescription>
                 </DialogHeader>
 
@@ -67,8 +69,12 @@ export function ResourceUpdateModal({ resource, open, onClose, onSaved }: Resour
                             id="total"
                             type="number"
                             value={totalCount}
-                            disabled
-                            className="bg-gray-100"
+                            onChange={(e) => {
+                                const val = Math.max(0, parseInt(e.target.value) || 0);
+                                setTotalCount(val);
+                                if (availableCount > val) setAvailableCount(val);
+                            }}
+                            min={0}
                         />
                     </div>
 
@@ -79,7 +85,7 @@ export function ResourceUpdateModal({ resource, open, onClose, onSaved }: Resour
                             id="available"
                             type="number"
                             value={availableCount}
-                            onChange={(e) => setAvailableCount(Math.max(0, parseInt(e.target.value) || 0))}
+                            onChange={(e) => setAvailableCount(Math.max(0, Math.min(totalCount, parseInt(e.target.value) || 0)))}
                             min={0}
                             max={totalCount}
                         />

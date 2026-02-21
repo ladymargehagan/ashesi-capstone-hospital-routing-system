@@ -27,7 +27,15 @@ async function apiFetch<T = unknown>(
 
     if (!res.ok) {
         const body = await res.json().catch(() => ({ detail: res.statusText }));
-        throw new Error(body.detail || `API error ${res.status}`);
+        let message = `API error ${res.status}`;
+        if (typeof body.detail === 'string') {
+            message = body.detail;
+        } else if (Array.isArray(body.detail)) {
+            message = body.detail.map((e: { msg?: string; loc?: string[] }) =>
+                e.msg || JSON.stringify(e)
+            ).join('; ');
+        }
+        throw new Error(message);
     }
 
     return res.json();
@@ -74,6 +82,12 @@ export const hospitalsApi = {
         apiFetch<{ success: boolean }>(
             `/api/hospitals/${id}/status`,
             { method: 'PUT', body: JSON.stringify({ status }) },
+        ),
+
+    delete: (id: string) =>
+        apiFetch<{ success: boolean }>(
+            `/api/hospitals/${id}`,
+            { method: 'DELETE' },
         ),
 };
 
@@ -174,6 +188,12 @@ export const usersApi = {
         const query = qs.toString();
         return apiFetch<Record<string, unknown>[]>(`/api/users/physicians${query ? `?${query}` : ''}`);
     },
+
+    updateProfile: (id: string, data: { full_name?: string; phone_number?: string }) =>
+        apiFetch<{ success: boolean }>(
+            `/api/users/${id}/profile`,
+            { method: 'PUT', body: JSON.stringify(data) },
+        ),
 };
 
 // ---------------------------------------------------------------------------

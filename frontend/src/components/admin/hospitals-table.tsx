@@ -13,14 +13,17 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { HospitalDetailsModal } from '@/components/admin/hospital-details-modal';
-import { Eye, Check, X } from 'lucide-react';
+import { hospitalsApi } from '@/lib/api-client';
+import { Eye, Check, X, Trash2, Loader2 } from 'lucide-react';
 
 interface HospitalsTableProps {
     hospitals: Hospital[];
+    onStatusChanged?: () => void;
 }
 
-export function HospitalsTable({ hospitals }: HospitalsTableProps) {
+export function HospitalsTable({ hospitals, onStatusChanged }: HospitalsTableProps) {
     const [selectedHospital, setSelectedHospital] = useState<Hospital | null>(null);
+    const [actionLoading, setActionLoading] = useState<string | null>(null);
 
     const formatDate = (dateStr: string) => {
         return new Date(dateStr).toLocaleDateString('en-US', {
@@ -40,8 +43,31 @@ export function HospitalsTable({ hospitals }: HospitalsTableProps) {
     };
 
     const handleQuickAction = async (hospital: Hospital, action: 'approve' | 'reject') => {
-        // Simulate API call
-        alert(`Hospital ${action}d successfully!`);
+        setActionLoading(hospital.id);
+        try {
+            const status = action === 'approve' ? 'active' : 'rejected';
+            await hospitalsApi.updateStatus(hospital.id, status);
+            onStatusChanged?.();
+        } catch (err) {
+            alert(err instanceof Error ? err.message : `Failed to ${action} hospital`);
+        } finally {
+            setActionLoading(null);
+        }
+    };
+
+    const handleRemove = async (hospital: Hospital) => {
+        if (!confirm(`Are you sure you want to remove "${hospital.name}" from the system? This will delete all associated data including users, resources, and referrals. This action cannot be undone.`)) {
+            return;
+        }
+        setActionLoading(hospital.id);
+        try {
+            await hospitalsApi.delete(hospital.id);
+            onStatusChanged?.();
+        } catch (err) {
+            alert(err instanceof Error ? err.message : 'Failed to remove hospital');
+        } finally {
+            setActionLoading(null);
+        }
     };
 
     return (
@@ -80,30 +106,45 @@ export function HospitalsTable({ hospitals }: HospitalsTableProps) {
                                 </TableCell>
                                 <TableCell>
                                     <div className="flex items-center gap-1">
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => setSelectedHospital(hospital)}
-                                        >
-                                            <Eye className="h-4 w-4" />
-                                        </Button>
-                                        {hospital.status === 'pending' && (
+                                        {actionLoading === hospital.id ? (
+                                            <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+                                        ) : (
                                             <>
                                                 <Button
                                                     variant="ghost"
                                                     size="sm"
-                                                    className="text-green-600 hover:text-green-700 hover:bg-green-50"
-                                                    onClick={() => handleQuickAction(hospital, 'approve')}
+                                                    onClick={() => setSelectedHospital(hospital)}
                                                 >
-                                                    <Check className="h-4 w-4" />
+                                                    <Eye className="h-4 w-4" />
                                                 </Button>
+                                                {hospital.status === 'pending' && (
+                                                    <>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                                                            onClick={() => handleQuickAction(hospital, 'approve')}
+                                                        >
+                                                            <Check className="h-4 w-4" />
+                                                        </Button>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                                            onClick={() => handleQuickAction(hospital, 'reject')}
+                                                        >
+                                                            <X className="h-4 w-4" />
+                                                        </Button>
+                                                    </>
+                                                )}
                                                 <Button
                                                     variant="ghost"
                                                     size="sm"
-                                                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                                                    onClick={() => handleQuickAction(hospital, 'reject')}
+                                                    className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                                                    onClick={() => handleRemove(hospital)}
+                                                    title="Remove hospital from system"
                                                 >
-                                                    <X className="h-4 w-4" />
+                                                    <Trash2 className="h-4 w-4" />
                                                 </Button>
                                             </>
                                         )}

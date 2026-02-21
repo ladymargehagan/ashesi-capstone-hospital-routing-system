@@ -1,23 +1,23 @@
 'use client';
 
+import { useAuth } from '@/hooks/use-auth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { User, Mail, Phone, Building2, Shield, Calendar, Stethoscope, FileText } from 'lucide-react';
+import { User, Mail, Phone, Building2, Shield, Calendar, Stethoscope, FileText, Loader2 } from 'lucide-react';
 
 export default function PhysicianProfilePage() {
-    // In a real app, this would fetch from the API using the authenticated user
-    const profile = {
-        full_name: 'Dr. Sarah Johnson',
-        email: 'physician@clinic.com',
-        phone_number: '+233 24 123 4567',
-        hospital_name: 'Downtown Medical Clinic',
-        license_number: 'MD-12345',
-        specialization: 'General Practice',
-        status: 'active' as const,
-        created_at: '2026-01-20T00:00:00Z',
-    };
+    const { user } = useAuth();
 
-    const formatDate = (dateStr: string) => {
+    if (!user) {
+        return (
+            <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+            </div>
+        );
+    }
+
+    const formatDate = (dateStr?: string) => {
+        if (!dateStr) return 'N/A';
         return new Date(dateStr).toLocaleDateString('en-US', {
             day: '2-digit',
             month: 'long',
@@ -41,10 +41,10 @@ export default function PhysicianProfilePage() {
                                 <User className="h-8 w-8 text-blue-600" />
                             </div>
                             <div>
-                                <h2 className="text-xl font-bold text-gray-900">{profile.full_name}</h2>
-                                <p className="text-gray-500 capitalize">{profile.specialization}</p>
+                                <h2 className="text-xl font-bold text-gray-900">{user.full_name}</h2>
+                                <p className="text-gray-500 capitalize">Physician</p>
                                 <Badge className="mt-1 bg-green-100 text-green-700 border-green-200" variant="outline">
-                                    {profile.status}
+                                    {user.status}
                                 </Badge>
                             </div>
                         </div>
@@ -61,14 +61,14 @@ export default function PhysicianProfilePage() {
                             <Mail className="h-5 w-5 text-gray-400" />
                             <div>
                                 <p className="text-sm text-gray-500">Email</p>
-                                <p className="font-medium">{profile.email}</p>
+                                <p className="font-medium">{user.email}</p>
                             </div>
                         </div>
                         <div className="flex items-center gap-3">
                             <Phone className="h-5 w-5 text-gray-400" />
                             <div>
                                 <p className="text-sm text-gray-500">Phone Number</p>
-                                <p className="font-medium">{profile.phone_number}</p>
+                                <p className="font-medium">{user.phone_number || 'Not set'}</p>
                             </div>
                         </div>
                     </CardContent>
@@ -81,31 +81,26 @@ export default function PhysicianProfilePage() {
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div className="flex items-center gap-3">
-                            <Building2 className="h-5 w-5 text-gray-400" />
+                            <Shield className="h-5 w-5 text-gray-400" />
                             <div>
-                                <p className="text-sm text-gray-500">Hospital</p>
-                                <p className="font-medium">{profile.hospital_name}</p>
+                                <p className="text-sm text-gray-500">Role</p>
+                                <p className="font-medium capitalize">{user.role.replace('_', ' ')}</p>
                             </div>
                         </div>
-                        <div className="flex items-center gap-3">
-                            <Stethoscope className="h-5 w-5 text-gray-400" />
-                            <div>
-                                <p className="text-sm text-gray-500">Specialization</p>
-                                <p className="font-medium capitalize">{profile.specialization}</p>
+                        {user.hospital_id && (
+                            <div className="flex items-center gap-3">
+                                <Building2 className="h-5 w-5 text-gray-400" />
+                                <div>
+                                    <p className="text-sm text-gray-500">Hospital</p>
+                                    <p className="font-medium">{user.hospital_name || `Hospital #${user.hospital_id}`}</p>
+                                </div>
                             </div>
-                        </div>
-                        <div className="flex items-center gap-3">
-                            <FileText className="h-5 w-5 text-gray-400" />
-                            <div>
-                                <p className="text-sm text-gray-500">License Number</p>
-                                <p className="font-medium">{profile.license_number}</p>
-                            </div>
-                        </div>
+                        )}
                         <div className="flex items-center gap-3">
                             <Calendar className="h-5 w-5 text-gray-400" />
                             <div>
                                 <p className="text-sm text-gray-500">Member Since</p>
-                                <p className="font-medium">{formatDate(profile.created_at)}</p>
+                                <p className="font-medium">{formatDate(user.created_at)}</p>
                             </div>
                         </div>
                     </CardContent>
