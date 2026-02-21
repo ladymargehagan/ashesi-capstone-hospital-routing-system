@@ -23,8 +23,15 @@ from psycopg2 import pool, extras
 
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
-    "postgresql://postgres:postgres@localhost:5432/HRSdb",
+    "",
 )
+
+# Individual connection params (avoids URL-encoding issues with special chars)
+DB_NAME = os.getenv("DB_NAME", "postgres")
+DB_USER = os.getenv("DB_USER", "postgres")
+DB_PASS = os.getenv("DB_PASS", "Stacks4lyf")
+DB_HOST = os.getenv("DB_HOST", "localhost")
+DB_PORT = os.getenv("DB_PORT", "5432")
 
 # Lazy-initialised connection pool (min 1, max 10)
 _pool: pool.SimpleConnectionPool | None = None
@@ -33,7 +40,14 @@ _pool: pool.SimpleConnectionPool | None = None
 def _get_pool() -> pool.SimpleConnectionPool:
     global _pool
     if _pool is None or _pool.closed:
-        _pool = pool.SimpleConnectionPool(1, 10, DATABASE_URL)
+        if DATABASE_URL:
+            _pool = pool.SimpleConnectionPool(1, 10, DATABASE_URL)
+        else:
+            _pool = pool.SimpleConnectionPool(
+                1, 10,
+                dbname=DB_NAME, user=DB_USER, password=DB_PASS,
+                host=DB_HOST, port=DB_PORT,
+            )
     return _pool
 
 
