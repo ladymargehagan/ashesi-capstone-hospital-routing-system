@@ -2,7 +2,7 @@
 
 import { useState, useEffect, createContext, useContext } from 'react';
 import { User } from '@/types';
-import { getCurrentUser, setCurrentUser as setStoredUser, findUserByEmail } from '@/lib/mock-data';
+import { authApi } from '@/lib/api-client';
 
 interface LoginResult {
     success: boolean;
@@ -23,39 +23,59 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // Check for existing session
-        const storedUser = getCurrentUser();
-        if (storedUser) {
-            setUser(storedUser);
-        }
-        setLoading(false);
+        // Check for existing session via the backend /api/auth/me endpoint
+        authApi.me()
+            .then((data) => {
+                if (data.user) {
+                    setUser(data.user as unknown as User);
+                    // Also store in localStorage as a cache
+                    localStorage.setItem('currentUser', JSON.stringify(data.user));
+                } else {
+                    // Try localStorage fallback for SSR
+                    const cached = localStorage.getItem('currentUser');
+                    if (cached) {
+                        setUser(JSON.parse(cached));
+                    }
+                }
+            })
+            .catch(() => {
+                // Backend unreachable — try localStorage cache
+                const cached = localStorage.getItem('currentUser');
+                if (cached) {
+                    setUser(JSON.parse(cached));
+                }
+            })
+            .finally(() => setLoading(false));
     }, []);
 
     const login = async (email: string, password: string): Promise<LoginResult> => {
-        const foundUser = findUserByEmail(email);
+        try {
+            const data = await authApi.login(email, password);
 
-        if (!foundUser) {
+            if (!data.success) {
+                return {
+                    success: false,
+                    status: data.status as 'pending' | 'rejected' | undefined,
+                };
+            }
+
+            const loggedInUser = data.user as unknown as User;
+            setUser(loggedInUser);
+            localStorage.setItem('currentUser', JSON.stringify(loggedInUser));
+            return { success: true, status: 'active' };
+        } catch {
             return { success: false };
         }
-
-        // Check user status before allowing login
-        if (foundUser.status === 'pending') {
-            return { success: false, status: 'pending' };
-        }
-
-        if (foundUser.status === 'rejected') {
-            return { success: false, status: 'rejected' };
-        }
-
-        // Active user — allow login
-        setUser(foundUser);
-        setStoredUser(foundUser);
-        return { success: true, status: 'active' };
     };
 
-    const logout = () => {
+    const logout = async () => {
+        try {
+            await authApi.logout();
+        } catch {
+            // ignore logout errors
+        }
         setUser(null);
-        setStoredUser(null);
+        localStorage.removeItem('currentUser');
     };
 
     return (

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -14,16 +14,25 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
-import { mockPatients } from '@/lib/mock-data';
+import { patientsApi } from '@/lib/api-client';
 import { Patient } from '@/types';
 import { PatientDetailsModal } from '@/components/physician/patient-details-modal';
-import { Search, Eye, Plus } from 'lucide-react';
+import { Search, Eye, Plus, Loader2 } from 'lucide-react';
 
 export default function PatientsPage() {
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+    const [patients, setPatients] = useState<Patient[]>([]);
+    const [loading, setLoading] = useState(true);
 
-    const filteredPatients = mockPatients.filter(patient =>
+    useEffect(() => {
+        patientsApi.list()
+            .then((data) => setPatients(data as unknown as Patient[]))
+            .catch((err) => console.error('Failed to load patients:', err))
+            .finally(() => setLoading(false));
+    }, []);
+
+    const filteredPatients = patients.filter(patient =>
         patient.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (patient.diagnosis || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
         patient.patient_identifier.toLowerCase().includes(searchQuery.toLowerCase())
@@ -57,6 +66,14 @@ export default function PatientsPage() {
         };
         return styles[status] || styles.None;
     };
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+            </div>
+        );
+    }
 
     return (
         <div>

@@ -11,8 +11,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { RecommendationsModal } from '@/components/physician/recommendations-modal';
-import { mockPatients, getActiveHospitals, mockResources } from '@/lib/mock-data';
+import { patientsApi, hospitalsApi, referralsApi, resourcesApi } from '@/lib/api-client';
 import { getRecommendations } from '@/lib/referral-api';
+import { useAuth } from '@/hooks/use-auth';
 import { ReferralFormData, Patient, Hospital, EngineRecommendation, EngineResponse, EmergencyType } from '@/types';
 import { ArrowLeft, TrendingUp, Loader2, Search, Building2, Bed, Heart, Users, CheckCircle, X, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
@@ -31,6 +32,7 @@ const EMERGENCY_TYPE_LABELS: Record<EmergencyType, string> = {
 function ReferralFormContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
+    const { user } = useAuth();
     const preselectedPatientId = searchParams.get('patient');
 
     const [showRecommendations, setShowRecommendations] = useState(false);
@@ -46,8 +48,23 @@ function ReferralFormContent() {
     const [chosenHospital, setChosenHospital] = useState<Hospital | null>(null);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
-    // Get active hospitals for the searchable dropdown
-    const activeHospitals = useMemo(() => getActiveHospitals(), []);
+    // Data from API
+    const [allPatients, setAllPatients] = useState<Patient[]>([]);
+    const [activeHospitals, setActiveHospitals] = useState<Hospital[]>([]);
+    const [hospitalResources, setHospitalResources] = useState<Record<string, unknown>[]>([]);
+    const [dataLoading, setDataLoading] = useState(true);
+
+    // Load patients and hospitals from API on mount
+    useEffect(() => {
+        Promise.all([
+            patientsApi.list().catch(() => []),
+            hospitalsApi.list('active').catch(() => []),
+        ]).then(([pats, hosps]) => {
+            setAllPatients(pats as unknown as Patient[]);
+            setActiveHospitals(hosps as unknown as Hospital[]);
+        }).finally(() => setDataLoading(false));
+    }, []);
+
     const filteredHospitals = useMemo(() => {
         if (!hospitalSearch) return activeHospitals;
         return activeHospitals.filter(h =>
@@ -69,7 +86,7 @@ function ReferralFormContent() {
 
     // Find preselected patient
     const preselectedPatient = preselectedPatientId
-        ? mockPatients.find(p => p.id === preselectedPatientId)
+        ? allPatients.find(p => p.id === preselectedPatientId)
         : null;
 
     const getAge = (dob?: string) => {
@@ -105,7 +122,7 @@ function ReferralFormContent() {
     });
 
     const handlePatientSelect = (patientId: string) => {
-        const patient = mockPatients.find(p => p.id === patientId);
+        const patient = allPatients.find(p => p.id === patientId);
         if (patient) {
             setFormData({
                 ...formData,
@@ -195,16 +212,45 @@ function ReferralFormContent() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        alert('Referral submitted successfully!');
-        router.push('/physician');
+        try {
+            const payload = {
+                patient_id: formData.patient_id,
+                receiving_hospital_id: formData.receiving_hospital_id,
+                emergency_type: formData.emergency_type,
+                severity: formData.severity,
+                stability: formData.stability,
+                presenting_complaint: formData.presenting_complaint,
+                clinical_history: formData.clinical_history,
+                examination_findings: formData.examination_findings,
+                working_diagnosis: formData.working_diagnosis,
+                investigations_done: formData.investigations_done,
+                treatment_given: formData.treatment_given,
+                reason_for_referral: formData.reason_for_referral,
+            };
+            await referralsApi.create(payload);
+            alert('Referral submitted successfully!');
+            router.push('/physician');
+        } catch (err) {
+            console.error('Failed to create referral:', err);
+            alert('Failed to submit referral. Please try again.');
+        } finally {
+            setLoading(false);
+        }
     };
 
     // Get hospital status preview data
+    // Load resources when a hospital is chosen
+    useEffect(() => {
+        if (chosenHospital?.id) {
+            resourcesApi.list(chosenHospital.id)
+                .then(setHospitalResources)
+                .catch(() => setHospitalResources([]));
+        }
+    }, [chosenHospital?.id]);
+
     const getHospitalPreview = (hospital: Hospital) => {
-        const hospitalResources = mockResources.filter(r => r.hospital_id === hospital.id);
-        const generalBeds = hospitalResources.find(r => r.resource_type === 'general_beds');
-        const icuBeds = hospitalResources.find(r => r.resource_type === 'icu_beds');
+        const generalBeds = hospitalResources.find((r: Record<string, unknown>) => r.resource_type === 'general_beds');
+        const icuBeds = hospitalResources.find((r: Record<string, unknown>) => r.resource_type === 'icu_beds');
 
         return {
             generalBeds: generalBeds ? `${generalBeds.available_count}/${generalBeds.total_count}` : 'N/A',
@@ -257,7 +303,7 @@ function ReferralFormContent() {
                                     <SelectValue placeholder="Select a patient" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {mockPatients.map((patient) => (
+                                    {allPatients.map((patient) => (
                                         <SelectItem key={patient.id} value={patient.id}>
                                             {patient.full_name} — {patient.patient_identifier}
                                         </SelectItem>
@@ -521,19 +567,19 @@ function ReferralFormContent() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                             <div>
                                 <p className="text-gray-500">Facility Name</p>
-                                <p className="font-medium">Downtown Medical Clinic</p>
+                                <p className="font-medium">{user?.hospital_name || 'N/A'}</p>
                             </div>
                             <div>
                                 <p className="text-gray-500">Address</p>
-                                <p className="font-medium">456 Central Ave, Accra</p>
+                                <p className="font-medium">{user?.hospital_address || 'N/A'}</p>
                             </div>
                             <div>
                                 <p className="text-gray-500">Telephone</p>
-                                <p className="font-medium">+233 30 277 2345</p>
+                                <p className="font-medium">{user?.contact_phone || 'N/A'}</p>
                             </div>
                             <div>
                                 <p className="text-gray-500">Clinician Name</p>
-                                <p className="font-medium">Dr. Sarah Johnson</p>
+                                <p className="font-medium">{user?.full_name || 'N/A'}</p>
                             </div>
                         </div>
                     </CardContent>

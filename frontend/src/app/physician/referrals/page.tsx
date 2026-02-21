@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -15,19 +15,26 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
-import { mockReferrals } from '@/lib/mock-data';
-import { Search, Plus } from 'lucide-react';
+import { referralsApi } from '@/lib/api-client';
+import { Referral } from '@/types';
+import { Search, Plus, Loader2 } from 'lucide-react';
 
 export default function ReferralsPage() {
     const [searchQuery, setSearchQuery] = useState('');
     const [statusFilter, setStatusFilter] = useState<string>('all');
     const [severityFilter, setSeverityFilter] = useState<string>('all');
+    const [referrals, setReferrals] = useState<Referral[]>([]);
+    const [loading, setLoading] = useState(true);
 
-    // Filter referrals for this physician
-    const physicianReferrals = mockReferrals.filter(r => r.referring_physician_id === 'phys-1');
+    useEffect(() => {
+        referralsApi.list()
+            .then((data) => setReferrals(data as unknown as Referral[]))
+            .catch((err) => console.error('Failed to load referrals:', err))
+            .finally(() => setLoading(false));
+    }, []);
 
     // Apply filters
-    const filteredReferrals = physicianReferrals.filter(referral => {
+    const filteredReferrals = referrals.filter(referral => {
         const matchesSearch =
             (referral.patient_name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
             (referral.receiving_hospital_name || '').toLowerCase().includes(searchQuery.toLowerCase());
@@ -68,6 +75,14 @@ export default function ReferralsPage() {
         };
         return styles[status] || styles.pending;
     };
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+            </div>
+        );
+    }
 
     return (
         <div>

@@ -9,6 +9,9 @@ export interface User {
     role: UserRole;
     phone_number?: string;
     hospital_id?: string;
+    hospital_name?: string;
+    hospital_address?: string;
+    contact_phone?: string;
     status: 'active' | 'pending' | 'rejected';
     created_at: string;
     updated_at?: string;
