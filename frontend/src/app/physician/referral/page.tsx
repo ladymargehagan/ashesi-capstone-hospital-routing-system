@@ -11,10 +11,22 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { RecommendationsModal } from '@/components/physician/recommendations-modal';
-import { mockPatients, mockRecommendations, getActiveHospitals, mockResources } from '@/lib/mock-data';
-import { ReferralFormData, Patient, Hospital, HospitalRecommendation } from '@/types';
-import { ArrowLeft, TrendingUp, Loader2, Search, Building2, Bed, Heart, Users, CheckCircle, X } from 'lucide-react';
+import { mockPatients, getActiveHospitals, mockResources } from '@/lib/mock-data';
+import { getRecommendations } from '@/lib/referral-api';
+import { ReferralFormData, Patient, Hospital, EngineRecommendation, EngineResponse, EmergencyType } from '@/types';
+import { ArrowLeft, TrendingUp, Loader2, Search, Building2, Bed, Heart, Users, CheckCircle, X, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
+
+// Maps emergency_type values to user-friendly labels
+const EMERGENCY_TYPE_LABELS: Record<EmergencyType, string> = {
+    cardiac: 'Cardiac (Heart)',
+    trauma: 'Trauma (Injury)',
+    respiratory: 'Respiratory (Breathing)',
+    stroke: 'Stroke (Neurological)',
+    obstetric: 'Obstetric (Maternity)',
+    seizure: 'Seizure (Neurological)',
+    general: 'General',
+};
 
 function ReferralFormContent() {
     const router = useRouter();
@@ -22,7 +34,10 @@ function ReferralFormContent() {
     const preselectedPatientId = searchParams.get('patient');
 
     const [showRecommendations, setShowRecommendations] = useState(false);
-    const [selectedHospital, setSelectedHospital] = useState<HospitalRecommendation | null>(null);
+    const [selectedRecommendation, setSelectedRecommendation] = useState<EngineRecommendation | null>(null);
+    const [engineResponse, setEngineResponse] = useState<EngineResponse | null>(null);
+    const [engineLoading, setEngineLoading] = useState(false);
+    const [engineError, setEngineError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
 
     // Hospital search state
@@ -83,6 +98,7 @@ function ReferralFormContent() {
         investigations_done: '',
         treatment_given: '',
         reason_for_referral: '',
+        emergency_type: 'general',
         severity: 'medium',
         stability: 'stable',
         referral_datetime: new Date().toISOString().slice(0, 16),
@@ -116,24 +132,63 @@ function ReferralFormContent() {
         setHospitalSearch('');
         setShowHospitalDropdown(false);
         setFormData({ ...formData, receiving_hospital_id: hospital.id });
-        // Clear any previously algorithm-selected hospital
-        setSelectedHospital(null);
+        setSelectedRecommendation(null);
     };
 
     const handleClearHospital = () => {
         setChosenHospital(null);
-        setSelectedHospital(null);
+        setSelectedRecommendation(null);
         setFormData({ ...formData, receiving_hospital_id: undefined });
     };
 
-    const handleGetRecommendations = () => {
+    // --- Core integration: call the referral engine API ---
+    const handleGetRecommendations = async () => {
         setShowRecommendations(true);
+        setEngineLoading(true);
+        setEngineError(null);
+        setEngineResponse(null);
+
+        try {
+            // Use the referring physician's hospital GPS as patient location.
+            // In production this is fetched from the logged-in user's hospital record.
+            // For now, use a known Accra location (Downtown Medical Clinic).
+            const referringHospitalGps = { lat: 5.5913, lng: -0.1786 };
+
+            const response = await getRecommendations({
+                lat: referringHospitalGps.lat,
+                lon: referringHospitalGps.lng,
+                emergency_type: (formData.emergency_type || 'general') as EmergencyType,
+                severity: formData.severity || 'medium',
+                stability: formData.stability || 'stable',
+            });
+
+            setEngineResponse(response);
+        } catch (err) {
+            console.error('Engine API error:', err);
+            setEngineError(
+                err instanceof Error
+                    ? err.message
+                    : 'Could not reach the referral engine. Please ensure the backend is running.'
+            );
+        } finally {
+            setEngineLoading(false);
+        }
     };
 
-    const handleSelectRecommendation = (recommendation: HospitalRecommendation) => {
-        setSelectedHospital(recommendation);
-        setChosenHospital(recommendation.hospital);
-        setFormData({ ...formData, receiving_hospital_id: recommendation.hospital.id });
+    const handleSelectRecommendation = (recommendation: EngineRecommendation) => {
+        setSelectedRecommendation(recommendation);
+        // Find matching hospital from frontend data for the preview card
+        const matchedHospital = activeHospitals.find(
+            h => h.name === recommendation.hospital_name
+        );
+        if (matchedHospital) {
+            setChosenHospital(matchedHospital);
+            setFormData({ ...formData, receiving_hospital_id: matchedHospital.id });
+        } else {
+            // Hospital from engine not in frontend mock data — use engine data directly
+            setChosenHospital(null);
+            setFormData({ ...formData, receiving_hospital_id: recommendation.hospital_id });
+        }
         setShowRecommendations(false);
     };
 
@@ -147,7 +202,6 @@ function ReferralFormContent() {
 
     // Get hospital status preview data
     const getHospitalPreview = (hospital: Hospital) => {
-        // In a real app this would come from the API
         const hospitalResources = mockResources.filter(r => r.hospital_id === hospital.id);
         const generalBeds = hospitalResources.find(r => r.resource_type === 'general_beds');
         const icuBeds = hospitalResources.find(r => r.resource_type === 'icu_beds');
@@ -372,7 +426,7 @@ function ReferralFormContent() {
                 <Card>
                     <CardHeader>
                         <CardTitle className="text-lg">Referral Details</CardTitle>
-                        <CardDescription>Specify referral reason, severity, and stability</CardDescription>
+                        <CardDescription>Specify emergency type, severity, and stability — these drive the hospital recommendation algorithm</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div className="space-y-2">
@@ -386,7 +440,31 @@ function ReferralFormContent() {
                                 required
                             />
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            {/* Emergency Type — feeds directly into the algorithm */}
+                            <div className="space-y-2">
+                                <Label htmlFor="emergency_type">Emergency Type *</Label>
+                                <Select
+                                    value={formData.emergency_type}
+                                    onValueChange={(v) => handleInputChange('emergency_type', v)}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {(Object.entries(EMERGENCY_TYPE_LABELS) as [EmergencyType, string][]).map(
+                                            ([value, label]) => (
+                                                <SelectItem key={value} value={value}>
+                                                    {label}
+                                                </SelectItem>
+                                            )
+                                        )}
+                                    </SelectContent>
+                                </Select>
+                                <p className="text-xs text-gray-400">
+                                    Determines which hospital capabilities are required
+                                </p>
+                            </div>
                             <div className="space-y-2">
                                 <Label htmlFor="severity">Severity *</Label>
                                 <Select
@@ -470,8 +548,19 @@ function ReferralFormContent() {
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
+                        {/* Engine error banner */}
+                        {engineError && (
+                            <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+                                <AlertTriangle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                                <div>
+                                    <p className="font-medium">Engine Error</p>
+                                    <p>{engineError}</p>
+                                </div>
+                            </div>
+                        )}
+
                         {/* Show chosen hospital with status preview */}
-                        {(chosenHospital || selectedHospital) ? (
+                        {(chosenHospital || selectedRecommendation) ? (
                             <div className="space-y-4">
                                 {/* Selected Hospital Card */}
                                 <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
@@ -480,11 +569,13 @@ function ReferralFormContent() {
                                             <CheckCircle className="h-5 w-5 text-green-600" />
                                             <div>
                                                 <p className="font-semibold text-green-800">
-                                                    {chosenHospital?.name || selectedHospital?.hospital.name}
+                                                    {chosenHospital?.name || selectedRecommendation?.hospital_name}
                                                 </p>
-                                                <p className="text-sm text-green-600">
-                                                    {chosenHospital?.address || selectedHospital?.hospital.address}
-                                                </p>
+                                                {chosenHospital && (
+                                                    <p className="text-sm text-green-600">
+                                                        {chosenHospital.address}
+                                                    </p>
+                                                )}
                                             </div>
                                         </div>
                                         <Button
@@ -532,11 +623,17 @@ function ReferralFormContent() {
                                         </div>
                                     )}
 
-                                    {/* Match score if from recommendations */}
-                                    {selectedHospital && (
-                                        <p className="text-sm text-green-600 mt-2">
-                                            {selectedHospital.match_score}% match • {selectedHospital.distance_km} km away
-                                        </p>
+                                    {/* Engine score if from recommendations */}
+                                    {selectedRecommendation && (
+                                        <div className="mt-2 flex items-center gap-3 text-sm text-green-600">
+                                            <span>
+                                                {Math.round(selectedRecommendation.composite_score * 100)}% match
+                                            </span>
+                                            <span>•</span>
+                                            <span>{selectedRecommendation.distance_km} km away</span>
+                                            <span>•</span>
+                                            <span>{selectedRecommendation.travel_time_minutes} min travel</span>
+                                        </div>
                                     )}
                                 </div>
 
@@ -636,7 +733,7 @@ function ReferralFormContent() {
                     <Link href="/physician">
                         <Button type="button" variant="outline">Cancel</Button>
                     </Link>
-                    <Button type="submit" disabled={loading || (!chosenHospital && !selectedHospital)}>
+                    <Button type="submit" disabled={loading || (!chosenHospital && !selectedRecommendation)}>
                         {loading ? (
                             <>
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -649,12 +746,14 @@ function ReferralFormContent() {
                 </div>
             </form>
 
-            {/* Recommendations Modal */}
+            {/* Recommendations Modal — now powered by the real engine */}
             <RecommendationsModal
                 open={showRecommendations}
                 onClose={() => setShowRecommendations(false)}
-                recommendations={mockRecommendations}
+                recommendations={engineResponse?.recommendations || []}
+                warnings={engineResponse?.warnings || []}
                 onSelect={handleSelectRecommendation}
+                loading={engineLoading}
             />
         </div>
     );

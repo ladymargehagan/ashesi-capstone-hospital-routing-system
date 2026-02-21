@@ -1,4 +1,5 @@
 'use client';
+import { useEffect, useRef } from 'react';
 
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -17,11 +18,95 @@ interface RecommendationsModalProps {
     warnings: string[];
     onSelect: (recommendation: EngineRecommendation) => void;
     loading?: boolean;
+    patientLat?: number;
+    patientLon?: number;
 }
 
 export function RecommendationsModal({
-    open, onClose, recommendations, warnings, onSelect, loading
+    open, onClose, recommendations, warnings, onSelect, loading,
+    patientLat, patientLon
 }: RecommendationsModalProps) {
+
+    const mapRef = useRef<HTMLDivElement>(null);
+    const mapInstanceRef = useRef<google.maps.Map | null>(null);
+
+    // Initialize or update the map when modal opens with recommendations
+    useEffect(() => {
+        if (!open || recommendations.length === 0 || !mapRef.current) return;
+        if (typeof window === 'undefined' || !window.google?.maps) return;
+
+        const bounds = new window.google.maps.LatLngBounds();
+
+        // Create the map centered on Greater Accra
+        const map = new window.google.maps.Map(mapRef.current, {
+            zoom: 12,
+            center: { lat: 5.56, lng: -0.20 },
+            mapTypeControl: false,
+            streetViewControl: false,
+            fullscreenControl: false,
+            styles: [
+                { featureType: 'poi', stylers: [{ visibility: 'off' }] },
+                { featureType: 'transit', stylers: [{ visibility: 'off' }] },
+            ],
+        });
+        mapInstanceRef.current = map;
+
+        // Patient / referring hospital marker (blue)
+        if (patientLat && patientLon) {
+            const patientPos = { lat: patientLat, lng: patientLon };
+            new window.google.maps.Marker({
+                position: patientPos,
+                map,
+                title: 'Patient Location (Referring Hospital)',
+                icon: {
+                    path: window.google.maps.SymbolPath.CIRCLE,
+                    scale: 10,
+                    fillColor: '#3b82f6',
+                    fillOpacity: 1,
+                    strokeColor: '#1d4ed8',
+                    strokeWeight: 2,
+                },
+                zIndex: 100,
+            });
+            bounds.extend(patientPos);
+        }
+
+        // Hospital markers (numbered)
+        recommendations.forEach((rec, idx) => {
+            if (!rec.hospital_lat || !rec.hospital_lon) return;
+            const pos = { lat: rec.hospital_lat, lng: rec.hospital_lon };
+            new window.google.maps.Marker({
+                position: pos,
+                map,
+                title: `#${idx + 1} ${rec.hospital_name}`,
+                label: {
+                    text: `${idx + 1}`,
+                    color: '#ffffff',
+                    fontWeight: 'bold',
+                    fontSize: '12px',
+                },
+                icon: {
+                    path: 'M 0,-24 C -6,-24 -12,-18 -12,-12 C -12,-4 0,0 0,0 C 0,0 12,-4 12,-12 C 12,-18 6,-24 0,-24 Z',
+                    fillColor: rec.composite_score >= 0.7 ? '#16a34a' : rec.composite_score >= 0.4 ? '#2563eb' : '#d97706',
+                    fillOpacity: 1,
+                    strokeColor: '#ffffff',
+                    strokeWeight: 1,
+                    scale: 1.2,
+                    labelOrigin: new window.google.maps.Point(0, -14),
+                },
+            });
+            bounds.extend(pos);
+        });
+
+        // Fit map to show all markers
+        if (!bounds.isEmpty()) {
+            map.fitBounds(bounds, 40);
+        }
+
+        return () => {
+            mapInstanceRef.current = null;
+        };
+    }, [open, recommendations, patientLat, patientLon]);
 
     const getScoreColor = (score: number) => {
         if (score >= 0.7) return 'text-green-600';
@@ -57,6 +142,15 @@ export function RecommendationsModal({
                         Ranked by composite score (capability × proximity × data freshness)
                     </DialogDescription>
                 </DialogHeader>
+
+                {/* Google Maps embed — shows hospital locations */}
+                {recommendations.length > 0 && (
+                    <div
+                        ref={mapRef}
+                        className="w-full h-48 rounded-lg border border-gray-200 bg-gray-100"
+                        style={{ minHeight: '192px' }}
+                    />
+                )}
 
                 {/* Engine Warnings */}
                 {warnings.length > 0 && (
@@ -188,8 +282,8 @@ export function RecommendationsModal({
                                                     key={ra.resource}
                                                     variant="outline"
                                                     className={`text-xs ${ra.available
-                                                            ? 'bg-green-50 text-green-700 border-green-200'
-                                                            : 'bg-red-50 text-red-700 border-red-200'
+                                                        ? 'bg-green-50 text-green-700 border-green-200'
+                                                        : 'bg-red-50 text-red-700 border-red-200'
                                                         }`}
                                                 >
                                                     {ra.available ? (

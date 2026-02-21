@@ -9,6 +9,7 @@ we only import and call it.
 from __future__ import annotations
 
 import json
+import os
 from datetime import datetime, timedelta
 from typing import Optional
 
@@ -27,6 +28,8 @@ from referral_engine import (
 # ---------------------------------------------------------------------------
 # App setup
 # ---------------------------------------------------------------------------
+
+GOOGLE_MAPS_API_KEY = os.getenv("GOOGLE_MAPS_API_KEY", "")
 
 app = FastAPI(
     title="HRS Referral Engine API",
@@ -73,7 +76,6 @@ def _load_hospitals(now: datetime) -> list[Hospital]:
             last_update=now - timedelta(hours=2),
             hospital_type="Teaching",
             phone="0302-123-456",
-            travel_time_override_mins=15,
         ),
         Hospital(
             hospital_id="37MH",
@@ -96,7 +98,6 @@ def _load_hospitals(now: datetime) -> list[Hospital]:
             last_update=now - timedelta(hours=4),
             hospital_type="Military",
             phone="0302-654-321",
-            travel_time_override_mins=8,
         ),
         Hospital(
             hospital_id="RIDGE",
@@ -123,7 +124,6 @@ def _load_hospitals(now: datetime) -> list[Hospital]:
             last_update=now - timedelta(hours=8),
             hospital_type="Regional",
             phone="0302-111-222",
-            travel_time_override_mins=12,
         ),
         Hospital(
             hospital_id="LEKMA",
@@ -140,7 +140,6 @@ def _load_hospitals(now: datetime) -> list[Hospital]:
             last_update=now - timedelta(hours=12),
             hospital_type="General",
             phone="0302-333-444",
-            travel_time_override_mins=25,
         ),
         Hospital(
             hospital_id="TEMA",
@@ -157,7 +156,6 @@ def _load_hospitals(now: datetime) -> list[Hospital]:
             last_update=now - timedelta(hours=1),
             hospital_type="General",
             phone="0303-555-666",
-            travel_time_override_mins=45,
         ),
     ]
 
@@ -236,7 +234,28 @@ def recommend(req: RecommendRequest):
 
     result = engine.rank(patient)
 
+    # Post-process: inject GPS coordinates so the frontend map can display pins.
+    # We don't modify the referral engine — we add these in the API wrapper.
+    hospital_coords = {h.hospital_id: (h.lat, h.lon) for h in hospitals}
+    for rec in result.get("recommendations", []):
+        coords = hospital_coords.get(rec["hospital_id"])
+        if coords:
+            rec["hospital_lat"] = coords[0]
+            rec["hospital_lon"] = coords[1]
+
     return result
+
+
+# ---------------------------------------------------------------------------
+# Google Maps key for frontend (Places Autocomplete, Maps JS)
+# ---------------------------------------------------------------------------
+
+@app.get("/api/maps-key")
+def maps_key():
+    """Return the Google Maps API key for frontend widgets."""
+    if not GOOGLE_MAPS_API_KEY:
+        return {"key": None, "message": "No API key configured. Set GOOGLE_MAPS_API_KEY env var."}
+    return {"key": GOOGLE_MAPS_API_KEY}
 
 
 # ---------------------------------------------------------------------------
@@ -245,4 +264,8 @@ def recommend(req: RecommendRequest):
 
 @app.get("/api/health")
 def health():
-    return {"status": "ok", "engine": "referral_engine.py (untouched)"}
+    return {
+        "status": "ok",
+        "engine": "referral_engine.py (untouched)",
+        "google_maps": "configured" if GOOGLE_MAPS_API_KEY else "not configured (using Haversine fallback)",
+    }

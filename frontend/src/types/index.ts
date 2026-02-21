@@ -220,6 +220,8 @@ export interface EngineRecommendation {
     last_update_hours_ago: number;
     resource_availability: ResourceAvailability[];
     distance_band_density_estimate?: number;
+    hospital_lat?: number;
+    hospital_lon?: number;
 }
 
 export interface EngineResponse {

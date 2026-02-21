@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { Building2, User, ClipboardCheck, Loader2, CheckCircle2, ArrowLeft, ArrowRight } from 'lucide-react';
+import { Building2, User, ClipboardCheck, Loader2, CheckCircle2, ArrowLeft, ArrowRight, MapPin } from 'lucide-react';
 import { HospitalRegistrationData } from '@/types';
 import { registerHospital } from '@/lib/mock-data';
 
@@ -45,18 +45,76 @@ export default function RegisterPage() {
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [loading, setLoading] = useState(false);
     const [submitted, setSubmitted] = useState(false);
+    const [mapsLoaded, setMapsLoaded] = useState(false);
 
-    const updateField = (field: keyof HospitalRegistrationData, value: string) => {
+    const addressInputRef = useRef<HTMLInputElement>(null);
+    const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
+
+    const updateField = useCallback((field: keyof HospitalRegistrationData, value: string) => {
         setFormData(prev => ({ ...prev, [field]: value }));
-        // Clear error when user edits
-        if (errors[field]) {
-            setErrors(prev => {
+        setErrors(prev => {
+            if (prev[field]) {
                 const next = { ...prev };
                 delete next[field];
                 return next;
+            }
+            return prev;
+        });
+    }, []);
+
+    // Initialize Google Places Autocomplete on the address input
+    useEffect(() => {
+        if (step !== 1) return;
+
+        const initAutocomplete = () => {
+            if (
+                typeof window === 'undefined' ||
+                !window.google?.maps?.places ||
+                !addressInputRef.current ||
+                autocompleteRef.current
+            ) return;
+
+            setMapsLoaded(true);
+            const autocomplete = new window.google.maps.places.Autocomplete(
+                addressInputRef.current,
+                {
+                    types: ['establishment', 'geocode'],
+                    componentRestrictions: { country: 'gh' }, // Restrict to Ghana
+                    fields: ['formatted_address', 'geometry', 'name'],
+                }
+            );
+
+            autocomplete.addListener('place_changed', () => {
+                const place = autocomplete.getPlace();
+                if (place.formatted_address) {
+                    updateField('address', place.formatted_address);
+                }
+                if (place.geometry?.location) {
+                    updateField('gps_lat', place.geometry.location.lat().toFixed(6));
+                    updateField('gps_lng', place.geometry.location.lng().toFixed(6));
+                }
             });
-        }
-    };
+
+            autocompleteRef.current = autocomplete;
+        };
+
+        // Try immediately, then retry every 500ms until Google Maps loads
+        initAutocomplete();
+        const interval = setInterval(() => {
+            if (window.google?.maps?.places) {
+                initAutocomplete();
+                clearInterval(interval);
+            }
+        }, 500);
+
+        return () => {
+            clearInterval(interval);
+            if (autocompleteRef.current) {
+                window.google?.maps?.event?.clearInstanceListeners(autocompleteRef.current);
+                autocompleteRef.current = null;
+            }
+        };
+    }, [step, updateField]);
 
     const validateStep1 = (): boolean => {
         const newErrors: Record<string, string> = {};
@@ -204,10 +262,10 @@ export default function RegisterPage() {
                         <div key={s.id} className="flex items-center">
                             <div
                                 className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors ${step === s.id
-                                        ? 'bg-blue-600 text-white'
-                                        : step > s.id
-                                            ? 'bg-green-100 text-green-700'
-                                            : 'bg-gray-100 text-gray-400'
+                                    ? 'bg-blue-600 text-white'
+                                    : step > s.id
+                                        ? 'bg-green-100 text-green-700'
+                                        : 'bg-gray-100 text-gray-400'
                                     }`}
                             >
                                 {step > s.id ? (
@@ -261,17 +319,72 @@ export default function RegisterPage() {
                                     {errors.license_number && <p className="text-xs text-red-500">{errors.license_number}</p>}
                                 </div>
 
-                                {/* Address */}
+                                {/* Address with Google Places Autocomplete */}
                                 <div className="space-y-2">
-                                    <Label htmlFor="address">Address <span className="text-red-500">*</span></Label>
+                                    <div className="flex items-center gap-2">
+                                        <Label htmlFor="address">Address <span className="text-red-500">*</span></Label>
+                                        {mapsLoaded && (
+                                            <Badge variant="outline" className="text-xs text-emerald-600 border-emerald-200 bg-emerald-50">
+                                                <MapPin className="h-3 w-3 mr-1" />
+                                                Google Places Active
+                                            </Badge>
+                                        )}
+                                    </div>
                                     <Input
+                                        ref={addressInputRef}
                                         id="address"
-                                        placeholder="e.g. 123 Independence Ave, Accra"
+                                        placeholder={mapsLoaded
+                                            ? "Start typing to search Google Places..."
+                                            : "e.g. 123 Independence Ave, Accra"
+                                        }
                                         value={formData.address}
                                         onChange={e => updateField('address', e.target.value)}
                                         className={errors.address ? 'border-red-300' : ''}
                                     />
+                                    {!mapsLoaded && (
+                                        <p className="text-xs text-gray-400">
+                                            Google Places not available — enter address manually
+                                        </p>
+                                    )}
                                     {errors.address && <p className="text-xs text-red-500">{errors.address}</p>}
+                                </div>
+
+                                {/* GPS Coordinates (auto-filled by Google Places, or manual) */}
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="gps_lat">
+                                            Latitude <span className="text-red-500">*</span>
+                                            {mapsLoaded && <span className="text-xs text-gray-400 ml-1">(auto-filled)</span>}
+                                        </Label>
+                                        <Input
+                                            id="gps_lat"
+                                            type="number"
+                                            step="any"
+                                            placeholder="e.g. 5.6037"
+                                            value={formData.gps_lat}
+                                            onChange={e => updateField('gps_lat', e.target.value)}
+                                            className={`${errors.gps_lat ? 'border-red-300' : ''} ${mapsLoaded && formData.gps_lat ? 'bg-emerald-50 border-emerald-200' : ''}`}
+                                            readOnly={mapsLoaded && !!formData.gps_lat}
+                                        />
+                                        {errors.gps_lat && <p className="text-xs text-red-500">{errors.gps_lat}</p>}
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="gps_lng">
+                                            Longitude <span className="text-red-500">*</span>
+                                            {mapsLoaded && <span className="text-xs text-gray-400 ml-1">(auto-filled)</span>}
+                                        </Label>
+                                        <Input
+                                            id="gps_lng"
+                                            type="number"
+                                            step="any"
+                                            placeholder="e.g. -0.1870"
+                                            value={formData.gps_lng}
+                                            onChange={e => updateField('gps_lng', e.target.value)}
+                                            className={`${errors.gps_lng ? 'border-red-300' : ''} ${mapsLoaded && formData.gps_lng ? 'bg-emerald-50 border-emerald-200' : ''}`}
+                                            readOnly={mapsLoaded && !!formData.gps_lng}
+                                        />
+                                        {errors.gps_lng && <p className="text-xs text-red-500">{errors.gps_lng}</p>}
+                                    </div>
                                 </div>
 
                                 {/* Tier, Type, Ownership row */}
@@ -330,36 +443,6 @@ export default function RegisterPage() {
                                             value={formData.contact_phone}
                                             onChange={e => updateField('contact_phone', e.target.value)}
                                         />
-                                    </div>
-                                </div>
-
-                                {/* GPS Coordinates */}
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="gps_lat">Latitude <span className="text-red-500">*</span></Label>
-                                        <Input
-                                            id="gps_lat"
-                                            type="number"
-                                            step="any"
-                                            placeholder="e.g. 5.6037"
-                                            value={formData.gps_lat}
-                                            onChange={e => updateField('gps_lat', e.target.value)}
-                                            className={errors.gps_lat ? 'border-red-300' : ''}
-                                        />
-                                        {errors.gps_lat && <p className="text-xs text-red-500">{errors.gps_lat}</p>}
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="gps_lng">Longitude <span className="text-red-500">*</span></Label>
-                                        <Input
-                                            id="gps_lng"
-                                            type="number"
-                                            step="any"
-                                            placeholder="e.g. -0.1870"
-                                            value={formData.gps_lng}
-                                            onChange={e => updateField('gps_lng', e.target.value)}
-                                            className={errors.gps_lng ? 'border-red-300' : ''}
-                                        />
-                                        {errors.gps_lng && <p className="text-xs text-red-500">{errors.gps_lng}</p>}
                                     </div>
                                 </div>
 

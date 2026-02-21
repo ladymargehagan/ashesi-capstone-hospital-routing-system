@@ -1,7 +1,7 @@
 import {
     User, Hospital, Patient, Referral, ReferralDetails, Specialist, Resource,
     Notification, PhysicianStats, HospitalStats, AdminStats,
-    HospitalRecommendation, Physician
+    Physician
 } from '@/types';
 
 // Mock Users (maps to USERS table)
@@ -464,59 +464,9 @@ export const mockPhysicianApplications: Physician[] = [
     }
 ];
 
-// Mock Hospital Recommendations (5 recommendations)
-export const mockRecommendations: HospitalRecommendation[] = [
-    {
-        hospital: mockHospitals[0], // City General
-        match_score: 95,
-        distance_km: 2.3,
-        estimated_wait: '< 2 hours',
-        available_beds: 42,
-        acceptance_rate: 92,
-        available_specialists: 3,
-        data_freshness: 'Fresh'
-    },
-    {
-        hospital: mockHospitals[4], // Korle Bu
-        match_score: 91,
-        distance_km: 5.8,
-        estimated_wait: '2-3 hours',
-        available_beds: 65,
-        acceptance_rate: 88,
-        available_specialists: 8,
-        data_freshness: 'Fresh'
-    },
-    {
-        hospital: mockHospitals[5], // Ridge Hospital
-        match_score: 87,
-        distance_km: 3.5,
-        estimated_wait: '1-2 hours',
-        available_beds: 28,
-        acceptance_rate: 85,
-        available_specialists: 4,
-        data_freshness: 'Fresh'
-    },
-    {
-        hospital: mockHospitals[6], // Lister Hospital
-        match_score: 82,
-        distance_km: 1.8,
-        estimated_wait: '< 1 hour',
-        available_beds: 15,
-        acceptance_rate: 90,
-        available_specialists: 3,
-        data_freshness: 'Stale'
-    },
-    {
-        hospital: mockHospitals[2], // St. Mary's
-        match_score: 76,
-        distance_km: 8.2,
-        estimated_wait: '3-4 hours',
-        available_beds: 38,
-        acceptance_rate: 80,
-        available_specialists: 2,
-        data_freshness: 'Stale'
-    }
-];
+// Note: Hospital recommendations now come from the live ReferralEngine API
+// via referral-api.ts → POST /api/recommend. The old mockRecommendations
+// array has been removed.
 
 // Helper function to get current user (simulated auth)
 export const getCurrentUser = (): User | null => {
