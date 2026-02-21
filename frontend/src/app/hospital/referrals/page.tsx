@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { StatsCard } from '@/components/stats-card';
@@ -17,13 +17,17 @@ export default function HospitalReferralsPage() {
     const [referrals, setReferrals] = useState<Referral[]>([]);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
+    const fetchReferrals = useCallback(() => {
         if (!user?.hospital_id) return;
         referralsApi.list({ hospital_id: user.hospital_id })
             .then((data) => setReferrals(data as unknown as Referral[]))
             .catch((err) => console.error('Failed to load referrals:', err))
             .finally(() => setLoading(false));
     }, [user?.hospital_id]);
+
+    useEffect(() => {
+        fetchReferrals();
+    }, [fetchReferrals]);
 
     const filteredReferrals = referrals.filter(referral => {
         const matchesSearch = !searchQuery ||
@@ -118,7 +122,7 @@ export default function HospitalReferralsPage() {
                     </div>
                 </CardHeader>
                 <CardContent>
-                    <HospitalReferralsTable referrals={filteredReferrals} />
+                    <HospitalReferralsTable referrals={filteredReferrals} onStatusChanged={fetchReferrals} />
                 </CardContent>
             </Card>
         </div>

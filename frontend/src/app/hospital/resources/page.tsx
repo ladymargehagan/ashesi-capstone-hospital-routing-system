@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { resourcesApi } from '@/lib/api-client';
 import { ResourcesTab } from '@/components/hospital/resources-tab';
@@ -12,13 +12,17 @@ export default function HospitalResourcesPage() {
     const [resources, setResources] = useState<Resource[]>([]);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
+    const fetchResources = useCallback(() => {
         if (!user?.hospital_id) return;
         resourcesApi.list(user.hospital_id)
             .then((data) => setResources(data as unknown as Resource[]))
             .catch((err) => console.error('Failed to load resources:', err))
             .finally(() => setLoading(false));
     }, [user?.hospital_id]);
+
+    useEffect(() => {
+        fetchResources();
+    }, [fetchResources]);
 
     if (loading) {
         return (
@@ -35,7 +39,7 @@ export default function HospitalResourcesPage() {
                 <p className="text-gray-500">Update bed availability and facility resources</p>
             </div>
 
-            <ResourcesTab resources={resources} />
+            <ResourcesTab resources={resources} onResourceUpdated={fetchResources} />
         </div>
     );
 }

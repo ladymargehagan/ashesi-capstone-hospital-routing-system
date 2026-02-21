@@ -7,17 +7,20 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Referral } from '@/types';
+import { referralsApi } from '@/lib/api-client';
 import { CheckCircle, XCircle } from 'lucide-react';
 
 interface ReferralDetailsModalProps {
     referral: Referral | null;
     open: boolean;
     onClose: () => void;
+    onStatusChanged?: () => void;
 }
 
-export function ReferralDetailsModal({ referral, open, onClose }: ReferralDetailsModalProps) {
+export function ReferralDetailsModal({ referral, open, onClose, onStatusChanged }: ReferralDetailsModalProps) {
     const [responseNotes, setResponseNotes] = useState('');
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     if (!referral) return null;
 
@@ -44,10 +47,22 @@ export function ReferralDetailsModal({ referral, open, onClose }: ReferralDetail
 
     const handleAction = async (action: 'accept' | 'reject') => {
         setLoading(true);
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        alert(`Referral ${action}ed successfully!`);
-        setLoading(false);
-        onClose();
+        setError(null);
+        try {
+            const status = action === 'accept' ? 'approved' : 'rejected';
+            await referralsApi.updateStatus(
+                referral.id,
+                status,
+                responseNotes || undefined,
+            );
+            setResponseNotes('');
+            onStatusChanged?.();
+            onClose();
+        } catch (err) {
+            setError(err instanceof Error ? err.message : `Failed to ${action} referral`);
+        } finally {
+            setLoading(false);
+        }
     };
 
     const isPending = referral.status === 'pending';
@@ -131,6 +146,10 @@ export function ReferralDetailsModal({ referral, open, onClose }: ReferralDetail
                                 rows={3}
                             />
                         </div>
+                    )}
+                    {/* Error */}
+                    {error && (
+                        <p className="text-sm text-red-600 bg-red-50 p-2 rounded">{error}</p>
                     )}
 
                     {/* Action Buttons */}

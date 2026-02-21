@@ -6,21 +6,24 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Resource } from '@/types';
-import { getResourceDisplayName } from '@/lib/api-client';
+import { getResourceDisplayName, resourcesApi } from '@/lib/api-client';
 
 interface ResourceUpdateModalProps {
     resource: Resource | null;
     open: boolean;
     onClose: () => void;
+    onSaved?: () => void;
 }
 
-export function ResourceUpdateModal({ resource, open, onClose }: ResourceUpdateModalProps) {
+export function ResourceUpdateModal({ resource, open, onClose, onSaved }: ResourceUpdateModalProps) {
     const [availableCount, setAvailableCount] = useState(0);
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         if (resource) {
             setAvailableCount(resource.available_count || 0);
+            setError(null);
         }
     }, [resource]);
 
@@ -31,11 +34,19 @@ export function ResourceUpdateModal({ resource, open, onClose }: ResourceUpdateM
 
     const handleSave = async () => {
         setLoading(true);
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        alert('Resource updated successfully!');
-        setLoading(false);
-        onClose();
+        setError(null);
+        try {
+            await resourcesApi.update(resource.id, {
+                available_count: availableCount,
+                is_available: availableCount > 0,
+            });
+            onSaved?.();
+            onClose();
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to update resource');
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -86,6 +97,10 @@ export function ResourceUpdateModal({ resource, open, onClose }: ResourceUpdateM
                                 Operator required{resource.operator_specialty ? `: ${resource.operator_specialty}` : ''}
                             </p>
                         </div>
+                    )}
+                    {/* Error */}
+                    {error && (
+                        <p className="text-sm text-red-600 bg-red-50 p-2 rounded">{error}</p>
                     )}
 
                     {/* Action Buttons */}

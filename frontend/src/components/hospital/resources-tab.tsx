@@ -10,9 +10,10 @@ import { getResourceDisplayName } from '@/lib/api-client';
 
 interface ResourcesTabProps {
     resources: Resource[];
+    onResourceUpdated?: () => void;
 }
 
-export function ResourcesTab({ resources }: ResourcesTabProps) {
+export function ResourcesTab({ resources, onResourceUpdated }: ResourcesTabProps) {
     const [selectedResource, setSelectedResource] = useState<Resource | null>(null);
 
     const formatDate = (dateStr: string) => {
@@ -114,6 +115,7 @@ export function ResourcesTab({ resources }: ResourcesTabProps) {
                 resource={selectedResource}
                 open={!!selectedResource}
                 onClose={() => setSelectedResource(null)}
+                onSaved={onResourceUpdated}
             />
         </>
     );

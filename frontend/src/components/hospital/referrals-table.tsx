@@ -17,9 +17,10 @@ import { ReferralDetailsModal } from '@/components/hospital/referral-details-mod
 
 interface HospitalReferralsTableProps {
     referrals: Referral[];
+    onStatusChanged?: () => void;
 }
 
-export function HospitalReferralsTable({ referrals }: HospitalReferralsTableProps) {
+export function HospitalReferralsTable({ referrals, onStatusChanged }: HospitalReferralsTableProps) {
     const [selectedReferral, setSelectedReferral] = useState<Referral | null>(null);
 
     const formatDate = (dateStr: string) => {
@@ -117,6 +118,7 @@ export function HospitalReferralsTable({ referrals }: HospitalReferralsTableProp
                 referral={selectedReferral}
                 open={!!selectedReferral}
                 onClose={() => setSelectedReferral(null)}
+                onStatusChanged={onStatusChanged}
             />
         </>
     );
