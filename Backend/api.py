@@ -13,6 +13,9 @@ from __future__ import annotations
 import json
 import os
 from datetime import datetime, timedelta
+from dotenv import load_dotenv
+
+load_dotenv()  # reads Backend/.env
 from typing import Optional
 
 from fastapi import FastAPI, HTTPException
@@ -41,7 +44,7 @@ from routes_specialists import router as specialists_router
 # App setup
 # ---------------------------------------------------------------------------
 
-GOOGLE_MAPS_API_KEY = os.getenv("GOOGLE_MAPS_API_KEY", "AIzaSyBjXsHqpAHUOBZaULcgJCsEPD7TVWkx79w")
+GOOGLE_MAPS_API_KEY = os.getenv("GOOGLE_MAPS_API_KEY", "")
 
 app = FastAPI(
     title="HRS Referral Engine API",
