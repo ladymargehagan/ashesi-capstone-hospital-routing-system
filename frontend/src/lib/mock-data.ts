@@ -565,3 +565,57 @@ export const getResourceDisplayName = (type: string): string => {
 export const getActiveHospitals = (): Hospital[] => {
     return mockHospitals.filter(h => h.status === 'active');
 };
+
+// Register a new hospital + admin user (both start as 'pending')
+export const registerHospital = (data: {
+    hospital_name: string;
+    license_number: string;
+    address: string;
+    tier: Hospital['tier'];
+    type: Hospital['type'];
+    ownership: Hospital['ownership'];
+    operating_hours: string;
+    contact_phone: string;
+    gps_lat: string;
+    gps_lng: string;
+    admin_full_name: string;
+    admin_email: string;
+    admin_phone: string;
+}): { hospital: Hospital; user: User } => {
+    const hospitalId = `hosp-${Date.now()}`;
+    const userId = `user-${Date.now()}`;
+    const now = new Date().toISOString();
+
+    const newHospital: Hospital = {
+        id: hospitalId,
+        name: data.hospital_name,
+        license_number: data.license_number,
+        address: data.address,
+        tier: data.tier,
+        type: data.type,
+        ownership: data.ownership,
+        operating_hours: data.operating_hours || undefined,
+        contact_phone: data.contact_phone || undefined,
+        gps_coordinates: data.gps_lat && data.gps_lng
+            ? { lat: parseFloat(data.gps_lat), lng: parseFloat(data.gps_lng) }
+            : undefined,
+        status: 'pending',
+        created_at: now,
+    };
+
+    const newUser: User = {
+        id: userId,
+        email: data.admin_email,
+        full_name: data.admin_full_name,
+        role: 'hospital_admin',
+        hospital_id: hospitalId,
+        phone_number: data.admin_phone || undefined,
+        status: 'pending',
+        created_at: now,
+    };
+
+    mockHospitals.push(newHospital);
+    mockUsers.push(newUser);
+
+    return { hospital: newHospital, user: newUser };
+};

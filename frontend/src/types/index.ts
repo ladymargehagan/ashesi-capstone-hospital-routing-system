@@ -234,3 +234,24 @@ export interface AdminStats {
     active_hospitals: number;
     total_hospitals: number;
 }
+
+// Hospital registration form data
+export interface HospitalRegistrationData {
+    // Hospital fields (→ HOSPITALS table)
+    hospital_name: string;
+    license_number: string;
+    address: string;
+    tier: HospitalTier;
+    type: HospitalType;
+    ownership: HospitalOwnership;
+    operating_hours: string;
+    contact_phone: string;
+    gps_lat: string;
+    gps_lng: string;
+    // Admin account fields (→ USERS table)
+    admin_full_name: string;
+    admin_email: string;
+    admin_phone: string;
+    admin_password: string;
+    admin_password_confirm: string;
+}

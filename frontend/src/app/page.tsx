@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,9 +24,9 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const success = await login(email, password);
+      const result = await login(email, password);
 
-      if (success) {
+      if (result.success) {
         // Redirect based on role
         if (email === 'admin@healthref.com') {
           router.push('/admin');
@@ -34,6 +35,10 @@ export default function LoginPage() {
         } else {
           router.push('/physician');
         }
+      } else if (result.status === 'pending') {
+        setError('Your application is currently under review. You will be notified once it has been approved.');
+      } else if (result.status === 'rejected') {
+        setError('Your application has been rejected. Please contact support for more information.');
       } else {
         setError('Invalid email or password');
       }
@@ -82,7 +87,14 @@ export default function LoginPage() {
             </div>
 
             {error && (
-              <p className="text-sm text-red-600 text-center">{error}</p>
+              <div className={`text-sm text-center p-3 rounded-lg ${error.includes('under review')
+                  ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                  : error.includes('rejected')
+                    ? 'bg-red-50 text-red-700 border border-red-200'
+                    : 'text-red-600'
+                }`}>
+                {error}
+              </div>
             )}
 
             <Button type="submit" className="w-full" disabled={loading}>
@@ -97,8 +109,19 @@ export default function LoginPage() {
             </Button>
           </form>
 
+          {/* Register Hospital Link */}
+          <div className="mt-6 pt-4 border-t text-center">
+            <p className="text-sm text-gray-500 mb-3">Want to onboard your hospital?</p>
+            <Link href="/register">
+              <Button variant="outline" className="w-full">
+                <Building2 className="h-4 w-4 mr-2" />
+                Register Hospital
+              </Button>
+            </Link>
+          </div>
+
           {/* Demo credentials hint - for development */}
-          <div className="mt-6 pt-4 border-t">
+          <div className="mt-4 pt-4 border-t">
             <p className="text-xs text-gray-500 text-center mb-3">Demo Accounts:</p>
             <div className="space-y-1 text-xs text-gray-600">
               <p><span className="font-medium">Admin:</span> admin@healthref.com / admin123</p>

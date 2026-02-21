@@ -4,10 +4,15 @@ import { useState, useEffect, createContext, useContext } from 'react';
 import { User } from '@/types';
 import { getCurrentUser, setCurrentUser as setStoredUser, findUserByEmail } from '@/lib/mock-data';
 
+interface LoginResult {
+    success: boolean;
+    status?: 'active' | 'pending' | 'rejected';
+}
+
 interface AuthContextType {
     user: User | null;
     loading: boolean;
-    login: (email: string, password: string) => Promise<boolean>;
+    login: (email: string, password: string) => Promise<LoginResult>;
     logout: () => void;
 }
 
@@ -26,18 +31,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setLoading(false);
     }, []);
 
-    const login = async (email: string, password: string): Promise<boolean> => {
-        // Simulated authentication - in production, this would call an API
+    const login = async (email: string, password: string): Promise<LoginResult> => {
         const foundUser = findUserByEmail(email);
 
-        // For demo purposes, accept any password
-        if (foundUser) {
-            setUser(foundUser);
-            setStoredUser(foundUser);
-            return true;
+        if (!foundUser) {
+            return { success: false };
         }
 
-        return false;
+        // Check user status before allowing login
+        if (foundUser.status === 'pending') {
+            return { success: false, status: 'pending' };
+        }
+
+        if (foundUser.status === 'rejected') {
+            return { success: false, status: 'rejected' };
+        }
+
+        // Active user — allow login
+        setUser(foundUser);
+        setStoredUser(foundUser);
+        return { success: true, status: 'active' };
     };
 
     const logout = () => {
