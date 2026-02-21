@@ -7,7 +7,7 @@ import { StatsCard } from '@/components/stats-card';
 import { HospitalsTable } from '@/components/admin/hospitals-table';
 import { PhysiciansTable } from '@/components/admin/physicians-table';
 import { mockAdminStats, mockHospitals, mockPhysicianApplications } from '@/lib/mock-data';
-import { Building2, UserCheck, CheckCircle, Users, Search } from 'lucide-react';
+import { Building2, Users, CheckCircle, Clock, Search } from 'lucide-react';
 
 export default function AdminDashboard() {
     const [activeTab, setActiveTab] = useState('hospitals');
@@ -16,7 +16,6 @@ export default function AdminDashboard() {
 
     // Filter hospitals by status
     const pendingHospitals = mockHospitals.filter(h => h.status === 'Pending');
-    const approvedHospitals = mockHospitals.filter(h => h.status === 'Approved');
 
     // Filter based on search
     const filteredHospitals = mockHospitals.filter(h =>
@@ -34,7 +33,7 @@ export default function AdminDashboard() {
             {/* Header */}
             <div className="mb-6">
                 <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
-                <p className="text-gray-500">Manage hospital and physician applications</p>
+                <p className="text-gray-500">Manage hospital applications and view system overview</p>
             </div>
 
             {/* Stats Cards */}
@@ -43,36 +42,36 @@ export default function AdminDashboard() {
                     title="Pending Hospitals"
                     value={stats.pending_hospitals}
                     description="Awaiting approval"
-                    icon={Building2}
-                    iconColor="text-amber-600"
-                />
-                <StatsCard
-                    title="Pending Physicians"
-                    value={stats.pending_physicians}
-                    description="Awaiting verification"
-                    icon={Users}
+                    icon={Clock}
                     iconColor="text-amber-600"
                 />
                 <StatsCard
                     title="Active Hospitals"
                     value={stats.active_hospitals}
-                    description="Currently active"
+                    description="Currently approved"
                     icon={CheckCircle}
                     iconColor="text-green-600"
                 />
                 <StatsCard
-                    title="Verified Physicians"
-                    value={stats.verified_physicians}
-                    description="Currently active"
-                    icon={UserCheck}
-                    iconColor="text-green-600"
+                    title="Total Hospitals"
+                    value={stats.total_hospitals}
+                    description="All registered"
+                    icon={Building2}
+                    iconColor="text-blue-600"
+                />
+                <StatsCard
+                    title="Total Physicians"
+                    value={stats.total_physicians}
+                    description="Across all hospitals"
+                    icon={Users}
+                    iconColor="text-purple-600"
                 />
             </div>
 
-            {/* Applications Section */}
+            {/* Content Section */}
             <div className="bg-white rounded-lg border p-6">
-                <h2 className="text-lg font-semibold mb-1">Applications</h2>
-                <p className="text-sm text-gray-500 mb-4">Review and approve hospital and physician applications</p>
+                <h2 className="text-lg font-semibold mb-1">Overview</h2>
+                <p className="text-sm text-gray-500 mb-4">Review hospital applications and physician directory</p>
 
                 {/* Tabs with Search */}
                 <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -89,7 +88,7 @@ export default function AdminDashboard() {
                         <div className="relative w-64">
                             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                             <Input
-                                placeholder="Search applications..."
+                                placeholder="Search..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 className="pl-9"

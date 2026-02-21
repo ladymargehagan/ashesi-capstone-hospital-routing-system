@@ -168,7 +168,7 @@ export interface HospitalStats {
 
 export interface AdminStats {
     pending_hospitals: number;
-    pending_physicians: number;
+    total_physicians: number;
     active_hospitals: number;
-    verified_physicians: number;
+    total_hospitals: number;
 }

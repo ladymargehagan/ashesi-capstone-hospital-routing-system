@@ -269,9 +269,9 @@ export const mockHospitalStats: HospitalStats = {
 
 export const mockAdminStats: AdminStats = {
     pending_hospitals: 2,
-    pending_physicians: 2,
-    active_hospitals: 1,
-    verified_physicians: 1
+    total_physicians: 3,
+    active_hospitals: 2,
+    total_hospitals: 4
 };
 
 // Mock Physician Applications
