@@ -164,40 +164,45 @@ def get_referral(referral_id: int):
 @router.post("")
 def create_referral(req: CreateReferral):
     """Create a new referral + referral details."""
-    with db_cursor() as cur:
-        cur.execute(
-            """
-            INSERT INTO referrals
-                (patient_id, referring_physician_id, referring_hospital_id,
-                 receiving_hospital_id, severity, stability, emergency_type,
-                 estimated_arrival_minutes, status)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 'pending')
-            RETURNING referral_id
-            """,
-            (req.patient_id, req.referring_physician_id, req.referring_hospital_id,
-             req.receiving_hospital_id, req.severity, req.stability,
-             req.emergency_type, req.estimated_arrival_minutes),
-        )
-        referral_id = cur.fetchone()["referral_id"]
+    import traceback
+    try:
+        with db_cursor() as cur:
+            cur.execute(
+                """
+                INSERT INTO referrals
+                    (patient_id, referring_physician_id, referring_hospital_id,
+                     receiving_hospital_id, severity, stability, emergency_type,
+                     estimated_arrival_minutes, status)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 'pending')
+                RETURNING referral_id
+                """,
+                (req.patient_id, req.referring_physician_id, req.referring_hospital_id,
+                 req.receiving_hospital_id, req.severity, req.stability,
+                 req.emergency_type, req.estimated_arrival_minutes),
+            )
+            referral_id = cur.fetchone()["referral_id"]
 
-        cur.execute(
-            """
-            INSERT INTO referral_details
-                (referral_id, presenting_complaint, clinical_history,
-                 initial_diagnosis, current_condition, clinical_summary,
-                 examination_findings, working_diagnosis, reason_for_referral,
-                 investigations_done, treatment_given, additional_notes,
-                 required_specialist, required_facility)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            """,
-            (referral_id, req.presenting_complaint, req.clinical_history,
-             req.initial_diagnosis, req.current_condition, req.clinical_summary,
-             req.examination_findings, req.working_diagnosis, req.reason_for_referral,
-             req.investigations_done, req.treatment_given, req.additional_notes,
-             req.required_specialist, req.required_facility),
-        )
+            cur.execute(
+                """
+                INSERT INTO referral_details
+                    (referral_id, presenting_complaint, clinical_history,
+                     initial_diagnosis, current_condition, clinical_summary,
+                     examination_findings, working_diagnosis, reason_for_referral,
+                     investigations_done, treatment_given, additional_notes,
+                     required_specialist, required_facility)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """,
+                (referral_id, req.presenting_complaint, req.clinical_history,
+                 req.initial_diagnosis, req.current_condition, req.clinical_summary,
+                 req.examination_findings, req.working_diagnosis, req.reason_for_referral,
+                 req.investigations_done, req.treatment_given, req.additional_notes,
+                 req.required_specialist, req.required_facility),
+            )
 
-    return {"success": True, "referral_id": str(referral_id)}
+        return {"success": True, "referral_id": str(referral_id)}
+    except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.put("/{referral_id}/status")
