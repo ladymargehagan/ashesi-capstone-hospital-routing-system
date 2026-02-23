@@ -67,7 +67,8 @@ function ReferralFormContent() {
 
     const filteredHospitals = useMemo(() => {
         // Exclude the physician's own hospital (can't refer to yourself)
-        const eligible = activeHospitals.filter(h => h.id !== user?.hospital_id);
+        const myHospitalId = String(user?.hospital_id || '');
+        const eligible = activeHospitals.filter(h => String(h.id) !== myHospitalId);
         if (!hospitalSearch) return eligible;
         return eligible.filter(h =>
             h.name.toLowerCase().includes(hospitalSearch.toLowerCase()) ||
@@ -214,6 +215,11 @@ function ReferralFormContent() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
+        if (String(formData.receiving_hospital_id) === String(user?.hospital_id)) {
+            alert('You cannot refer a patient to your own hospital. Please select a different receiving hospital.');
+            setLoading(false);
+            return;
+        }
         try {
             const payload = {
                 patient_id: formData.patient_id,
