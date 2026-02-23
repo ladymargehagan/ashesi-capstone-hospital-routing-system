@@ -66,12 +66,14 @@ function ReferralFormContent() {
     }, []);
 
     const filteredHospitals = useMemo(() => {
-        if (!hospitalSearch) return activeHospitals;
-        return activeHospitals.filter(h =>
+        // Exclude the physician's own hospital (can't refer to yourself)
+        const eligible = activeHospitals.filter(h => h.id !== user?.hospital_id);
+        if (!hospitalSearch) return eligible;
+        return eligible.filter(h =>
             h.name.toLowerCase().includes(hospitalSearch.toLowerCase()) ||
             h.address.toLowerCase().includes(hospitalSearch.toLowerCase())
         );
-    }, [hospitalSearch, activeHospitals]);
+    }, [hospitalSearch, activeHospitals, user?.hospital_id]);
 
     // Close dropdown on outside click
     useEffect(() => {
