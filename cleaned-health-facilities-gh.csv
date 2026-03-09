@@ -1,0 +1,505 @@
+,Region,District,FacilityName,Type,Town,Ownership,Latitude,Longitude,Country
+1,Greater Accra,Accra Metropolitan,Arakan Maternity Home,Maternity Home,Burma Camp,Private,5.59714,-0.15088,Ghana
+2,Greater Accra,Accra Metropolitan,Arakan Medical Centre,Clinic,Burma Camp,Private,5.59714,-0.15088,Ghana
+3,Greater Accra,Accra Metropolitan,1st Foundation Clinic,Clinic,Dansoman (Control market),Private,5.54182,-0.2648,Ghana
+4,Greater Accra,Accra Metropolitan,37 Military Hospital,Hospital,37,Private,5.58704,-0.18391,Ghana
+5,Greater Accra,Accra Metropolitan,441 Welfare Association Clinic,Clinic,Nima,Private,5.58446,-0.19419,Ghana
+6,Greater Accra,Accra Metropolitan,Ablekuma Sub Metro Health Directorate,District Health Centre,Mamprobi,Private,5.53851,-0.24517,Ghana
+7,Greater Accra,Accra Metropolitan,Abodwe Clinic (Star of the sea clinic),Clinic,Mamprobi,Private,5.53469,-0.24216,Ghana
+8,Greater Accra,Ga East,Abokobi Health Centre,Health Centre,Abokobi,Government,5.7345,-0.20296,Ghana
+9,Greater Accra,Accra Metropolitan,Abora Clinic,Clinic,Asylum Down,Private,5.57034,-0.20905,Ghana
+10,Greater Accra,Tema Metropolitan,Abotare Clinic (Alternative Medical Centre),Clinic,Betlehem (near Michael Camp),Private,5.70749,-0.01335,Ghana
+11,Greater Accra,Accra Metropolitan,Accra Metro Health Directorate,District Health Centre,Adabraka,Government,5.56223,-0.20376,Ghana
+12,Greater Accra,Accra Metropolitan,Accra Psychiatric Hospital,Hospital,Adabraka,Private,5.56272,-0.20528,Ghana
+13,Greater Accra,Accra Metropolitan,Acheampong Memorial Clinic,Clinic,La,Private,5.56187,-0.17248,Ghana
+14,Greater Accra,Ga East,Achimota Hospital,Hospital,Atomic,Government,5.62922,-0.21476,Ghana
+15,Greater Accra,Dangme East,Ada Health Centre,Health Centre,Ada,Private,5.78477,0.62719,Ghana
+16,Greater Accra,Accra Metropolitan,Adabraka Polyclinic,Polyclinic,Adabraka,Private,5.56129,-0.20477,Ghana
+17,Greater Accra,Accra Metropolitan,Adehye Clinic,Clinic,Okaishie,Private,5.54896,-0.20779,Ghana
+18,Greater Accra,Tema Metropolitan,Adenta Clinic,Clinic,Adenta Estate,Private,5.70617,-0.16787,Ghana
+19,Greater Accra,Accra Metropolitan,Adjabeng Leprosy Clinic,Clinic,Adjabeng,Private,5.55234,-0.2115,Ghana
+20,Greater Accra,Ga West,Advent Clinic,Clinic,Taifa,Private,5.65598,-0.25194,Ghana
+21,Greater Accra,Accra Metropolitan,Adwoa Boatema Memorial Clinic,Clinic,Mamprobi (near mytrs of Uganda),Private,5.53295,-0.23737,Ghana
+22,Greater Accra,Tema Metropolitan,Afenyo Memorial Hospital,Hospital,Ashaiman,Private,5.69028,-0.03417,Ghana
+23,Greater Accra,Dangme West,Afienya Community Clinic,Clinic,Afienya,Private,5.80116,0.00616,Ghana
+24,Greater Accra,Dangme West,Agomeda Community Clinic,Clinic,Agomeda,Private,5.98033,0.0099,Ghana
+25,Greater Accra,Accra Metropolitan,Airport Clinic Ltd,Clinic,Airport,Private,5.60399,-0.1722,Ghana
+26,Greater Accra,Accra Metropolitan,Akai House Clinic,Clinic,Roman Ridge (near Jack and Jill),Private,5.60219,-0.19218,Ghana
+27,Greater Accra,Accra Metropolitan,Akai House Clinic,Clinic,Osu,Private,5.56633,-0.18301,Ghana
+28,Greater Accra,Ga East,Akyama Clinic,Clinic,Taifa,Private,5.6597,-0.25092,Ghana
+29,Greater Accra,Accra Metropolitan,Alajo Clinic,Clinic,Alajo,Private,5.5978,-0.21331,Ghana
+30,Greater Accra,Accra Metropolitan,Al-ayar Clinic & Maternity Home,Hospital,Akweteman,Private,5.61371,-0.24046,Ghana
+31,Greater Accra,Tema Metropolitan,Alberto Clinic,Clinic,Tema Community 11,Private,5.6655,-0.02545,Ghana
+32,Greater Accra,Accra Metropolitan,Alfred Memorial Clinic,Clinic,Abossey Okai,Private,5.56402,-0.23544,Ghana
+33,Greater Accra,Tema Metropolitan,Alpha Dental Clinic,Clinic,Tema Community 1,Private,5.64579,-0.00927,Ghana
+34,Greater Accra,Ga East,Alpha Medical centre,Health Centre,Madina,NGO,5.66423,-0.15746,Ghana
+35,Greater Accra,Tema Metropolitan,Amaganaa Clinic,Clinic,Adenta Estate,Private,5.71054,-0.16063,Ghana
+36,Greater Accra,Accra Metropolitan,Amanda Maternity Home & Clinic (formerly Abaya Clinic & Maternity Home),Maternity Home,East Legon,Private,5.6396,-0.16437,Ghana
+37,Greater Accra,Ga East,Amasaman Health Centre,Health Centre,Amasaman,Private,5.70185,-0.29998,Ghana
+38,Greater Accra,Accra Metropolitan,Amazing Grace Clinic,Clinic,Kaneshie,Private,5.56524,-0.23646,Ghana
+39,Greater Accra,Ga West,Amoah Memorial Hospital,Hospital,Awoshie (last stop),Private,5.59055,-0.28732,Ghana
+40,Greater Accra,Ga West,Ananda Marga Primary Health Clinic,Clinic,Domiabra,NGO,5.61206,-0.41456,Ghana
+41,Greater Accra,Ga West,Aneeja Clinic,Clinic,Trantra Hill,Private,5.64073,-0.26306,Ghana
+42,Greater Accra,Dangme East,Anyamam Clinic,Clinic,Anyamam,Private,5.79134,0.36983,Ghana
+43,Greater Accra,Accra Metropolitan,Apaak Traditional Clinic,Clinic,Asylum Down,Private,5.56969,-0.20942,Ghana
+44,Greater Accra,Tema Metropolitan,Apenyo Memorial Hospital,Hospital,Ashaiman,Private,5.69028,-0.03417,Ghana
+45,Greater Accra,Accra Metropolitan,Apex Medical Centre,Clinic,Awudome,Private,5.56908,-0.22895,Ghana
+46,Greater Accra,Accra Metropolitan,Asamoah Clinic,Hospital,Abelemkpe,Private,5.61148,-0.22208,Ghana
+47,Greater Accra,Accra Metropolitan,Asare Odei Hospital,Hospital,East Legon,Private,5.64073,-0.16868,Ghana
+48,Greater Accra,Tema Metropolitan,Ashaiman Health Centre,Health Centre,Ashaiman,Private,5.68576,-0.03945,Ghana
+49,Greater Accra,Tema Metropolitan,Ashalebotwe Community Clinic,Clinic,Ashalebotwe,Private,5.68421,-0.13418,Ghana
+50,Greater Accra,Tema Metropolitan,Ashiyie Community Clinic,Clinic,Adenta,Private,5.74555,-0.1547,Ghana
+51,Greater Accra,Accra Metropolitan,Asomdwehene Maternity Home,Maternity Home,Odorkor,Private,5.58463,-0.27062,Ghana
+52,Greater Accra,Accra Metropolitan,Asylum Down Dental Clinic (near Abora Clinic),Clinic,Asylum Down,Private,5.57034,-0.20905,Ghana
+53,Greater Accra,Accra Metropolitan,Atta Quarshie Morton Memorial Hospital,Clinic,Adabraka,Private,5.5619,-0.21426,Ghana
+54,Greater Accra,Accra Metropolitan,Aviation Road Clinic,Clinic,Airport residential area,Private,5.61724,-0.17852,Ghana
+55,Greater Accra,Accra Metropolitan,Ayawaso Sub Metro Health Directorate,District Health Centre,Maamobi,Private,5.59134,-0.19931,Ghana
+56,Greater Accra,Accra Metropolitan,Baeta Clinic,Clinic,Dzorwulu,Private,5.61504,-0.19988,Ghana
+57,Greater Accra,Accra Metropolitan,Bank of Ghana Clinic,Clinic,Ridge,Government,5.56584,-0.19736,Ghana
+58,Greater Accra,Accra Metropolitan,Bart-Plange Memorial Clinic,Hospital,Agbogbloshie,Private,5.55005,-0.22199,Ghana
+59,Greater Accra,Accra Metropolitan,Beach Community Clinic (Ga Mantse Community Clinic),Clinic,James Town,Government,5.53312,-0.21164,Ghana
+60,Greater Accra,Accra Metropolitan,Beijing Chinese Clinic,Clinic,Osu,Private,5.55834,-0.17991,Ghana
+61,Greater Accra,Tema Metropolitan,Bengali Hospital,Hospital,Tema Community 11,Private,5.6681,-0.02051,Ghana
+62,Greater Accra,Accra Metropolitan,Bennette Memorial Clinic,Hospital,New Town,Private,5.58418,-0.20844,Ghana
+63,Greater Accra,Ga East,Bennette Memorial Clinic,Hospital,Madina,Private,5.6667,-0.15996,Ghana
+64,Greater Accra,Ga West,Bessie Memorial Health centre,Clinic,Ofankor,Private,5.64363,-0.26233,Ghana
+65,Greater Accra,Tema Metropolitan,Bethel Hospital,Clinic,Tema Community 9,Private,5.67201,-0.01973,Ghana
+66,Greater Accra,Accra Metropolitan,Biomedical Department,Hospital,Korle-bu,Private,5.53599,-0.22959,Ghana
+67,Greater Accra,Tema Metropolitan,Bon Ami Eye Clinic,Clinic,Adenta Estate,Private,5.71057,-0.16687,Ghana
+68,Greater Accra,Dangme East,Bornikope Health Centre,Health Centre,Bornikope,Government,5.84672,0.40386,Ghana
+69,Greater Accra,Accra Metropolitan,Bostal Clinic,Clinic,Bostal Institution,Private,5.60807,-0.19085,Ghana
+70,Greater Accra,Ga West,Brazza Maternity Home & Clinic,Maternity Home,North Kwashieman,Private,5.59436,-0.2707,Ghana
+71,Greater Accra,Tema Metropolitan,B's Maternity Home,Maternity Home,Tema Community 8,Private,5.66848,-0.01108,Ghana
+72,Greater Accra,Tema Metropolitan,Bukom Ellphkwei Hospital,Hospital,Ashaiman,Private,5.69263,-0.02201,Ghana
+73,Greater Accra,Accra Metropolitan,Castle Drive Clinic,Clinic,Osu,Private,5.54853,-0.18691,Ghana
+74,Greater Accra,Accra Metropolitan,Cathedral Clinic & Laboratory,Clinic,High Street,Private,5.53963,-0.2077,Ghana
+75,Greater Accra,Accra Metropolitan,Cedar Clinic,Clinic,Abelemkpe,Private,5.60708,-0.21688,Ghana
+76,Greater Accra,Accra Metropolitan,Central Achimota Clinic,Clinic,Achimota,Private,5.62316,-0.23211,Ghana
+77,Greater Accra,Tema Metropolitan,Central Clinic,Clinic,Tema Community 1,Private,5.64632,-3.00E-05,Ghana
+78,Greater Accra,Accra Metropolitan,Clecom Memorial Specialist Hospital,Hospital,Dzorwulu,Private,5.61495,-0.19474,Ghana
+79,Greater Accra,Accra Metropolitan,Club Road Clinic,Clinic,Opera Square,Private,5.54472,-0.20639,Ghana
+80,Greater Accra,Accra Metropolitan,Beth's Clinic,Clinic,Lartebiokorshie (near Nkruma flats),Private,5.55045,-0.23382,Ghana
+81,Greater Accra,Tema Metropolitan,Caiquo Hospital,Hospital,Tema Community 10,Private,5.65332,-0.02255,Ghana
+82,Greater Accra,Tema Metropolitan,Calvary Cross Clinic,Clinic,Tema Community 5,Private,5.64277,-0.01896,Ghana
+83,Greater Accra,Accra Metropolitan,Central Dansoman Clinic,Clinic,Dansoman,Private,5.5521,-0.26226,Ghana
+84,Greater Accra,Accra Metropolitan,Central Medical Lab,Clinic,Lartebiokoshie (k'shie mamprobi rd),Private,5.54859,-0.2403,Ghana
+85,Greater Accra,Accra Metropolitan,Christ The King Mat Home & Clinic,Maternity Home,Bubuashie (Atico last stop),Private,5.57994,-0.24725,Ghana
+86,Greater Accra,Accra Metropolitan,Christian Medical Centre,Hospital,Nungua,NGO,5.60656,-0.07769,Ghana
+87,Greater Accra,Accra Metropolitan,Cocoa Clinic,Hospital,North Kaneshie,Government,5.57172,-0.2357,Ghana
+88,Greater Accra,Accra Metropolitan,Community clinic,Clinic,Abossey Okai,Private,5.57172,-0.2357,Ghana
+89,Greater Accra,Tema Metropolitan,Binney Medical Centre,Hospital,Tema Community 2,Private,5.63344,-0.00936,Ghana
+90,Greater Accra,Accra Metropolitan,Blessings Clinic,Hospital,Tesano,Private,5.59917,-0.2325,Ghana
+91,Greater Accra,Ga West,CDH Weija Clinic,Clinic,Marcathy Hill Junction,Private,5.5656,-0.28957,Ghana
+92,Greater Accra,Tema Metropolitan,Crystal Eye Clinic,Clinic,Adenta Estate (Housing Down),Private,5.70647,-0.14702,Ghana
+93,Greater Accra,Tema Metropolitan,Cocoa Processing Clinic,Clinic,Tema Heavy Industrial Town,Government,5.65744,0.00246,Ghana
+94,Greater Accra,Accra Metropolitan,Community Clinic,Clinic,Abossey Okai (near Mosque),Private,5.55828,-0.23133,Ghana
+95,Greater Accra,Accra Metropolitan,Community Clinic & Maternity Home,Maternity Home,Glefe (Behing the largoon),Private,5.51994,-0.27101,Ghana
+96,Greater Accra,Tema Metropolitan,Crocodile Matchette Clinic,Clinic,Tema,Government,5.66642,-0.00032,Ghana
+97,Greater Accra,Ga East,Danfa Health Centre,Health Centre,Danfa,Private,5.78942,-0.15948,Ghana
+98,Greater Accra,Dangme East,Dangme East District Health Directorate,District Health Centre,Ada,Government,5.78469,0.62763,Ghana
+99,Greater Accra,Dangme East,Dangme East District Hospital,District Health Centre,Ada,Private,5.88888,0.56949,Ghana
+100,Greater Accra,Dangme West,Dangme West District Health Directorate,District Health Centre,Dodowa,Private,5.8855,-0.09255,Ghana
+101,Greater Accra,Accra Metropolitan,Dansoman Health Centre,Clinic,Dansoman,Government,5.56125,-0.26,Ghana
+102,Greater Accra,Tema Metropolitan,Darben Clinic,Hospital,Ashaiman,Private,5.6831,0.03603,Ghana
+103,Greater Accra,Dangme West,Dawhenya  Clinic,Clinic,Dawhenya,Private,5.76708,0.05434,Ghana
+104,Greater Accra,Tema Metropolitan,Dede Oforiwaa Tetteh Clinic,Clinic,Kpone Bawaleshi,Private,5.85596,-0.10975,Ghana
+105,Greater Accra,Accra Metropolitan,Delta Clinic (Korle-bu behind mobil filing station),Clinic,Korle-bu,Private,5.53472,-0.22899,Ghana
+106,Greater Accra,Tema Metropolitan,Dental Care Clinic,Clinic,Sakumano Estate,Private,5.62397,-0.05997,Ghana
+107,Greater Accra,Tema Metropolitan,Dental Clinic,Clinic,Tema Community 8,Private,5.66877,-0.01302,Ghana
+108,Greater Accra,Accra Metropolitan,Derban Clinic,Clinic,Dzorwulu,Private,5.61413,-0.21226,Ghana
+109,Greater Accra,Ga West,Deseret Hospital,Hospital,Antiaku (near north kwashieman),Private,5.60821,-0.27876,Ghana
+110,Greater Accra,Accra Metropolitan,Dr Eustace Akwei Memorial Clinic,Clinic,Lartebiokorshie,Private,5.54738,-0.24094,Ghana
+111,Greater Accra,Accra Metropolitan,Dua Clinic & Lab,Clinic,Asylum Down,Private,5.57207,-0.20247,Ghana
+112,Greater Accra,Accra Metropolitan,Duala Medical Centre,Clinic,Burma Camp,Private,5.58805,-0.15001,Ghana
+113,Greater Accra,Accra Metropolitan,East Legon Clinic,Hospital,East Legon,Private,5.63002,-0.17534,Ghana
+114,Greater Accra,Accra Metropolitan,Eden Specialist Hospital,Hospital,North Kaneshie,Private,5.5803,-0.22805,Ghana
+115,Greater Accra,Ga West,Ediths Maternity Home,Maternity Home,Medie,Private,5.75781,-0.02641,Ghana
+116,Greater Accra,Accra Metropolitan,Efan Victory Clinic,Clinic,Pig Farm (lorry station),Private,5.59848,-0.19858,Ghana
+117,Greater Accra,Tema Metropolitan,Einen Medical Centre,Health Centre,Tema Community 2,Private,5.63344,-0.00946,Ghana
+118,Greater Accra,Accra Metropolitan,El-Rapha Clinic,Hospital,Mataheko,Private,5.56096,-0.24662,Ghana
+119,Greater Accra,Ga West,Eme's Maternity Home & Clinic,Maternity Home,North Kwashieman,Private,5.60656,-0.27205,Ghana
+120,Greater Accra,Accra Metropolitan,Emmanuel Eye Clinic,Clinic,East Legon,Private,5.6302,-0.17472,Ghana
+121,Greater Accra,Accra Metropolitan,Emmanuel Maternity Home & Clinic,Maternity Home,Awoshie,Private,5.58564,-0.27895,Ghana
+122,Greater Accra,Accra Metropolitan,Esidem Medical Centre,Clinic,Maamobi (near market),Private,5.59487,-0.19429,Ghana
+123,Greater Accra,Tema Metropolitan,Estate Clinic & Lab,Clinic,Lashibi Community 19,Private,5.65645,-0.06177,Ghana
+124,Greater Accra,Tema Metropolitan,Estate Medical Centre,Clinic,Adenta Estate,Private,5.70699,-0.16719,Ghana
+125,Greater Accra,Accra Metropolitan,Eye Gye Nyame Clinic,Hospital,Nima (Mallam atta gutter. market road),Private,5.57916,-0.20364,Ghana
+126,Greater Accra,Accra Metropolitan,Fahd Al-Marzouq Clinic,Clinic,Nima,NGO,5.58522,-0.19976,Ghana
+127,Greater Accra,Accra Metropolitan,Fair Lady Clinic,Clinic,East Legon (towards America house -Social X'tian centre),Private,5.63677,-0.14999,Ghana
+128,Greater Accra,Accra Metropolitan,Faith Evangelical Hospital,Hospital,Bubuashie,Private,5.57727,-0.23709,Ghana
+129,Greater Accra,Tema Metropolitan,Faith Medical Centre,Clinic,Kpone,Private,5.69593,0.04715,Ghana
+130,Greater Accra,Accra Metropolitan,Family Health Hospital,Hospital,Korle-bu (before mortuary turn right to korlebu flats),Private,5.54547,-0.22981,Ghana
+131,Greater Accra,Ga West,Fausty Maternity Home,Maternity Home,Horbor,Private,5.68927,-0.42634,Ghana
+132,Greater Accra,Accra Metropolitan,Felidan Maternity Home,Maternity Home,Chemuna (Chorkor),Private,5.52571,-0.25049,Ghana
+133,Greater Accra,Tema Metropolitan,Fiden Medical Centre (Formerly Eillen's Maternity Home),Clinic,Tema Community 2,Private,5.63682,-0.01062,Ghana
+134,Greater Accra,Dangme west,Dodowa Health Centre,Health Centre,Dodowa,Government,5.88556,-0.09225,Ghana
+135,Greater Accra,Ga East,Doku Memorial Clinic,Hospital,Madina,Private,5.68042,-0.16565,Ghana
+136,Greater Accra,Ga West,Dome Sampah-mang CHPS,CHPS,Dome Sampah-mang,Private,5.71916,-0.36576,Ghana
+137,Greater Accra,Dangme West,Ebenezer Clinic,Clinic,Lower Prampram,Private,5.70932,0.11292,Ghana
+138,Greater Accra,Accra Metropolitan,Egon German Clinic,Hospital,Abelemkpe,Private,5.61261,-0.21417,Ghana
+139,Greater Accra,Accra Metropolitan,El Shadai Mat Home & Clinic,Maternity Home,Nyamekye (Darkuman),Private,5.59793,-0.25534,Ghana
+140,Greater Accra,Accra Metropolitan,Emmanuel Clinic (ENT Specialist),Clinic,Nungua,Private,5.58915,-0.08284,Ghana
+141,Greater Accra,Tema Metropolitan,Esther Memorial Maternity Home & Clinic,Maternity Home,Ashaima New Town,Private,5.70392,-0.02951,Ghana
+142,Greater Accra,Accra Metropolitan,Faith Medical Centre,Hospital,Alajo (near T junction),Private,5.59978,-0.21767,Ghana
+143,Greater Accra,Accra Metropolitan,Fire Medical Centre (Old site),Hospital,James Town,Government,5.53282,-0.2177,Ghana
+144,Greater Accra,Accra Metropolitan,Fralena Health Centre,Health Centre,Kaneshie,Private,5.5648,-0.23579,Ghana
+145,Greater Accra,Ga East,Fransko Maternity Home (same as Francisca Maternity Home),Maternity Home,Madina,Private,5.67082,-0.17037,Ghana
+146,Greater Accra,Ga East,Ga East District Health Directorate,District Health Centre,Abokobi,Government,5.7345,-0.20296,Ghana
+147,Greater Accra,Ga West,Ga West District Health Directorate,District Health Centre,Amasaman,Private,5.70119,-0.30056,Ghana
+148,Greater Accra,Tema Metropolitan,GAFCO Clinic,Clinic,Tema Main Habour,Private,5.63309,0.00807,Ghana
+149,Greater Accra,Accra Metropolitan,Gak Clinic,Hospital,Osu (Nyaniba Estate),Private,5.55989,-0.174,Ghana
+150,Greater Accra,Ga West,Gbawe Clinic & Maternity Home,Maternity Home,Gbawe,Private,5.57741,-0.2846,Ghana
+151,Greater Accra,Tema Metropolitan,Ghacem Clinic,Clinic,Tema Main Habour,Private,5.6351,0.00686,Ghana
+152,Greater Accra,Ga East,Ghana Atomic Energy Commission Clinic,Clinic,Atomic,Private,5.66854,-0.23162,Ghana
+153,Greater Accra,Accra Metropolitan,Ghana Police Clinic,Clinic,37 Licencing Office,Government,5.59374,-0.17854,Ghana
+154,Greater Accra,Accra Metropolitan,Regional Health Directorate,Regional Health Centre,Adabraka,Private,5.55802,-0.20629,Ghana
+155,Greater Accra,Accra Metropolitan,Regional Health Directorate (new site),Regional Health Centre,Adabraka,Government,5.56179,-0.20348,Ghana
+156,Greater Accra,Accra Metropolitan,Gimpa Clinic,Clinic,Greenhill,Government,5.63633,-0.20028,Ghana
+157,Greater Accra,Ga East,Global Medical Centre,Clinic,Madina,Private,5.67534,-0.18185,Ghana
+158,Greater Accra,Tema Metropolitan,Gloria Family Health Centre,Hospital,Adenta,Private,5.69705,-0.17367,Ghana
+159,Greater Accra,Accra Metropolitan,Gloria's Maternity Home,Maternity Home,New Town,Private,5.5867,-0.20833,Ghana
+160,Greater Accra,Ga West,God Cares Clinic & Maternity,Clinic,Asabaham (near Domiabra),Private,5.60629,-0.41625,Ghana
+161,Greater Accra,Dangme west,Godia Clinic,Clinic,New Dawhenya,Private,5.75451,-0.04701,Ghana
+162,Greater Accra,Accra Metropolitan,Golden Sourveinier Clinic,Clinic,Tesano,Private,5.59525,-0.23342,Ghana
+163,Greater Accra,Accra Metropolitan,Goodwill Maternity Home,Maternity Home,Asylum Down,Private,5.56844,-0.20448,Ghana
+164,Greater Accra,Tema Metropolitan,GPHA Main Clinic,Clinic,Tema Community 2,Private,5.63276,-0.00654,Ghana
+165,Greater Accra,Tema Metropolitan,Grace & Peace Clinic & Maternity Home,Maternity Home,Ashalebotwe,Private,5.68191,-0.14157,Ghana
+166,Greater Accra,Accra Metropolitan,Grace Baah Memorial Clinic,Clinic,Russia,Private,5.55228,-0.25181,Ghana
+167,Greater Accra,Dangme west,Grace Maternity Home,Maternity Home,Dodowa,Private,5.87929,-0.10627,Ghana
+168,Greater Accra,Accra Metropolitan,Grace Maternity Home & Clinic,Maternity Home,Awoshie (last stop),Private,5.58553,-0.27977,Ghana
+169,Greater Accra,Accra Metropolitan,Grasam Clinic,Clinic,Mempeasem,Private,5.65097,-0.15879,Ghana
+170,Greater Accra,Ga East,Greater Grace Hospital,Hospital,Pantang hosp road,Private,5.71866,-0.17425,Ghana
+171,Greater Accra,Accra Metropolitan,Green Hand Clinic,Clinic,North Kaneshie,Private,5.58284,-0.22884,Ghana
+172,Greater Accra,Tema Metropolitan,GTP Clinic,Clinic,Tema Heavy Industrial Town,Private,5.66264,-0.00345,Ghana
+173,Greater Accra,Accra Metropolitan,Hajj Abdulai Yaro's Memorial Clinic,Hospital,Nima,Private,5.58254,-0.19682,Ghana
+174,Greater Accra,Accra Metropolitan,Hams Clinic,Clinic,Mataheko,Private,5.55984,-0.24297,Ghana
+175,Greater Accra,Accra Metropolitan,Hannah Larbie's Maternity Home,Maternity Home,Chorkor (near Abodwe),Private,5.52961,-0.24151,Ghana
+176,Greater Accra,Ga East,Harmony Clinic,Hospital,Madina,Private,5.67152,-0.17373,Ghana
+177,Greater Accra,Tema Metropolitan,Health Loop Clinic,Clinic,Adenta Estate,Private,5.70134,-0.14823,Ghana
+178,Greater Accra,Accra Metropolitan,Hebron Maternity & Clinic,Maternity Home,La,Private,5.5639,-0.15154,Ghana
+179,Greater Accra,Accra Metropolitan,Henrietta Clinic & Maternity Home,Maternity Home,Lartebiokorshie (near Nkruma flats),Private,5.5501,-0.232,Ghana
+180,Greater Accra,Accra Metropolitan,Highway Dental Clinic,Clinic,Maamobi (near market),Private,5.59481,-0.19421,Ghana
+181,Greater Accra,Accra Metropolitan,Hobats Clinic,Clinic,Tesano,Private,5.60699,-0.2317,Ghana
+182,Greater Accra,Accra Metropolitan,Holy Cross Clinic & Maternity Home,Clinic,Lartebiokoshie,Private,5.55001,-0.24449,Ghana
+183,Greater Accra,Accra Metropolitan,Holy Height Clinic,Clinic,Kokomlemle,Private,5.57714,-0.20895,Ghana
+184,Greater Accra,Accra Metropolitan,Holy Trinity Medical Centre,Hospital,North Kaneshie,Private,5.5867,-0.23519,Ghana
+185,Greater Accra,Accra Metropolitan,International Health Care Centre,Clinic,Roman Ridge (near Ghana inst of engineers buidling),Private,5.60547,-0.19762,Ghana
+186,Greater Accra,Accra Metropolitan,Iran Clinic,Hospital,Circle,NGO,5.568,-0.21248,Ghana
+187,Greater Accra,Accra Metropolitan,James Camp Borstral Clinic,Clinic,Roman Ridge,Private,5.60807,-0.19085,Ghana
+188,Greater Accra,Accra Metropolitan,James Fort Prison's Clinic,Clinic,James Town,Private,5.53423,-0.21111,Ghana
+189,Greater Accra,Accra Metropolitan,James Town Maternity Home,Maternity Home,James Town,Private,5.54065,-0.21591,Ghana
+190,Greater Accra,Accra Metropolitan,Jesus Saves Clinic,Clinic,Okaishie,Private,5.54896,-0.20779,Ghana
+191,Greater Accra,Tema Metropolitan,Jireh Eye Clinic,Clinic,Tema Community 1,Private,5.63503,-0.00321,Ghana
+192,Greater Accra,Accra Metropolitan,Johpat Hospital,Hospital,Dzorwulu,Private,5.61151,-0.19963,Ghana
+193,Greater Accra,Tema Metropolitan,Kpone Health Centre,Health Centre,Kpone,Private,5.69206,0.05842,Ghana
+194,Greater Accra,Accra Metropolitan,Jordan's Maternity Home,Maternity Home,La,Private,5.5621,-0.16464,Ghana
+195,Greater Accra,Ga West,Joy Family Clinic,Clinic,Santamaria,Private,5.60186,-0.2741,Ghana
+196,Greater Accra,Tema Metropolitan,Jubail Specialist Hospital,Hospital,Sakumano Estate,Private,5.62549,-0.05216,Ghana
+197,Greater Accra,Accra Metropolitan,Juliana Aku Clegg Maternity home,Maternity Home,Zongo junction,Private,5.55837,-0.23957,Ghana
+198,Greater Accra,Accra Metropolitan,Kaneshie Market Clinic,Clinic,Kaneshie,Private,5.56684,-0.2374,Ghana
+199,Greater Accra,Accra Metropolitan,Kaneshie Polyclinic,Polyclinic,Kaneshie,Private,5.57446,-0.23074,Ghana
+200,Greater Accra,Accra Metropolitan,Kaneshie School Clinic,Clinic,Kaneshie,Government,5.57281,-0.23295,Ghana
+201,Greater Accra,Accra Metropolitan,Karikari Brobbey Hospital,Hospital,Agege (Agege road -Karikari area),Private,5.53092,-0.26149,Ghana
+202,Greater Accra,Dangme East,Kasseh Health Centre,Health Centre,Kasseh,Private,5.89665,0.52294,Ghana
+203,Greater Accra,Accra Metropolitan,Keep Smiling clinic,Clinic,Mamprobi (opposite mtyr uganda),Private,5.53292,-0.23732,Ghana
+204,Greater Accra,Accra Metropolitan,King David Hospital,Hospital,Kotobabi,Private,5.59277,-0.20588,Ghana
+205,Greater Accra,Ga East,Kokrobite CHPS,CHPS,Kokrobite,Private,5.50209,-0.37027,Ghana
+206,Greater Accra,Ga West,Kokrobite Community Clinic,Clinic,Kokrobite,Government,5.50179,-0.37017,Ghana
+207,Greater Accra,Accra Metropolitan,Korle-Bu Polyclinic,Polyclinic,Korle-Bu,Private,5.580728,-0.210467,Ghana
+208,Greater Accra,Accra Metropolitan,Korle-Bu Teaching Hospital,Hospital,Korle-bu,Private,5.53719,-0.2266,Ghana
+209,Greater Accra,Ga East,Korle-Gonno Polyclinic,Polyclinic,Korle-bu,Government,5.53736,-0.22312,Ghana
+210,Greater Accra,Accra Metropolitan,Kpeshie Sub Metro Health Directorate,District Health Centre,La,Private,5.55538,-0.16657,Ghana
+211,Greater Accra,Accra Metropolitan,Kumorji Hospital,Hospital,Cantoments,Private,5.57419,-0.18263,Ghana
+212,Greater Accra,Accra Metropolitan,La General Hospital,Hospital,La,Government,5.55538,-0.16657,Ghana
+213,Greater Accra,Accra Metropolitan,Labadi Road Dental Clinic,Clinic,Osu,Private,5.55265,-0.17742,Ghana
+214,Greater Accra,Accra Metropolitan,Lagoon Clinic,Clinic,Chemuna (Chorkor),Private,5.52568,-0.25025,Ghana
+215,Greater Accra,Tema Metropolitan,Lagoon Clinic,Clinic,Tema Community 1,Private,5.64767,-0.00154,Ghana
+216,Greater Accra,Accra Metropolitan,Lagoon Clinic & Maternity home,Maternity Home,Mpoase (off Glefe rd),Private,5.52397,-0.26406,Ghana
+217,Greater Accra,Accra Metropolitan,Lakeside Clinic,Hospital,Tesano,Private,5.5923,-0.23136,Ghana
+218,Greater Accra,Accra Metropolitan,Lapaz Community Clinic,Hospital,Abaka Lapas,Private,5.60851,-0.25349,Ghana
+219,Greater Accra,Accra Metropolitan,Laura's Maternity Home & Clinic,Maternity Home,Darkuman,Private,5.58704,-0.24794,Ghana
+220,Greater Accra,Tema Metropolitan,Leister Medical Centre,Clinic,Spintex road,Private,5.61916,-0.1461,Ghana
+221,Greater Accra,Accra Metropolitan,Link Road Hospital,Hospital,Lartebiokorshie,Private,5.54944,-0.24093,Ghana
+222,Greater Accra,Tema Metropolitan,Lube Oil Clinic,Clinic,Tema Heavy Industrial Town,Government,5.65042,0.00836,Ghana
+223,Greater Accra,Accra Metropolitan,Maamobi Polyclinic,Polyclinic,Maamobi,Private,5.59184,-0.19929,Ghana
+224,Greater Accra,Accra Metropolitan,Mega Care Clinic (Annex),Clinic,Abossey Okai,Private,5.55952,-0.23308,Ghana
+225,Greater Accra,Accra Metropolitan,Liha Medical Clinic,Clinic,East Legon (before America house road),Private,5.64174,-0.16071,Ghana
+226,Greater Accra,Accra Metropolitan,Maabs Dental Clinic,Clinic,Osu,Private,5.55982,-0.17441,Ghana
+227,Greater Accra,Accra Metropolitan,Megavest Medical Centre,Hospital,North Kaneshie,Private,5.59342,-0.24423,Ghana
+228,Greater Accra,Tema Metropolitan,Lebanon Clinic,Clinic,Ashaiman,Private,5.68791,-0.03049,Ghana
+229,Greater Accra,Accra Metropolitan,Lession Clinic,Clinic,Nima,Private,5.58208,-0.20114,Ghana
+230,Greater Accra,Accra Metropolitan,Limb Fitting Centre,Others,Tema Station (near Lotteries),Government,5.5485,-0.19999,Ghana
+231,Greater Accra,Accra Metropolitan,Mab Medicare Centre,Hospital,Nyamekye (Darkuman),Private,5.59958,-0.25417,Ghana
+232,Greater Accra,Ga East,Madina RCH Clinic (near Market),Clinic,Madina (Old road),Private,5.6788,-0.16751,Ghana
+233,Greater Accra,Accra Metropolitan,Larkai Medical Centre,Clinic,Nima (near Police station),Private,5.576,-0.19972,Ghana
+234,Greater Accra,Accra Metropolitan,Life Line Clinic,Clinic,Nima 441 (area near bridge),Private,5.5882,-0.19478,Ghana
+235,Greater Accra,Accra Metropolitan,Living Clinic & Laboratory,Clinic,Agbogbloshie,Private,5.55032,-0.2167,Ghana
+236,Greater Accra,Ga West,Lizzie Matternity Home & Clinic,Maternity Home,Ofankor,Private,5.65484,-0.27076,Ghana
+237,Greater Accra,Ga East,Madina Central Clinic,Clinic,Madina (Old road),Private,5.66759,-0.16516,Ghana
+238,Greater Accra,Accra Metropolitan,Makola Government Clinic,Clinic,Makola,Private,5.54857,-0.20599,Ghana
+239,Greater Accra,Accra Metropolitan,Makola Plaza Clinic,Clinic,Makola,Private,5.54672,-0.20603,Ghana
+240,Greater Accra,Accra Metropolitan,Mallam Atta Market Clinic,Clinic,Mallam Atta,Private,5.57872,-0.20832,Ghana
+241,Greater Accra,Ga West,Mallam Demonstration Clinic,Clinic,Mallam,Private,5.57781,-0.29942,Ghana
+242,Greater Accra,Accra Metropolitan,Mamprobi Polyclinic,Polyclinic,Mamprobi,Government,5.53807,-0.24556,Ghana
+243,Greater Accra,Ga West,Mamprobi School Dental Clinic,Clinic,Mamprobi (salvation army schls),Private,5.54138,-0.24118,Ghana
+244,Greater Accra,Tema Metropolitan,Manko Clinic,Clinic,Tema Fishing Habour,Private,5.64503,0.0132,Ghana
+245,Greater Accra,Accra Metropolitan,Manna Mission Hospital,Hospital,Teshie,Private,5.60706,-0.10872,Ghana
+246,Greater Accra,Ga West,Margo Maternity Home,Maternity Home,Jei Krodua,Private,5.64608,-0.49304,Ghana
+247,Greater Accra,Accra Metropolitan,Martin Memorial Hospital,Hospital,Dzorwulu,Private,5.61023,-0.20448,Ghana
+248,Greater Accra,Ga West,Mary's Clinic,Clinic,Chorkor (behind police station),Private,5.528,-0.23733,Ghana
+249,Greater Accra,Accra Metropolitan,May Day Clinic,Clinic,Lartebiokorshie,Private,5.54985,-0.24674,Ghana
+250,Greater Accra,Accra Metropolitan,May Day Clinic,Clinic,Agbogbloshie,Private,5.55142,-0.21931,Ghana
+251,Greater Accra,Accra Metropolitan,May Fair Clinic,Clinic,Lartebiokoshie,Private,5.54628,-0.24244,Ghana
+252,Greater Accra,Accra Metropolitan,May's Ear Nose & Throat clinic,Clinic,Lartebiokorshie (Nkrumah flats),Private,5.54734,-0.23324,Ghana
+253,Greater Accra,Accra Metropolitan,Medifem Hospital,Hospital,Dzorwulu,Private,5.61284,-0.20209,Ghana
+254,Greater Accra,Ga West,Mega Care Clinic,Clinic,North Kaneshie,Private,5.58913,-0.26083,Ghana
+255,Greater Accra,Accra Metropolitan,Mercedarian Clinic,Clinic,Osu,Private,5.55526,-0.18007,Ghana
+256,Greater Accra,Accra Metropolitan,Midway Clinic Ltd,Hospital,Abofu (Achimota),Private,5.61731,-0.22646,Ghana
+257,Greater Accra,Accra Metropolitan,Korle-Bu Midwifery Training School,Institutional Health Centre,Korle-Bu,Government,5.53972,-0.23044,Ghana
+258,Greater Accra,Ga East,Mighty Clinic,Clinic,Madina (near market),Private,5.6816,-0.16645,Ghana
+259,Greater Accra,Ga East,Modern Atomic Clinic,Hospital,Atomic Road,Private,5.66743,-0.20819,Ghana
+260,Greater Accra,Ga East,Mother Love Health Care Cantre,Maternity Home,Adenta,Private,5.71726,-0.16644,Ghana
+261,Greater Accra,Accra Metropolitan,Mother's Pride Clinic & Maternity Home,Maternity Home,Mamprobi (off juncion before salvation army),Private,5.54216,-0.24507,Ghana
+262,Greater Accra,Accra Metropolitan,Motorway Clinic,Hospital,Abeka Lapas,Private,5.60616,-0.25137,Ghana
+263,Greater Accra,Accra Metropolitan,Mt Sinai Clinic,Clinic,Nyamekye (Darkuman),Private,5.60126,-0.25719,Ghana
+264,Greater Accra,Accra Metropolitan,N M's Dental Clinic,Clinic,Dzorwulu (junction),Private,5.60828,-0.20689,Ghana
+265,Greater Accra,Accra Metropolitan,Mercy Clinic,Hospital,Mataheko,Private,5.56431,-0.24764,Ghana
+266,Greater Accra,Accra Metropolitan,Mercy Maternity Home & Clinic,Maternity Home,Agege (Glefe near largoon),Private,5.52609,-0.27449,Ghana
+267,Greater Accra,Tema Metropolitan,Meridian Clinic,Clinic,Tema Community 1,Private,5.64543,-0.0072,Ghana
+268,Greater Accra,Accra Metropolitan,Mission Clinic,Clinic,Caprice (Near carprice hotel),Private,5.58282,-0.21575,Ghana
+269,Greater Accra,Tema Metropolitan,Narh Bita Hospital,Hospital,Tema Community 4,Private,5.65793,-0.01062,Ghana
+270,Greater Accra,Tema Metropolitan,Dziram Eye Clinic,Clinic,Baatsona,Private,5.65793,-0.01062,Ghana
+271,Greater Accra,Tema Metropolitan,Greehouse Clinic and Diagnostic Centre,Clinic,Spintex road,Private,5.65793,-0.01062,Ghana
+272,Greater Accra,Tema Metropolitan,Narh Bita Nursing Training School,Institutional Health Centre,Tema Community 4,Private,5.65793,-0.01062,Ghana
+273,Greater Accra,Ga West,Nashwell Clinic,Clinic,Gbawe,Private,5.5772,-0.28721,Ghana
+274,Greater Accra,Accra Metropolitan,National Cold Room,Others,Korle-bu,Private,5.53797,-0.23342,Ghana
+275,Greater Accra,Accra Metropolitan,Nelleville Clinic,Clinic,Nungua,Private,5.59389,-0.08789,Ghana
+276,Greater Accra,Tema Metropolitan,Nelmax Clinic,Clinic,Lashibi Community 20,Private,5.65273,-0.06999,Ghana
+277,Greater Accra,Tema Metropolitan,Nestle Clinic,Clinic,Tema,Private,5.67518,-0.00305,Ghana
+278,Greater Accra,Accra Metropolitan,New Achimota Clinic,Hospital,New Achimota (mile 7),Private,5.6293,-0.24781,Ghana
+279,Greater Accra,Accra Metropolitan,New Cross Clinic,Clinic,Nima,Private,5.58234,-0.1994,Ghana
+280,Greater Accra,Tema Metropolitan,New Crystal Clinic,Clinic,Ashaiman,Private,5.68671,-0.03317,Ghana
+281,Greater Accra,Tema Metropolitan,New Crystal Clinic,Clinic,Ashaiman,Private,5.68671,-0.03317,Ghana
+282,Greater Accra,Tema Metropolitan,New Edem Maternity Home,Maternity Home,Ashaiman (Nii Amui Park {Manannanyo},Private,5.69924,-0.03531,Ghana
+283,Greater Accra,Accra Metropolitan,New Town Clinic,Clinic,New Town (Nkasan-Djan junction),Private,5.59122,-0.20621,Ghana
+284,Greater Accra,Accra Metropolitan,New Town School Dental Clinic,Clinic,New Town ( school compound),Government,5.58552,-0.21001,Ghana
+285,Greater Accra,Accra Metropolitan,New World Dental Clinic,Clinic,Asylum Down,Private,5.56918,-0.20248,Ghana
+286,Greater Accra,Ga West,Ngleshie Amanfro Community Health Centre,Clinic,Ngleshie Amamfrom,Private,5.53638,-0.41126,Ghana
+287,Greater Accra,Accra Metropolitan,Nightingale Clinic,Hospital,Dansoman (Sahara),Private,5.55031,-0.26737,Ghana
+288,Greater Accra,Accra Metropolitan,Nima Government Clinic,Clinic,Nima,Private,5.57771,-0.20008,Ghana
+289,Greater Accra,Accra Metropolitan,Nima Highway Specialist Clinic,Clinic,Nima (near Gutter),Private,5.59007,-0.19605,Ghana
+290,Greater Accra,Accra Metropolitan,North Kaneshie Maternity Home,Maternity Home,Demond (North Kaneshie),Private,5.58962,-0.2433,Ghana
+291,Greater Accra,Ga West,North Kwashieman Clinic,Clinic,North Kwashieman,Private,5.59432,-0.26869,Ghana
+292,Greater Accra,Ga East,North Legon Hospital,Hospital,North Legon (off Atomic Energy Road),Private,5.66923,-0.18228,Ghana
+293,Greater Accra,Accra Metropolitan,North Ridge Clinic,Hospital,North Ridge,Private,5.57275,-0.19852,Ghana
+294,Greater Accra,Accra Metropolitan,North Teshie Clinic & Maternity Home,Clinic,Teshie,Private,5.59709,-0.10302,Ghana
+295,Greater Accra,Tema Metropolitan,Nostra Clinic,Clinic,Tema Community 11,Private,5.66398,-0.02705,Ghana
+296,Greater Accra,Ga West,Nsakina CHPS,CHPS,Nsakina,Government,5.65177,-0.32388,Ghana
+297,Greater Accra,Accra Metropolitan,Nungua Community Clinic,Clinic,Nungua,Private,5.5974,-0.07896,Ghana
+298,Greater Accra,Accra Metropolitan,Korle-Bu Nurses Training College,Institutional Health Centre,Korle-Bu,Private,5.54027,-0.23095,Ghana
+299,Greater Accra,Accra Metropolitan,Nyaho Medical Centre,Clinic,Airport residential area,Private,5.61486,-0.18514,Ghana
+300,Greater Accra,Accra Metropolitan,Nima Clinic,Clinic,Nima,Private,5.57412,-0.19912,Ghana
+301,Greater Accra,Dangme West,Nyigbenya Clinic,CHPS,Nugbenya,Private,5.83471,0.21885,Ghana
+302,Greater Accra,Tema Metropolitan,Odonkor Clinic,Clinic,Tema Community 8,Private,5.66589,-0.01423,Ghana
+303,Greater Accra,Accra Metropolitan,Odorna Clinic,Clinic,Odorna (Adabraka),Private,5.55887,-0.21556,Ghana
+304,Greater Accra,Tema Metropolitan,Okanta Memorial Clinic,Clinic,Ashaiman,Private,5.68684,-0.03972,Ghana
+305,Greater Accra,Accra Metropolitan,Oman Clinic,Clinic,Kaneshie (Sports Complex),Private,5.57508,-0.22694,Ghana
+306,Greater Accra,Tema Metropolitan,Omari Clinic,Clinic,Tema Mataheko,Private,5.77204,-0.00509,Ghana
+307,Greater Accra,Accra Metropolitan,Omni Health Care,Clinic,Dzorwulu,Private,5.61647,-0.19249,Ghana
+308,Greater Accra,Accra Metropolitan,Opoku Ware Clinic,Hospital,Dansoman,Private,5.56451,-0.27354,Ghana
+309,Greater Accra,Accra Metropolitan,Osu Government Maternity Home,Maternity Home,Osu,Private,5.55401,-0.18494,Ghana
+310,Greater Accra,Dangme West,Osudoku Health Centre,Clinic,Asutsuare,Private,6.07519,0.19468,Ghana
+311,Greater Accra,Ga West,Osuwem Community Based Clinic (New site),Clinic,Osuwem,Government,6.03171,0.17526,Ghana
+312,Greater Accra,Accra Metropolitan,Owusu Medical Centre,Clinic,Alajo (ask at Faith medical centre for direction),Private,5.59796,-0.21905,Ghana
+313,Greater Accra,Tema Metropolitan,Port Health,Clinic,Tema,Private,5.63433,0.00461,Ghana
+314,Greater Accra,Tema Metropolitan,Port Medical Centre,Hospital,Tema Community 1,Private,5.64266,0.00126,Ghana
+315,Greater Accra,Tema Metropolitan,Port Dental Clinic,Clinic,Tema Community 1,Private,5.64266,0.00126,Ghana
+316,Greater Accra,Tema Metropolitan,Nyamebetyere Maternity Home,Maternity Home,Ashaiman Lebanon,Private,5.70281,-0.04369,Ghana
+317,Greater Accra,Accra Metropolitan,Opec Clinic (Teshie Health Centre),Clinic,Teshie,Government,5.6021,-0.11996,Ghana
+318,Greater Accra,Accra Metropolitan,Nyameadom Maternity Clinic,Maternity Home,Dansoman (before sahara),Private,5.55206,-0.26433,Ghana
+319,Greater Accra,Ga West,Obom Health Centre,Health Centre,Obom,Private,5.7357,-0.43974,Ghana
+320,Greater Accra,Ga West,Oduman Health Centre,Health Centre,Oduman,Government,5.64171,-0.33028,Ghana
+321,Greater Accra,Accra Metropolitan,Okai Koi Sub Metro Health Directorate,District Health Centre,Kaneshie,Private,5.57442,-0.23082,Ghana
+322,Greater Accra,Dangme West,Old Ningo Health Centre (Present site),Health Centre,Old Ningo,Private,5.75161,0.18647,Ghana
+323,Greater Accra,Dangme West,Old Ningo Health Centre (New site),Health Centre,Old Ningo,Government,5.75161,0.18647,Ghana
+324,Greater Accra,Dangme West,Osuwem Community Based Clinic (Old site),Clinic,Osuwem,Private,6.03666,0.17579,Ghana
+325,Greater Accra,Tema Metropolitan,Oyibi Health Centre,Health Centre,Oyibi,Private,5.80615,-0.10773,Ghana
+326,Greater Accra,Tema Metropolitan,Oyoko Clinic,Clinic,Adenta Estate,Private,5.70397,-0.15236,Ghana
+327,Greater Accra,Ga East,Pantang Hospital,Hospital,Pantang,Private,5.71511,-0.18802,Ghana
+328,Greater Accra,Ga East,Pantang Nurses Training College,Institutional Health Centre,Pantang,Private,5.71554,-0.18749,Ghana
+329,Greater Accra,Accra Metropolitan,Parliament Clinic,Clinic,Osu,Government,5.55668,-0.19011,Ghana
+330,Greater Accra,Accra Metropolitan,Peace Clinic,Clinic,Mataheko,Private,5.59595,-0.24739,Ghana
+331,Greater Accra,Dangme East,Pediator Kope Health Centre,Health Centre,Pediator Kope,Private,5.82202,0.62849,Ghana
+332,Greater Accra,Accra Metropolitan,Peoga Maternity Home,Maternity Home,Nungua,Private,5.6189,-0.08294,Ghana
+333,Greater Accra,Accra Metropolitan,PML Hospital,Hospital,Paladium,Private,5.5446,-0.21302,Ghana
+334,Greater Accra,Accra Metropolitan,Police Hospital,Hospital,Cantoments,Private,5.56835,-0.18145,Ghana
+335,Greater Accra,Accra Metropolitan,PPAG Clinic,Clinic,Lartebiokoshie,NGO,5.55042,-0.24156,Ghana
+336,Greater Accra,Dangme West,PPAG Dodowa,Clinic,Dodowa,Private,5.8809,-0.10713,Ghana
+337,Greater Accra,Dangme West,Prampram Health Centre,Health Centre,Prampram,Private,5.71177,0.11002,Ghana
+338,Greater Accra,Tema Metropolitan,Prilway Specialist Clinic & Labolatory,Clinic,Baba Yara (Madina),Private,5.68551,-0.1571,Ghana
+339,Greater Accra,Accra Metropolitan,Prince of Peace Maternity Home & Clinic,Maternity Home,Fadama,Private,5.59935,-0.24462,Ghana
+340,Greater Accra,Accra Metropolitan,Queen's Medical Centre,Hospital,Kokomlemle,Private,5.57571,-0.20762,Ghana
+341,Greater Accra,Tema Metropolitan,St Peter's Clinic,Clinic,Tema Community 4,Private,5.6586,-0.0052,Ghana
+342,Greater Accra,Accra Metropolitan,Sunrise Clinic,Clinic,Kaneshie (near mkt),Private,5.56811,-0.24051,Ghana
+343,Greater Accra,Accra Metropolitan,Tooth Home Clinic,Clinic,Nima (near Police station),Private,5.57506,-0.20084,Ghana
+344,Greater Accra,Tema Metropolitan,St Minas Clinic,Clinic,Ashaima,Private,5.69411,-0.0279,Ghana
+345,Greater Accra,Ga East,Taifa Medical Centre,Hospital,Taifa,Private,5.6576,-0.25345,Ghana
+346,Greater Accra,Accra Metropolitan,Purswani Memorial Clinic,Clinic,Asylum Down,Private,5.56932,-0.20479,Ghana
+347,Greater Accra,Tema Metropolitan,RCI Mission Clinic,Clinic,Amrahia,Private,5.76845,-0.14182,Ghana
+348,Greater Accra,Accra Metropolitan,St Louis Memorial Clinic,Clinic,Nima,Private,5.58289,-0.20117,Ghana
+349,Greater Accra,Tema Metropolitan,Tema Naval Base Clinic,Clinic,Tema New Town,Private,5.64838,0.02257,Ghana
+350,Greater Accra,Tema Metropolitan,Universal Bethesda Clinic,Clinic,Ashalebotwe,Private,5.6856,-0.13769,Ghana
+351,Greater Accra,Accra Metropolitan,Korle-Bu School of Hygiene,Institutional Health Centre,Korle-Bu,Private,5.53823,-0.2329,Ghana
+352,Greater Accra,Tema Metropolitan,St Florence Clinic,Clinic,Ashaiman,Private,5.68808,-0.03285,Ghana
+353,Greater Accra,Tema Metropolitan,St Mary's Maternity Home,Maternity Home,Tema Community 7,Private,5.65991,-0.01244,Ghana
+354,Greater Accra,Accra Metropolitan,Ussher Polyclinic,Polyclinic,James Town,Private,5.54038,-0.21294,Ghana
+355,Greater Accra,Tema Metropolitan,Provita Specialist Hospital,Hospital,Tema Community 6,Private,5.65216,-0.0198,Ghana
+356,Greater Accra,Accra Metropolitan,Rabito Clinic,Clinic,Osu,Private,5.56549,-0.18028,Ghana
+357,Greater Accra,Tema Metropolitan,Rabito Clinic,Clinic,Tema Community 2,Private,5.6288,-0.01819,Ghana
+358,Greater Accra,Tema Metropolitan,Raphel Clinic (Old site),Clinic,Tema Community 1,Private,5.64655,-0.00772,Ghana
+359,Greater Accra,Tema Metropolitan,Raphel Clinc (New Site),Clinic,Tema Community 10,Private,5.64655,-0.00772,Ghana
+360,Greater Accra,Tema Metropolitan,Raphel Medical Centre,Health Centre,UnIdentified,Private,5.64655,-0.00772,Ghana
+361,Greater Accra,Tema Metropolitan,RCI Mission Clinic,Clinic,Amrahia,Private,5.76845,-0.14182,Ghana
+362,Greater Accra,Ga West,Redeemer's Mission Clinic,Clinic,Pokuase,NGO,5.68863,-0.28584,Ghana
+363,Greater Accra,Accra Metropolitan,Rehoboth Maternity Home,Maternity Home,Darkuman,Private,5.58754,-0.25108,Ghana
+364,Greater Accra,Accra Metropolitan,Richmond Clinic,Clinic,Zongo (near night mkt),Private,5.55509,-0.23564,Ghana
+365,Greater Accra,Accra Metropolitan,Ridge Hospital,Hospital,Ridge,Government,5.56238,-0.1987,Ghana
+366,Greater Accra,Tema Metropolitan,Robert Martin Memorial Clinic,Clinic,Ashalebotwe,Private,5.67904,-0.14148,Ghana
+367,Greater Accra,Accra Metropolitan,Rose Clinic,Clinic,Russia,Private,5.55656,-0.25719,Ghana
+368,Greater Accra,Accra Metropolitan,Rosina Memorial Clinic,Clinic,Abofu (Achimota),Private,5.61416,-0.2263,Ghana
+369,Greater Accra,Tema Metropolitan,Sab Dental Clinic,Clinic,Tema Community 2,Private,5.63467,-0.01416,Ghana
+370,Greater Accra,Tema Metropolitan,Sakumono Community Clinic,Hospital,Sakumano Estate,Private,5.62224,-0.06281,Ghana
+371,Greater Accra,Accra Metropolitan,Salvation Army Urban Aid Clinic,Hospital,Maamobi (near market),Private,5.5947,-0.19169,Ghana
+372,Greater Accra,Ga West,Samala Clinic,Clinic,Mallam,Private,5.57728,-0.30004,Ghana
+373,Greater Accra,Accra Metropolitan,Sape Agbo Memorial Hospital,Hospital,New Town,Private,5.59232,-0.20804,Ghana
+374,Greater Accra,Ga West,Savans Clinic & Maternity Home,Clinic,Weija,Private,5.5745,-0.33829,Ghana
+375,Greater Accra,Accra Metropolitan,Korle-Bu School of Medical Laboratory Technology,Institutional Health Centre,Korle-Bu,Private,5.53885,-0.22915,Ghana
+376,Greater Accra,Accra Metropolitan,Korle-Bu School of Radiology,Institutional Health Centre,Korle-Bu,Private,5.53764,-0.22591,Ghana
+377,Greater Accra,Dangme East,Sege Health Centre,Health Centre,Sege,Government,5.87531,0.36137,Ghana
+378,Greater Accra,Accra Metropolitan,Shwectzer Clinic,Clinic,Accra,Private,5.54502,-0.20823,Ghana
+379,Greater Accra,Accra Metropolitan,SIC Bob Freeman Clinic,Hospital,Adabraka (near Goil headoffice),Private,5.55408,-0.20889,Ghana
+380,Greater Accra,Tema Metropolitan,SIC Bob Freeman Clinic,Hospital,Adabraka (near Goil headoffice),Private,5.55408,-0.20889,Ghana
+381,Greater Accra,Tema Metropolitan,Sinel Specialist Hospital,Clinic,Tema Community 10,Private,5.65612,-0.01481,Ghana
+382,Greater Accra,Tema Metropolitan,Skin Clinic,Clinic,Tema Community 1,Private,5.65159,-0.00502,Ghana
+383,Greater Accra,Tema Metropolitan,Solace Medical Certical Centre,Health Centre,Ashaiman Community 12,Private,5.67782,-0.02954,Ghana
+384,Greater Accra,Accra Metropolitan,Specialist Hospital & Family Planning Centre,Hospital,Dansoman (SSNIT flats),Private,5.56507,-0.27309,Ghana
+385,Greater Accra,Tema Metropolitan,SSNIT Clinic,Clinic,Tema Community 2,Private,5.6333,-0.01261,Ghana
+386,Greater Accra,Dangme West,St Andrews Catholic Clinic,Clinic,Kordiabe,NGO,5.92528,0.01798,Ghana
+387,Greater Accra,Accra Metropolitan,St Andrews Clinic,Clinic,Adabraka (near NCR Offices & cinema area),Private,5.55852,-0.21337,Ghana
+388,Greater Accra,Accra Metropolitan,St Andrews Clinic,Clinic,Roman Ridge,Private,5.55852,-0.21337,Ghana
+389,Greater Accra,Tema Metropolitan,St Anthony's Clinic,Hospital,Tema Community 1,Private,5.64954,-0.00299,Ghana
+390,Greater Accra,Accra Metropolitan,St Bernard Eye Clinic,Clinic,Kokomlemle,Private,5.57409,-0.20761,Ghana
+391,Greater Accra,Tema Metropolitan,St Georges Family Clinic,Clinic,Adenta,Private,5.70263,-0.17056,Ghana
+392,Greater Accra,Accra Metropolitan,St Gloria's Clinic & Maternity Home,Clinic,Agege (Karikari area),Private,5.53191,-0.26233,Ghana
+393,Greater Accra,Tema Metropolitan,St John's Clinic,Clinic,Tema Manhean,Private,5.65665,0.02827,Ghana
+394,Greater Accra,Accra Metropolitan,St Luke's Clinic,Clinic,Airport residential area,Private,5.6144,-0.17776,Ghana
+395,Greater Accra,Accra Metropolitan,St Martin's Clinic,Clinic,Nima (near gutter ),Private,5.58812,-0.19819,Ghana
+396,Greater Accra,Accra Metropolitan,St Mathew's Clinic,Hospital,New Achimota (mile 7),Private,5.63286,-0.24057,Ghana
+397,Greater Accra,Accra Metropolitan,St Maurice Maternity Home,Maternity Home,La,Private,5.56542,-0.14468,Ghana
+398,Greater Accra,Tema Metropolitan,St Nicholas Hospital,Hospital,Tema Community 5,Private,5.64811,-0.01317,Ghana
+399,Greater Accra,Tema Metropolitan,Stadium Clinic,Clinic,Osu,Private,5.55119,-0.19382,Ghana
+400,Greater Accra,Ga West,Stand Firm Maternity Home,Maternity Home,Pokuase,Private,5.69443,-0.28026,Ghana
+401,Greater Accra,Ga East,Star Clinic,Clinic,Taifa,Private,5.66222,-0.24995,Ghana
+402,Greater Accra,Accra Metropolitan,Sulemana Memorial Hospital Ltd (formerly Islamic Foundation Clinic),Hospital,Maamobi,Private,5.59448,-0.19546,Ghana
+403,Greater Accra,Tema Metropolitan,Sulemana Memorial Hospital Ltd (formerly Islamic Foundation Clinic),Hospital,Maamobi,Private,5.59448,-0.19546,Ghana
+404,Greater Accra,Tema Metropolitan,Sunrise Clinic,Clinic,Kaneshie (near mkt),Private,5.56811,-0.24051,Ghana
+405,Greater Accra,Accra Metropolitan,Su-san Clinic,Clinic,Sukura,Private,5.55731,-0.24679,Ghana
+406,Greater Accra,Accra Metropolitan,Swan Clinic,Clinic,Adenta,Private,5.6896,-0.17322,Ghana
+407,Greater Accra,Tema Metropolitan,Swan Clinic,Clinic,Osu,Private,5.55438,-0.17184,Ghana
+408,Greater Accra,Tema Metropolitan,Swan Clinic,Clinic,Osu,Private,5.55438,-0.17184,Ghana
+409,Greater Accra,Tema Metropolitan,Swan Clinic,Clinic,Adenta,Private,5.6896,-0.17322,Ghana
+410,Greater Accra,Ga West,Taifa Station Clinic Annex (Theatre Only),Clinic,Taifa,Private,5.65709,-0.25137,Ghana
+411,Greater Accra,Accra Metropolitan,Tee's Maternity Home,Maternity Home,La,Private,5.57194,-0.14955,Ghana
+412,Greater Accra,Tema Metropolitan,Tema Christian Eye Clinic,Clinic,Tema Community 1,Private,5.64565,-0.00911,Ghana
+413,Greater Accra,Tema Metropolitan,Tema Municipal Health Directorate,District Health Centre,Tema Community 1,Government,5.63979,-0.00893,Ghana
+414,Greater Accra,Tema Metropolitan,Tema General Hospital,Hospital,Tema,Private,5.67387,-0.02496,Ghana
+415,Greater Accra,Tema Metropolitan,Tema Manhean Health Centre,Health Centre,Tema Manhean,Private,5.64783,0.02428,Ghana
+416,Greater Accra,Tema Metropolitan,Tema Oil Refinary Clinic,Clinic,Tema Heavy Industrial Town,Private,5.66575,0.00578,Ghana
+417,Greater Accra,Tema Metropolitan,Tema Polyclinic,Polyclinic,Tema Community 2,Private,5.63556,-0.00667,Ghana
+418,Greater Accra,Tema Metropolitan,Tema Women's Hospital,Hospital,Tema Community 10,Private,5.6656,-0.01902,Ghana
+419,Greater Accra,Accra Metropolitan,Teshie Community Clinic,Clinic,Teshie,Government,5.57696,-0.10644,Ghana
+420,Greater Accra,Tema Metropolitan,The Achimota Clinic,Clinic,Mile 7 (New Achimota),Private,5.6293,-0.24781,Ghana
+421,Greater Accra,Accra Metropolitan,The Clinic,Clinic,Zongo junction,Private,5.5575,-0.24081,Ghana
+422,Greater Accra,Accra Metropolitan,The Finger of God Maternity Home,Maternity Home,Teshie,Private,5.57678,-0.10985,Ghana
+423,Greater Accra,Tema Metropolitan,The Healing Star Clinic,Clinic,Tema,Private,5.69591,-0.01348,Ghana
+424,Greater Accra,Accra Metropolitan,The King & 1 Eye Clinic,Clinic,East Legon (before America house road),Private,5.64521,-0.15377,Ghana
+425,Greater Accra,Accra Metropolitan,The Oak Street Clinic,Clinic,Teshie/Nungua,Private,5.59062,-0.09922,Ghana
+426,Greater Accra,Accra Metropolitan,The Rock Hospital,Hospital,Odorkor,Private,5.58483,-0.2627,Ghana
+427,Greater Accra,Tema Metropolitan,The Tema Clinic (West End Specialist Clinic),Clinic,Tema Community 2,Private,5.62477,-0.01911,Ghana
+428,Greater Accra,Ga West,Trinity Clinic,Clinic,Santamaria,Private,5.6028,-0.3713,Ghana
+429,Greater Accra,Accra Metropolitan,Trust Hospital (SSNIT Hospital),Hospital,Osu,Government,5.56244,-0.18174,Ghana
+430,Greater Accra,Accra Metropolitan,TUC Clinic,Clinic,Adabraka,Government,5.5555,-0.20495,Ghana
+431,Greater Accra,Accra Metropolitan,Unicorn Memorial Clinic,Hospital,Teshie,Private,5.57818,-0.11181,Ghana
+432,Greater Accra,Tema Metropolitan,Unilever Clinic,Clinic,Tema Fishing Habour,Private,5.64468,0.00887,Ghana
+433,Greater Accra,Accra Metropolitan,University Hospital (Legon Hospital),Hospital,Legon,Private,5.65141,-0.17794,Ghana
+434,Greater Accra,Accra Metropolitan,University of Ghana Medical School,Institutional Health Centre,Korle-Bu,Government,5.53857,-0.22933,Ghana
+435,Greater Accra,Tema Metropolitan,Urban Health Centre,Clinic,Ashaiman Lebanon,Private,5.70798,-0.04613,Ghana
+436,Greater Accra,Tema Metropolitan,Valco Hospital,Hospital,Tema Heavy Industrial Town,Private,5.66886,0.03468,Ghana
+437,Greater Accra,Accra Metropolitan,Vicon Specialist Hospital / Mat home,Hospital,Dansoman (Sahara),Private,5.5518,-0.26671,Ghana
+438,Greater Accra,Accra Metropolitan,Vic's Maternity Home,Maternity Home,New Town,Private,5.58422,-0.20776,Ghana
+439,Greater Accra,Accra Metropolitan,Victor's Maternity & Child Health Clinic,Maternity Home,Bubuashie,Private,5.52873,-0.23366,Ghana
+440,Greater Accra,Tema Metropolitan,Voice of the Lord Maternity Home & Clinic,Clinic,Lashibi,Private,5.66461,-0.04978,Ghana
+441,Greater Accra,Tema Metropolitan,Volta Clinic,Clinic,Nima,Private,5.58654,-0.19724,Ghana
+442,Greater Accra,Accra Metropolitan,VRA Clinic,Clinic,Osu,Private,5.55437,-0.18078,Ghana
+443,Greater Accra,Ga East,We Care Medical centre,Clinic,Madina,Private,5.67844,-0.17433,Ghana
+444,Greater Accra,Tema Metropolitan,White Eagle Clinic,Clinic,Sakumano Estate,Private,5.6242,-0.06929,Ghana
+445,Greater Accra,Accra Metropolitan,White House Clinic,Clinic,Dansoman (Ebenezer rd),Private,5.5362,-0.26569,Ghana
+446,Greater Accra,Accra Metropolitan,Zoti Clinic,Clinic,Lartebiokorshie (opposite hope sch),Private,5.54648,-0.23049,Ghana
+447,Greater Accra,Accra Metropolitan,Memorial Clinic,Clinic,5th Bank Lane (Near Bank of Ghana),Private,5.580728,-0.210467,Ghana
+448,Greater Accra,Accra Metropolitan,James Camp Borstral Clinic,Clinic,Roman Ridge,Private,5.580728,-0.210467,Ghana
+449,Greater Accra,Accra Metropolitan,Joana Clinic,Clinic,Kokomlemle,Private,5.580728,-0.210467,Ghana
+450,Greater Accra,Accra Metropolitan,Twumasi-Waah Memorial Hospital,Hospital,East Legon (before America house road),Private,5.580728,-0.210467,Ghana
+451,Greater Accra,Accra Metropolitan,Eye Link,Clinic,Abelenkpe,Private,5.580728,-0.210467,Ghana
+452,Greater Accra,Accra Metropolitan,Save the Nation Sight,Clinic,Atraco,Private,5.580728,-0.210467,Ghana
+453,Greater Accra,Accra Metropolitan,Family Health Ltd.,Hospital,Teshie,Private,5.580728,-0.210467,Ghana
+454,Greater Accra,Accra Metropolitan,Dental Clinic,Clinic,Teshie/Nungua Estate (branch off at A-Life junction),Private,5.580728,-0.210467,Ghana
+455,Greater Accra,Accra Metropolitan,North Labone Dental Clinic,Clinic,North Labone,Private,5.580728,-0.210467,Ghana
+456,Greater Accra,Accra Metropolitan,S & S Medical Centre,Clinic,Labadi,Private,5.580728,-0.210467,Ghana
+457,Greater Accra,Accra Metropolitan,Philips Clinic,Clinic,Airport,Private,5.580728,-0.210467,Ghana
+458,Greater Accra,Accra Metropolitan,Teshie Health Assistants Training School,Institutional Health Centre,Teshie,Government,5.580728,-0.210467,Ghana
+459,Greater Accra,Accra Metropolitan,C & J Medicare,Hospital,Tudu,Private,5.580728,-0.210467,Ghana
+460,Greater Accra,Accra Metropolitan,Charisma Dental Clinic,Clinic,Osu (Oxford Street),Private,5.580728,-0.210467,Ghana
+461,Greater Accra,Accra Metropolitan,Nuffield Clinic,Clinic,Osu RE,Private,5.580728,-0.210467,Ghana
+462,Greater Accra,Accra Metropolitan,Executive Health Care Unit,Clinic,Ringway Estate (Angola Rd.),Private,5.580728,-0.210467,Ghana
+463,Greater Accra,Accra Metropolitan,Spaes Dental Clinic,Clinic,Ringway Estate,Private,5.580728,-0.210467,Ghana
+464,Greater Accra,Accra Metropolitan,Ayifua Clinic,Clinic,Nyaniba Estate (Osu),Private,5.580728,-0.210467,Ghana
+465,Greater Accra,Accra Metropolitan,Otoo Memorial Dental Clinic,Clinic,Adabraka (94 Kojo Thompson Rd. - Premises of Avenida Hotel),Private,5.580728,-0.210467,Ghana
+466,Greater Accra,Accra Metropolitan,Family Clinic,Clinic,Adabraka,Private,5.580728,-0.210467,Ghana
+467,Greater Accra,Accra Metropolitan,Civil Service Clinic,Clinic,Osu,Government,5.580728,-0.210467,Ghana
+468,Greater Accra,Accra Metropolitan,Obenfo Hospital,Hospital,Mataheko,Private,5.580728,-0.210467,Ghana
+469,Greater Accra,Accra Metropolitan,Hanson Medical Centre,Clinic,North Odorkor,Private,5.580728,-0.210467,Ghana
+470,Greater Accra,Accra Metropolitan,Aroma Dental Clinic,Clinic,Zongo (near night market),Private,5.580728,-0.210467,Ghana
+471,Greater Accra,Accra Metropolitan,Bethany Medical Centre,Clinic,Kaneshie,Private,5.580728,-0.210467,Ghana
+472,Greater Accra,Accra Metropolitan,Lighthouse Mission,Clinic,Tesano,Private,5.580728,-0.210467,Ghana
+473,Greater Accra,Accra Metropolitan,Achimota Hospital,Hospital,Achimota,Government,5.580728,-0.210467,Ghana
+474,Greater Accra,Accra Metropolitan,Fire Medical Centre,Clinic,James Town,Private,5.580728,-0.210467,Ghana
+475,Greater Accra,Ga East,Madina Health Centre,Clinic,Madina (New Road),Private,5.708873,-0.2432307,Ghana
+476,Greater Accra,Ga East,Superior Medical Centre,Clinic,Dome,Private,5.708873,-0.2432307,Ghana
+477,Greater Accra,Ga East,Clements Clinic,Clinic,Dome (Near Petrol Station),Private,5.708873,-0.2432307,Ghana
+478,Greater Accra,Ga East,Pantang Health Assistants Training School,Institutional Health Centre,Pantang,Private,5.708873,-0.2432307,Ghana
+479,Greater Accra,Ga East,CMFR Clinic,Clinic,Hatso,Private,5.708873,-0.2432307,Ghana
+480,Greater Accra,Ga East,Dr Koranteng Dental Clinic,Clinic,Madina,Private,5.708873,-0.2432307,Ghana
+481,Greater Accra,Ga East,African Moslem Clinic,Clinic,Madina,Private,5.708873,-0.2432307,Ghana
+482,Greater Accra,Ga East,Victoria Clinic,Clinic,Madina,Private,5.708873,-0.2432307,Ghana
+483,Greater Accra,Ga East,Leonard Clinic,Clinic,Madina,Private,5.708873,-0.2432307,Ghana
+484,Greater Accra,Ga East,Van Medical Centre,Hospital,Ashongman,Private,5.708873,-0.2432307,Ghana
+485,Greater Accra,Ga East,Passion Clinic,Clinic,Ogbojo,Private,5.708873,-0.2432307,Ghana
+486,Greater Accra,Ga East,Taifa CHPS,Clinic,Taifa,Private,5.708873,-0.2432307,Ghana
+487,Greater Accra,Ga East,Jilac Specialist Hospital,Hospital,Dome,Private,5.708873,-0.2432307,Ghana
+488,Greater Accra,Ga East,Beans Clinic,Clinic,UnIdentified,Private,5.708873,-0.2432307,Ghana
+489,Greater Accra,Ga East,St Clement Clinic,Clinic,Dome,Private,5.708873,-0.2432307,Ghana
+490,Greater Accra,Ga East,Taifa CHPS,CHPS,Taifa,Private,5.708873,-0.2432307,Ghana
+491,Greater Accra,Ga East,Dela Clinic,Clinic,Madina (Old Road),Private,5.708873,-0.2432307,Ghana
+492,Greater Accra,Ga West,Holy Dove Hospital,Hospital,New Achimota,Private,5.708873,-0.2432307,Ghana
+493,Greater Accra,Ga West,The New Achimota Clinic,Clinic,New Achimota,Private,5.708873,-0.2432307,Ghana
+494,Greater Accra,Ga West,Bertmis Maternity Home,Maternity Home,Tabora,Private,5.708873,-0.2432307,Ghana
+495,Greater Accra,Tema Metropolitan,Green House Clinic,Clinic,Spintex Road,Private,5.64767,-0.0015396,Ghana
+496,Greater Accra,Tema Metropolitan,Dziram Eye Clinic,Clinic,Baatsona,Private,5.64767,-0.0015396,Ghana
+497,Greater Accra,Accra Metropolitan,Korle-Bu Opthamalmic,Institutional Health Centre,Korle-Bu,Government,5.580728,-0.210467,Ghana
+498,Greater Accra,Accra Metropolitan,Korle-Bu Pery Operative,Institutional Health Centre,Korle-Bu,Private,5.580728,-0.210467,Ghana
+499,Greater Accra,Accra Metropolitan,Korle-Bu Public Health,Institutional Health Centre,Korle-Bu,Private,5.580728,-0.210467,Ghana
+500,Greater Accra,Accra Metropolitan,Military Nurses Training College,Institutional Health Centre,37,Government,5.580728,-0.210467,Ghana
+501,Greater Accra,Ga West,Western Hills School of Nursing (General Nursing),Institutional Health Centre,Ofankor,Private,5.6667219,-0.3560076,Ghana
+502,Greater Accra,Ga East,Health Concern (Health Assistants Clinical),Institutional Health Centre,Hatso,Private,5.708873,-0.2432307,Ghana
+503,Greater Accra,Tema Metropolitan,Nyaniba (Health Assistants Training School Clinical),Institutional Health Centre,Tema,Private,5.64767,-0.0015396,Ghana
+504,Greater Accra,Accra Metropolitan,Martin Luther Health Assistants Training School,Institutional Health Centre,Odorkor,Private,5.580728,-0.210467,Ghana
