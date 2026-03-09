@@ -52,6 +52,12 @@ export const authApi = {
             { method: 'POST', body: JSON.stringify({ email, password }) },
         ),
 
+    register: (data: Record<string, unknown>) =>
+        apiFetch<{ success: boolean; user_id?: string }>(
+            '/api/auth/register',
+            { method: 'POST', body: JSON.stringify(data) },
+        ),
+
     me: () =>
         apiFetch<{ user: Record<string, unknown> | null }>('/api/auth/me'),
 
@@ -60,7 +66,7 @@ export const authApi = {
 };
 
 // ---------------------------------------------------------------------------
-// Hospitals
+// Hospitals (read-only — hospitals are pre-loaded)
 // ---------------------------------------------------------------------------
 
 export const hospitalsApi = {
@@ -71,24 +77,6 @@ export const hospitalsApi = {
 
     get: (id: string) =>
         apiFetch<Record<string, unknown>>(`/api/hospitals/${id}`),
-
-    register: (data: Record<string, unknown>) =>
-        apiFetch<{ success: boolean; hospital_id: string; user_id: string }>(
-            '/api/hospitals/register',
-            { method: 'POST', body: JSON.stringify(data) },
-        ),
-
-    updateStatus: (id: string, status: string) =>
-        apiFetch<{ success: boolean }>(
-            `/api/hospitals/${id}/status`,
-            { method: 'PUT', body: JSON.stringify({ status }) },
-        ),
-
-    delete: (id: string) =>
-        apiFetch<{ success: boolean }>(
-            `/api/hospitals/${id}`,
-            { method: 'DELETE' },
-        ),
 };
 
 // ---------------------------------------------------------------------------

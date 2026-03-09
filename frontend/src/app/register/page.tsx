@@ -1,247 +1,128 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Separator } from '@/components/ui/separator';
-import { Badge } from '@/components/ui/badge';
-import { Building2, User, ClipboardCheck, Loader2, CheckCircle2, ArrowLeft, ArrowRight, MapPin } from 'lucide-react';
-import { HospitalRegistrationData } from '@/types';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Activity, Loader2, ArrowLeft, Stethoscope, CheckCircle2 } from 'lucide-react';
 import { hospitalsApi } from '@/lib/api-client';
 
-const STEPS = [
-    { id: 1, title: 'Hospital Details', icon: Building2 },
-    { id: 2, title: 'Admin Account', icon: User },
-    { id: 3, title: 'Review & Submit', icon: ClipboardCheck },
-];
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
-const initialFormData: HospitalRegistrationData = {
-    hospital_name: '',
-    license_number: '',
-    address: '',
-    tier: 'tier_1',
-    type: 'polyclinic',
-    ownership: 'public',
-    operating_hours: '',
-    contact_phone: '',
-    gps_lat: '',
-    gps_lng: '',
-    admin_full_name: '',
-    admin_email: '',
-    admin_phone: '',
-    admin_password: '',
-    admin_password_confirm: '',
-};
+interface Hospital {
+    id: string;
+    name: string;
+    level: string;
+    address: string;
+}
 
 export default function RegisterPage() {
     const router = useRouter();
-    const [step, setStep] = useState(1);
-    const [formData, setFormData] = useState<HospitalRegistrationData>(initialFormData);
-    const [errors, setErrors] = useState<Record<string, string>>({});
+
+    // Form state
+    const [fullName, setFullName] = useState('');
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [phoneNumber, setPhoneNumber] = useState('');
+    const [hospitalId, setHospitalId] = useState('');
+    const [licenseNumber, setLicenseNumber] = useState('');
+    const [title, setTitle] = useState('Dr');
+    const [specialization, setSpecialization] = useState('');
+    const [department, setDepartment] = useState('');
+    const [grade, setGrade] = useState('');
+
+    // UI state
+    const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
-    const [submitted, setSubmitted] = useState(false);
-    const [mapsLoaded, setMapsLoaded] = useState(false);
+    const [success, setSuccess] = useState(false);
+    const [hospitals, setHospitals] = useState<Hospital[]>([]);
+    const [hospitalSearch, setHospitalSearch] = useState('');
+    const [step, setStep] = useState(1); // 1 = account, 2 = professional
 
-    const addressInputRef = useRef<HTMLInputElement>(null);
-    const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
-
-    const updateField = useCallback((field: keyof HospitalRegistrationData, value: string) => {
-        setFormData(prev => ({ ...prev, [field]: value }));
-        setErrors(prev => {
-            if (prev[field]) {
-                const next = { ...prev };
-                delete next[field];
-                return next;
-            }
-            return prev;
-        });
+    // Load hospitals
+    useEffect(() => {
+        hospitalsApi.list()
+            .then((data) => setHospitals(data as unknown as Hospital[]))
+            .catch(() => console.warn('Could not load hospitals'));
     }, []);
 
-    // Initialize Google Places Autocomplete on the address input
-    useEffect(() => {
-        if (step !== 1) return;
+    const filteredHospitals = hospitals.filter(h =>
+        h.name.toLowerCase().includes(hospitalSearch.toLowerCase())
+    );
 
-        const initAutocomplete = () => {
-            if (
-                typeof window === 'undefined' ||
-                !window.google?.maps?.places ||
-                !addressInputRef.current ||
-                autocompleteRef.current
-            ) return;
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setError('');
 
-            setMapsLoaded(true);
-            const autocomplete = new window.google.maps.places.Autocomplete(
-                addressInputRef.current,
-                {
-                    types: ['establishment', 'geocode'],
-                    componentRestrictions: { country: 'gh' }, // Restrict to Ghana
-                    fields: ['formatted_address', 'geometry', 'name'],
-                }
-            );
-
-            autocomplete.addListener('place_changed', () => {
-                const place = autocomplete.getPlace();
-                if (place.formatted_address) {
-                    updateField('address', place.formatted_address);
-                }
-                if (place.geometry?.location) {
-                    updateField('gps_lat', place.geometry.location.lat().toFixed(6));
-                    updateField('gps_lng', place.geometry.location.lng().toFixed(6));
-                }
-            });
-
-            autocompleteRef.current = autocomplete;
-        };
-
-        // Try immediately, then retry every 500ms until Google Maps loads
-        initAutocomplete();
-        const interval = setInterval(() => {
-            if (window.google?.maps?.places) {
-                initAutocomplete();
-                clearInterval(interval);
-            }
-        }, 500);
-
-        return () => {
-            clearInterval(interval);
-            if (autocompleteRef.current) {
-                window.google?.maps?.event?.clearInstanceListeners(autocompleteRef.current);
-                autocompleteRef.current = null;
-            }
-        };
-    }, [step, updateField]);
-
-    const validateStep1 = (): boolean => {
-        const newErrors: Record<string, string> = {};
-        if (!formData.hospital_name.trim()) newErrors.hospital_name = 'Hospital name is required';
-        if (!formData.license_number.trim()) newErrors.license_number = 'License number is required';
-        if (!formData.address.trim()) newErrors.address = 'Address is required';
-        if (!formData.gps_lat.trim()) newErrors.gps_lat = 'Latitude is required';
-        if (!formData.gps_lng.trim()) newErrors.gps_lng = 'Longitude is required';
-        if (formData.gps_lat && (isNaN(Number(formData.gps_lat)) || Number(formData.gps_lat) < -90 || Number(formData.gps_lat) > 90)) {
-            newErrors.gps_lat = 'Latitude must be between -90 and 90';
+        if (password !== confirmPassword) {
+            setError('Passwords do not match');
+            return;
         }
-        if (formData.gps_lng && (isNaN(Number(formData.gps_lng)) || Number(formData.gps_lng) < -180 || Number(formData.gps_lng) > 180)) {
-            newErrors.gps_lng = 'Longitude must be between -180 and 180';
+        if (password.length < 6) {
+            setError('Password must be at least 6 characters');
+            return;
         }
-        setErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
-    };
+        if (!hospitalId) {
+            setError('Please select your hospital');
+            return;
+        }
 
-    const validateStep2 = (): boolean => {
-        const newErrors: Record<string, string> = {};
-        if (!formData.admin_full_name.trim()) newErrors.admin_full_name = 'Full name is required';
-        if (!formData.admin_email.trim()) newErrors.admin_email = 'Email is required';
-        if (formData.admin_email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.admin_email)) {
-            newErrors.admin_email = 'Enter a valid email address';
-        }
-        if (!formData.admin_password) newErrors.admin_password = 'Password is required';
-        if (formData.admin_password && formData.admin_password.length < 8) {
-            newErrors.admin_password = 'Password must be at least 8 characters';
-        }
-        if (!formData.admin_password_confirm) newErrors.admin_password_confirm = 'Please confirm your password';
-        if (formData.admin_password && formData.admin_password_confirm && formData.admin_password !== formData.admin_password_confirm) {
-            newErrors.admin_password_confirm = 'Passwords do not match';
-        }
-        setErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
-    };
-
-    const handleNext = () => {
-        if (step === 1 && validateStep1()) {
-            setStep(2);
-        } else if (step === 2 && validateStep2()) {
-            setStep(3);
-        }
-    };
-
-    const handleBack = () => {
-        if (step > 1) setStep(step - 1);
-    };
-
-    const handleSubmit = async () => {
         setLoading(true);
+
         try {
-            await hospitalsApi.register({
-                hospital_name: formData.hospital_name,
-                license_number: formData.license_number,
-                address: formData.address,
-                tier: formData.tier,
-                type: formData.type,
-                ownership: formData.ownership,
-                operating_hours: formData.operating_hours,
-                contact_phone: formData.contact_phone,
-                gps_lat: formData.gps_lat,
-                gps_lng: formData.gps_lng,
-                admin_full_name: formData.admin_full_name,
-                admin_email: formData.admin_email,
-                admin_phone: formData.admin_phone,
-                admin_password: formData.admin_password,
+            const res = await fetch(`${API_BASE}/api/auth/register`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    full_name: fullName,
+                    email,
+                    password,
+                    phone_number: phoneNumber,
+                    hospital_id: parseInt(hospitalId),
+                    license_number: licenseNumber,
+                    title,
+                    specialization,
+                    department,
+                    grade,
+                }),
             });
 
-            setSubmitted(true);
-        } catch (err) {
-            console.error('Registration failed:', err);
-            alert(err instanceof Error ? err.message : 'Registration failed. Please try again.');
+            const data = await res.json();
+
+            if (data.success) {
+                setSuccess(true);
+            } else {
+                setError(data.detail || 'Registration failed. Please try again.');
+            }
+        } catch {
+            setError('An error occurred. Please try again.');
         } finally {
             setLoading(false);
         }
     };
 
-    const tierLabels: Record<string, string> = {
-        tier_1: 'Tier 1 — Primary Care',
-        tier_2: 'Tier 2 — Secondary Care',
-        tier_3: 'Tier 3 — Tertiary Care',
-    };
-
-    const typeLabels: Record<string, string> = {
-        polyclinic: 'Polyclinic',
-        district: 'District Hospital',
-        regional: 'Regional Hospital',
-        teaching: 'Teaching Hospital',
-        specialist: 'Specialist Hospital',
-    };
-
-    const ownershipLabels: Record<string, string> = {
-        public: 'Government / Public',
-        private: 'Private',
-        faith_based: 'Faith-Based',
-        military: 'Military',
-    };
-
-    // Success screen
-    if (submitted) {
+    if (success) {
         return (
-            <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex items-center justify-center p-4">
-                <Card className="w-full max-w-md shadow-xl text-center">
-                    <CardContent className="pt-10 pb-8 space-y-6">
-                        <div className="mx-auto h-16 w-16 rounded-full bg-green-100 flex items-center justify-center">
-                            <CheckCircle2 className="h-8 w-8 text-green-600" />
+            <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
+                <Card className="w-full max-w-md shadow-xl shadow-slate-200/60 border-slate-100 text-center">
+                    <CardContent className="pt-10 pb-8">
+                        <div className="mx-auto mb-6 h-16 w-16 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shadow-lg shadow-emerald-200/50">
+                            <CheckCircle2 className="h-8 w-8 text-white" />
                         </div>
-                        <div>
-                            <h2 className="text-2xl font-bold text-gray-900 mb-2">Application Submitted!</h2>
-                            <p className="text-gray-500 leading-relaxed">
-                                Your hospital registration for <span className="font-medium text-gray-700">{formData.hospital_name}</span> has been submitted successfully.
-                            </p>
-                        </div>
-                        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-                            <p className="text-sm text-amber-800">
-                                <span className="font-semibold">What happens next?</span><br />
-                                A system administrator will review your application. You will be notified via email
-                                at <span className="font-medium">{formData.admin_email}</span> once your application has been approved.
-                            </p>
-                        </div>
-                        <Button
-                            className="w-full"
-                            onClick={() => router.push('/')}
-                        >
-                            Return to Login
-                        </Button>
+                        <h2 className="text-2xl font-bold text-slate-900 mb-2">Registration Submitted!</h2>
+                        <p className="text-slate-500 leading-relaxed mb-8">
+                            Your account is pending approval by your hospital administrator.
+                            You&apos;ll receive an email notification once approved.
+                        </p>
+                        <Link href="/login">
+                            <Button className="bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 rounded-xl px-8 shadow-md shadow-blue-200/50">
+                                Go to Login
+                            </Button>
+                        </Link>
                     </CardContent>
                 </Card>
             </div>
@@ -249,450 +130,202 @@ export default function RegisterPage() {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex items-center justify-center p-4">
-            <div className="w-full max-w-2xl">
-                {/* Header */}
-                <div className="text-center mb-8">
-                    <div className="mx-auto mb-4 h-14 w-14 rounded-full bg-blue-600 flex items-center justify-center">
-                        <Building2 className="h-7 w-7 text-white" />
+        <div className="min-h-screen flex">
+            {/* Left panel — branding */}
+            <div className="hidden lg:flex lg:w-2/5 relative bg-gradient-to-br from-blue-600 via-blue-700 to-cyan-600 items-center justify-center p-12">
+                <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)', backgroundSize: '32px 32px' }} />
+                <div className="relative z-10 max-w-sm text-center">
+                    <div className="mx-auto mb-8 h-20 w-20 rounded-3xl bg-white/20 backdrop-blur-lg flex items-center justify-center border border-white/30">
+                        <Stethoscope className="h-10 w-10 text-white" />
                     </div>
-                    <h1 className="text-2xl font-bold text-gray-900">Register Your Hospital</h1>
-                    <p className="text-gray-500 mt-1">Join the Healthcare Referral System</p>
-                </div>
-
-                {/* Step indicator */}
-                <div className="flex items-center justify-center gap-2 mb-8">
-                    {STEPS.map((s, i) => (
-                        <div key={s.id} className="flex items-center">
-                            <div
-                                className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors ${step === s.id
-                                    ? 'bg-blue-600 text-white'
-                                    : step > s.id
-                                        ? 'bg-green-100 text-green-700'
-                                        : 'bg-gray-100 text-gray-400'
-                                    }`}
-                            >
-                                {step > s.id ? (
-                                    <CheckCircle2 className="h-4 w-4" />
-                                ) : (
-                                    <s.icon className="h-4 w-4" />
-                                )}
-                                <span className="hidden sm:inline">{s.title}</span>
-                                <span className="sm:hidden">{s.id}</span>
+                    <h1 className="text-3xl font-extrabold text-white tracking-tight leading-tight">
+                        Join the HRS Network
+                    </h1>
+                    <p className="mt-4 text-blue-100 text-lg leading-relaxed">
+                        Register as a physician to start making patient referrals across the
+                        Greater Accra healthcare network.
+                    </p>
+                    <div className="mt-10 space-y-4 text-left">
+                        {[
+                            'Select from 170+ pre-loaded facilities',
+                            'Get verified by your hospital admin',
+                            'Start referring patients instantly',
+                        ].map((item, i) => (
+                            <div key={i} className="flex items-center gap-3 bg-white/10 backdrop-blur rounded-xl p-3 border border-white/10">
+                                <CheckCircle2 className="h-5 w-5 text-cyan-300 flex-shrink-0" />
+                                <span className="text-sm text-white">{item}</span>
                             </div>
-                            {i < STEPS.length - 1 && (
-                                <div className={`w-8 h-0.5 mx-1 ${step > s.id ? 'bg-green-300' : 'bg-gray-200'}`} />
-                            )}
-                        </div>
-                    ))}
+                        ))}
+                    </div>
                 </div>
+            </div>
 
-                {/* Form Card */}
-                <Card className="shadow-xl">
-                    {/* Step 1: Hospital Details */}
-                    {step === 1 && (
-                        <>
-                            <CardHeader>
-                                <CardTitle className="text-lg">Hospital Information</CardTitle>
-                                <CardDescription>Provide details about your hospital facility</CardDescription>
-                            </CardHeader>
-                            <CardContent className="space-y-5">
-                                {/* Hospital Name */}
-                                <div className="space-y-2">
-                                    <Label htmlFor="hospital_name">Hospital Name <span className="text-red-500">*</span></Label>
-                                    <Input
-                                        id="hospital_name"
-                                        placeholder="e.g. Accra General Hospital"
-                                        value={formData.hospital_name}
-                                        onChange={e => updateField('hospital_name', e.target.value)}
-                                        className={errors.hospital_name ? 'border-red-300' : ''}
-                                    />
-                                    {errors.hospital_name && <p className="text-xs text-red-500">{errors.hospital_name}</p>}
-                                </div>
-
-                                {/* License Number */}
-                                <div className="space-y-2">
-                                    <Label htmlFor="license_number">License Number <span className="text-red-500">*</span></Label>
-                                    <Input
-                                        id="license_number"
-                                        placeholder="e.g. GHS-LIC-2025-001"
-                                        value={formData.license_number}
-                                        onChange={e => updateField('license_number', e.target.value)}
-                                        className={errors.license_number ? 'border-red-300' : ''}
-                                    />
-                                    {errors.license_number && <p className="text-xs text-red-500">{errors.license_number}</p>}
-                                </div>
-
-                                {/* Address with Google Places Autocomplete */}
-                                <div className="space-y-2">
-                                    <div className="flex items-center gap-2">
-                                        <Label htmlFor="address">Address <span className="text-red-500">*</span></Label>
-                                        {mapsLoaded && (
-                                            <Badge variant="outline" className="text-xs text-emerald-600 border-emerald-200 bg-emerald-50">
-                                                <MapPin className="h-3 w-3 mr-1" />
-                                                Google Places Active
-                                            </Badge>
-                                        )}
-                                    </div>
-                                    <Input
-                                        ref={addressInputRef}
-                                        id="address"
-                                        placeholder={mapsLoaded
-                                            ? "Start typing to search Google Places..."
-                                            : "e.g. 123 Independence Ave, Accra"
-                                        }
-                                        value={formData.address}
-                                        onChange={e => updateField('address', e.target.value)}
-                                        className={errors.address ? 'border-red-300' : ''}
-                                    />
-                                    {!mapsLoaded && (
-                                        <p className="text-xs text-gray-400">
-                                            Google Places not available — enter address manually
-                                        </p>
-                                    )}
-                                    {errors.address && <p className="text-xs text-red-500">{errors.address}</p>}
-                                </div>
-
-                                {/* GPS Coordinates (auto-filled by Google Places, or manual) */}
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="gps_lat">
-                                            Latitude <span className="text-red-500">*</span>
-                                            {mapsLoaded && <span className="text-xs text-gray-400 ml-1">(auto-filled)</span>}
-                                        </Label>
-                                        <Input
-                                            id="gps_lat"
-                                            type="number"
-                                            step="any"
-                                            placeholder="e.g. 5.6037"
-                                            value={formData.gps_lat}
-                                            onChange={e => updateField('gps_lat', e.target.value)}
-                                            className={`${errors.gps_lat ? 'border-red-300' : ''} ${mapsLoaded && formData.gps_lat ? 'bg-emerald-50 border-emerald-200' : ''}`}
-                                            readOnly={mapsLoaded && !!formData.gps_lat}
-                                        />
-                                        {errors.gps_lat && <p className="text-xs text-red-500">{errors.gps_lat}</p>}
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="gps_lng">
-                                            Longitude <span className="text-red-500">*</span>
-                                            {mapsLoaded && <span className="text-xs text-gray-400 ml-1">(auto-filled)</span>}
-                                        </Label>
-                                        <Input
-                                            id="gps_lng"
-                                            type="number"
-                                            step="any"
-                                            placeholder="e.g. -0.1870"
-                                            value={formData.gps_lng}
-                                            onChange={e => updateField('gps_lng', e.target.value)}
-                                            className={`${errors.gps_lng ? 'border-red-300' : ''} ${mapsLoaded && formData.gps_lng ? 'bg-emerald-50 border-emerald-200' : ''}`}
-                                            readOnly={mapsLoaded && !!formData.gps_lng}
-                                        />
-                                        {errors.gps_lng && <p className="text-xs text-red-500">{errors.gps_lng}</p>}
-                                    </div>
-                                </div>
-
-                                {/* Tier, Type, Ownership row */}
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    <div className="space-y-2">
-                                        <Label>Tier <span className="text-red-500">*</span></Label>
-                                        <Select value={formData.tier} onValueChange={v => updateField('tier', v)}>
-                                            <SelectTrigger><SelectValue /></SelectTrigger>
-                                            <SelectContent>
-                                                {Object.entries(tierLabels).map(([val, label]) => (
-                                                    <SelectItem key={val} value={val}>{label}</SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label>Type <span className="text-red-500">*</span></Label>
-                                        <Select value={formData.type} onValueChange={v => updateField('type', v)}>
-                                            <SelectTrigger><SelectValue /></SelectTrigger>
-                                            <SelectContent>
-                                                {Object.entries(typeLabels).map(([val, label]) => (
-                                                    <SelectItem key={val} value={val}>{label}</SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label>Ownership <span className="text-red-500">*</span></Label>
-                                        <Select value={formData.ownership} onValueChange={v => updateField('ownership', v)}>
-                                            <SelectTrigger><SelectValue /></SelectTrigger>
-                                            <SelectContent>
-                                                {Object.entries(ownershipLabels).map(([val, label]) => (
-                                                    <SelectItem key={val} value={val}>{label}</SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                </div>
-
-                                {/* Operating Hours & Contact Phone */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="operating_hours">Operating Hours</Label>
-                                        <Input
-                                            id="operating_hours"
-                                            placeholder="e.g. 24/7 or Mon-Fri 8am-5pm"
-                                            value={formData.operating_hours}
-                                            onChange={e => updateField('operating_hours', e.target.value)}
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="contact_phone">Contact Phone</Label>
-                                        <Input
-                                            id="contact_phone"
-                                            placeholder="e.g. +233 24 555 1234"
-                                            value={formData.contact_phone}
-                                            onChange={e => updateField('contact_phone', e.target.value)}
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="flex justify-between pt-4">
-                                    <Link href="/">
-                                        <Button variant="ghost" type="button">
-                                            <ArrowLeft className="h-4 w-4 mr-2" />
-                                            Back to Login
-                                        </Button>
-                                    </Link>
-                                    <Button onClick={handleNext}>
-                                        Continue
-                                        <ArrowRight className="h-4 w-4 ml-2" />
-                                    </Button>
-                                </div>
-                            </CardContent>
-                        </>
-                    )}
-
-                    {/* Step 2: Admin Account */}
-                    {step === 2 && (
-                        <>
-                            <CardHeader>
-                                <CardTitle className="text-lg">Administrator Account</CardTitle>
-                                <CardDescription>Create the admin account that will manage this hospital</CardDescription>
-                            </CardHeader>
-                            <CardContent className="space-y-5">
-                                {/* Full Name */}
-                                <div className="space-y-2">
-                                    <Label htmlFor="admin_full_name">Full Name <span className="text-red-500">*</span></Label>
-                                    <Input
-                                        id="admin_full_name"
-                                        placeholder="e.g. John Doe"
-                                        value={formData.admin_full_name}
-                                        onChange={e => updateField('admin_full_name', e.target.value)}
-                                        className={errors.admin_full_name ? 'border-red-300' : ''}
-                                    />
-                                    {errors.admin_full_name && <p className="text-xs text-red-500">{errors.admin_full_name}</p>}
-                                </div>
-
-                                {/* Email */}
-                                <div className="space-y-2">
-                                    <Label htmlFor="admin_email">Email Address <span className="text-red-500">*</span></Label>
-                                    <Input
-                                        id="admin_email"
-                                        type="email"
-                                        placeholder="e.g. admin@hospital.com"
-                                        value={formData.admin_email}
-                                        onChange={e => updateField('admin_email', e.target.value)}
-                                        className={errors.admin_email ? 'border-red-300' : ''}
-                                    />
-                                    {errors.admin_email && <p className="text-xs text-red-500">{errors.admin_email}</p>}
-                                </div>
-
-                                {/* Phone */}
-                                <div className="space-y-2">
-                                    <Label htmlFor="admin_phone">Phone Number</Label>
-                                    <Input
-                                        id="admin_phone"
-                                        placeholder="e.g. +233 24 555 1234"
-                                        value={formData.admin_phone}
-                                        onChange={e => updateField('admin_phone', e.target.value)}
-                                    />
-                                </div>
-
-                                <Separator />
-
-                                {/* Password */}
-                                <div className="space-y-2">
-                                    <Label htmlFor="admin_password">Password <span className="text-red-500">*</span></Label>
-                                    <Input
-                                        id="admin_password"
-                                        type="password"
-                                        placeholder="Minimum 8 characters"
-                                        value={formData.admin_password}
-                                        onChange={e => updateField('admin_password', e.target.value)}
-                                        className={errors.admin_password ? 'border-red-300' : ''}
-                                    />
-                                    {errors.admin_password && <p className="text-xs text-red-500">{errors.admin_password}</p>}
-                                </div>
-
-                                {/* Confirm Password */}
-                                <div className="space-y-2">
-                                    <Label htmlFor="admin_password_confirm">Confirm Password <span className="text-red-500">*</span></Label>
-                                    <Input
-                                        id="admin_password_confirm"
-                                        type="password"
-                                        placeholder="Re-enter your password"
-                                        value={formData.admin_password_confirm}
-                                        onChange={e => updateField('admin_password_confirm', e.target.value)}
-                                        className={errors.admin_password_confirm ? 'border-red-300' : ''}
-                                    />
-                                    {errors.admin_password_confirm && <p className="text-xs text-red-500">{errors.admin_password_confirm}</p>}
-                                </div>
-
-                                <div className="flex justify-between pt-4">
-                                    <Button variant="outline" onClick={handleBack}>
-                                        <ArrowLeft className="h-4 w-4 mr-2" />
-                                        Back
-                                    </Button>
-                                    <Button onClick={handleNext}>
-                                        Review Application
-                                        <ArrowRight className="h-4 w-4 ml-2" />
-                                    </Button>
-                                </div>
-                            </CardContent>
-                        </>
-                    )}
-
-                    {/* Step 3: Review & Submit */}
-                    {step === 3 && (
-                        <>
-                            <CardHeader>
-                                <CardTitle className="text-lg">Review Your Application</CardTitle>
-                                <CardDescription>Please verify all information before submitting</CardDescription>
-                            </CardHeader>
-                            <CardContent className="space-y-6">
-                                {/* Hospital Details Summary */}
-                                <div>
-                                    <div className="flex items-center justify-between mb-3">
-                                        <h3 className="font-semibold text-base text-gray-900">Hospital Details</h3>
-                                        <Button variant="ghost" size="sm" onClick={() => setStep(1)}>
-                                            Edit
-                                        </Button>
-                                    </div>
-                                    <div className="bg-gray-50 rounded-lg p-4 space-y-3 text-sm">
-                                        <div className="grid grid-cols-2 gap-y-3">
-                                            <div>
-                                                <p className="text-gray-500">Hospital Name</p>
-                                                <p className="font-medium">{formData.hospital_name}</p>
-                                            </div>
-                                            <div>
-                                                <p className="text-gray-500">License Number</p>
-                                                <p className="font-medium">{formData.license_number}</p>
-                                            </div>
-                                            <div className="col-span-2">
-                                                <p className="text-gray-500">Address</p>
-                                                <p className="font-medium">{formData.address}</p>
-                                            </div>
-                                            <div>
-                                                <p className="text-gray-500">Tier</p>
-                                                <Badge variant="outline" className="mt-1">{tierLabels[formData.tier]}</Badge>
-                                            </div>
-                                            <div>
-                                                <p className="text-gray-500">Type</p>
-                                                <Badge variant="outline" className="mt-1">{typeLabels[formData.type]}</Badge>
-                                            </div>
-                                            <div>
-                                                <p className="text-gray-500">Ownership</p>
-                                                <Badge variant="outline" className="mt-1">{ownershipLabels[formData.ownership]}</Badge>
-                                            </div>
-                                            <div>
-                                                <p className="text-gray-500">GPS Coordinates</p>
-                                                <p className="font-medium">{formData.gps_lat}, {formData.gps_lng}</p>
-                                            </div>
-                                            {formData.operating_hours && (
-                                                <div>
-                                                    <p className="text-gray-500">Operating Hours</p>
-                                                    <p className="font-medium">{formData.operating_hours}</p>
-                                                </div>
-                                            )}
-                                            {formData.contact_phone && (
-                                                <div>
-                                                    <p className="text-gray-500">Contact Phone</p>
-                                                    <p className="font-medium">{formData.contact_phone}</p>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <Separator />
-
-                                {/* Admin Account Summary */}
-                                <div>
-                                    <div className="flex items-center justify-between mb-3">
-                                        <h3 className="font-semibold text-base text-gray-900">Administrator Account</h3>
-                                        <Button variant="ghost" size="sm" onClick={() => setStep(2)}>
-                                            Edit
-                                        </Button>
-                                    </div>
-                                    <div className="bg-gray-50 rounded-lg p-4 space-y-3 text-sm">
-                                        <div className="grid grid-cols-2 gap-y-3">
-                                            <div>
-                                                <p className="text-gray-500">Full Name</p>
-                                                <p className="font-medium">{formData.admin_full_name}</p>
-                                            </div>
-                                            <div>
-                                                <p className="text-gray-500">Email</p>
-                                                <p className="font-medium">{formData.admin_email}</p>
-                                            </div>
-                                            {formData.admin_phone && (
-                                                <div>
-                                                    <p className="text-gray-500">Phone</p>
-                                                    <p className="font-medium">{formData.admin_phone}</p>
-                                                </div>
-                                            )}
-                                            <div>
-                                                <p className="text-gray-500">Password</p>
-                                                <p className="font-medium">{'•'.repeat(formData.admin_password.length)}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Submit */}
-                                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-800">
-                                    By submitting, your hospital application will be sent for review by a system administrator.
-                                    You will be notified once your application has been processed.
-                                </div>
-
-                                <div className="flex justify-between pt-2">
-                                    <Button variant="outline" onClick={handleBack}>
-                                        <ArrowLeft className="h-4 w-4 mr-2" />
-                                        Back
-                                    </Button>
-                                    <Button
-                                        onClick={handleSubmit}
-                                        disabled={loading}
-                                        className="bg-blue-600 hover:bg-blue-700"
-                                    >
-                                        {loading ? (
-                                            <>
-                                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                                Submitting...
-                                            </>
-                                        ) : (
-                                            <>
-                                                <CheckCircle2 className="mr-2 h-4 w-4" />
-                                                Submit Application
-                                            </>
-                                        )}
-                                    </Button>
-                                </div>
-                            </CardContent>
-                        </>
-                    )}
-                </Card>
-
-                {/* Footer link */}
-                <p className="text-center text-sm text-gray-500 mt-6">
-                    Already registered?{' '}
-                    <Link href="/" className="text-blue-600 hover:underline font-medium">
-                        Sign in here
+            {/* Right panel — form */}
+            <div className="flex-1 flex items-start justify-center p-6 pt-8 bg-slate-50 overflow-y-auto">
+                <div className="w-full max-w-lg">
+                    <Link href="/" className="inline-flex items-center text-sm text-slate-500 hover:text-blue-600 transition-colors mb-6 group">
+                        <ArrowLeft className="h-4 w-4 mr-1.5 group-hover:-translate-x-0.5 transition-transform" />
+                        Back to home
                     </Link>
-                </p>
+
+                    <Card className="shadow-xl shadow-slate-200/60 border-slate-100">
+                        <CardHeader className="pb-2">
+                            <div className="lg:hidden mx-auto mb-4 h-12 w-12 rounded-xl bg-gradient-to-br from-blue-600 to-cyan-500 flex items-center justify-center shadow-md shadow-blue-200">
+                                <Activity className="h-6 w-6 text-white" />
+                            </div>
+                            <CardTitle className="text-2xl font-bold text-center lg:text-left">Doctor Registration</CardTitle>
+                            <CardDescription className="text-center lg:text-left">Create your HRS account to start referring patients</CardDescription>
+                        </CardHeader>
+
+                        <CardContent className="pt-4">
+                            {/* Step indicator */}
+                            <div className="flex items-center gap-2 mb-6">
+                                <button
+                                    onClick={() => setStep(1)}
+                                    className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-colors ${step === 1 ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
+                                >
+                                    1. Account Details
+                                </button>
+                                <button
+                                    onClick={() => setStep(2)}
+                                    className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-colors ${step === 2 ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
+                                >
+                                    2. Professional Info
+                                </button>
+                            </div>
+
+                            <form onSubmit={handleSubmit} className="space-y-4">
+                                {step === 1 && (
+                                    <>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="fullName">Full Name *</Label>
+                                            <Input id="fullName" placeholder="Dr. Kwame Mensah" value={fullName} onChange={(e) => setFullName(e.target.value)} required className="h-11" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="regEmail">Email Address *</Label>
+                                            <Input id="regEmail" type="email" placeholder="kwame.mensah@hospital.gov.gh" value={email} onChange={(e) => setEmail(e.target.value)} required className="h-11" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="phone">Phone Number</Label>
+                                            <Input id="phone" placeholder="+233 24 123 4567" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} className="h-11" />
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div className="space-y-2">
+                                                <Label htmlFor="regPassword">Password *</Label>
+                                                <Input id="regPassword" type="password" placeholder="Min 6 characters" value={password} onChange={(e) => setPassword(e.target.value)} required className="h-11" />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label htmlFor="confirm">Confirm Password *</Label>
+                                                <Input id="confirm" type="password" placeholder="Repeat password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required className="h-11" />
+                                            </div>
+                                        </div>
+                                        <Button type="button" onClick={() => setStep(2)} className="w-full h-11 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 shadow-md shadow-blue-200/50 font-semibold mt-2">
+                                            Continue to Professional Info
+                                        </Button>
+                                    </>
+                                )}
+
+                                {step === 2 && (
+                                    <>
+                                        {/* Hospital selection with search */}
+                                        <div className="space-y-2">
+                                            <Label>Select Your Hospital *</Label>
+                                            <Input
+                                                placeholder="Search hospitals..."
+                                                value={hospitalSearch}
+                                                onChange={(e) => setHospitalSearch(e.target.value)}
+                                                className="h-11"
+                                            />
+                                            <div className="max-h-40 overflow-y-auto border border-slate-200 rounded-xl bg-white">
+                                                {filteredHospitals.length === 0 ? (
+                                                    <div className="p-3 text-sm text-slate-400 text-center">No hospitals found</div>
+                                                ) : (
+                                                    filteredHospitals.slice(0, 30).map((h) => (
+                                                        <button
+                                                            key={h.id}
+                                                            type="button"
+                                                            onClick={() => { setHospitalId(h.id); setHospitalSearch(h.name); }}
+                                                            className={`w-full text-left px-3 py-2 text-sm hover:bg-blue-50 transition-colors border-b border-slate-50 last:border-0 ${hospitalId === h.id ? 'bg-blue-50 text-blue-700 font-medium' : 'text-slate-700'}`}
+                                                        >
+                                                            <div className="font-medium">{h.name}</div>
+                                                            <div className="text-xs text-slate-400">{h.level} • {h.address}</div>
+                                                        </button>
+                                                    ))
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div className="space-y-2">
+                                                <Label htmlFor="title">Title</Label>
+                                                <select id="title" value={title} onChange={(e) => setTitle(e.target.value)} className="h-11 w-full rounded-lg border border-slate-200 px-3 text-sm bg-white">
+                                                    <option value="Dr">Dr</option>
+                                                    <option value="Prof">Prof</option>
+                                                    <option value="Mr">Mr</option>
+                                                    <option value="Mrs">Mrs</option>
+                                                    <option value="Ms">Ms</option>
+                                                </select>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label htmlFor="license">License Number *</Label>
+                                                <Input id="license" placeholder="MC-GH-12345" value={licenseNumber} onChange={(e) => setLicenseNumber(e.target.value)} required className="h-11" />
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <Label htmlFor="spec">Specialization *</Label>
+                                            <Input id="spec" placeholder="e.g. General Practice, Surgery, Cardiology" value={specialization} onChange={(e) => setSpecialization(e.target.value)} required className="h-11" />
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div className="space-y-2">
+                                                <Label htmlFor="dept">Department</Label>
+                                                <Input id="dept" placeholder="e.g. A&E, Surgery" value={department} onChange={(e) => setDepartment(e.target.value)} className="h-11" />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label htmlFor="grade">Grade</Label>
+                                                <Input id="grade" placeholder="e.g. Medical Officer" value={grade} onChange={(e) => setGrade(e.target.value)} className="h-11" />
+                                            </div>
+                                        </div>
+
+                                        {error && (
+                                            <div className="text-sm text-center p-3 rounded-xl bg-red-50 text-red-600 border border-red-100">
+                                                {error}
+                                            </div>
+                                        )}
+
+                                        <div className="flex gap-3 mt-2">
+                                            <Button type="button" variant="outline" onClick={() => setStep(1)} className="flex-1 h-11 rounded-xl">
+                                                Back
+                                            </Button>
+                                            <Button type="submit" className="flex-1 h-11 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 shadow-md shadow-blue-200/50 font-semibold" disabled={loading}>
+                                                {loading ? (
+                                                    <>
+                                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                        Registering...
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Stethoscope className="h-4 w-4 mr-2" />
+                                                        Register
+                                                    </>
+                                                )}
+                                            </Button>
+                                        </div>
+                                    </>
+                                )}
+                            </form>
+
+                            {/* Login link */}
+                            <div className="mt-6 pt-4 border-t border-slate-100 text-center">
+                                <p className="text-sm text-slate-500">
+                                    Already have an account?{' '}
+                                    <Link href="/login" className="text-blue-600 hover:text-blue-700 font-medium">Sign in</Link>
+                                </p>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
             </div>
         </div>
     );
