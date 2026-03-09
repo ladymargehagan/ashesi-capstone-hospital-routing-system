@@ -103,6 +103,16 @@ def update_user_status(user_id: int, req: UserStatusUpdate):
             (req.status, user_id),
         )
 
+        # Send approval email if status is active
+        if req.status == "active":
+            cur.execute("SELECT full_name FROM users WHERE user_id = %s", (user_id,))
+            u = cur.fetchone()
+            if u:
+                try:
+                    notify_account_approved(user_id, u["full_name"])
+                except Exception as e:
+                    print(f"[WARN] Account approval notification failed: {e}")
+
     return {"success": True, "user_id": str(user_id), "status": req.status}
 
 
