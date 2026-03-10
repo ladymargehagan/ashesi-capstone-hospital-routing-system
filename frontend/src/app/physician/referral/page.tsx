@@ -265,19 +265,22 @@ function ReferralFormContent() {
         return {
             generalBeds: generalBeds ? `${generalBeds.available_count}/${generalBeds.total_count}` : 'N/A',
             icuBeds: icuBeds ? `${icuBeds.available_count}/${icuBeds.total_count}` : 'N/A',
-            tier: hospital.tier.replace('_', ' ').toUpperCase(),
+            level: (hospital.level || '').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
             type: hospital.type.charAt(0).toUpperCase() + hospital.type.slice(1),
             ownership: hospital.ownership.replace('_', ' ').charAt(0).toUpperCase() + hospital.ownership.replace('_', ' ').slice(1),
         };
     };
 
-    const getTierBadgeStyle = (tier: string) => {
+    const getLevelBadgeStyle = (level: string) => {
         const styles: Record<string, string> = {
-            tier_3: 'bg-blue-100 text-blue-700 border-blue-200',
-            tier_2: 'bg-purple-100 text-purple-700 border-purple-200',
-            tier_1: 'bg-gray-100 text-gray-700 border-gray-200',
+            teaching: 'bg-purple-100 text-purple-700 border-purple-200',
+            regional: 'bg-blue-100 text-blue-700 border-blue-200',
+            district: 'bg-cyan-100 text-cyan-700 border-cyan-200',
+            polyclinic: 'bg-teal-100 text-teal-700 border-teal-200',
+            health_centre: 'bg-green-100 text-green-700 border-green-200',
+            chps: 'bg-gray-100 text-gray-700 border-gray-200',
         };
-        return styles[tier] || styles.tier_1;
+        return styles[level] || styles.district;
     };
 
     return (
@@ -668,8 +671,8 @@ function ReferralFormContent() {
                                                             <p className="font-semibold text-sm">{preview.type}</p>
                                                         </div>
                                                         <div className="bg-white rounded-md p-2 text-center">
-                                                            <Badge className={`text-xs ${getTierBadgeStyle(chosenHospital.tier)}`} variant="outline">
-                                                                {preview.tier}
+                                                            <Badge className={`text-xs ${getLevelBadgeStyle(chosenHospital.level)}`} variant="outline">
+                                                                {preview.level}
                                                             </Badge>
                                                             <p className="text-xs text-gray-500 mt-1">{preview.ownership}</p>
                                                         </div>
@@ -745,8 +748,8 @@ function ReferralFormContent() {
                                                                     <p className="text-xs text-gray-500">{hospital.address}</p>
                                                                 </div>
                                                                 <div className="flex items-center gap-2">
-                                                                    <Badge className={`text-xs ${getTierBadgeStyle(hospital.tier)}`} variant="outline">
-                                                                        {preview.tier}
+                                                                    <Badge className={`text-xs ${getLevelBadgeStyle(hospital.level)}`} variant="outline">
+                                                                        {preview.level}
                                                                     </Badge>
                                                                 </div>
                                                             </div>

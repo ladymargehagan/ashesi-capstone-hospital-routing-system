@@ -41,8 +41,8 @@ export default function HospitalProfilePage() {
         });
     };
 
-    const getTierLabel = (tier: string) => {
-        return tier.replace('_', ' ').toUpperCase();
+    const getLevelLabel = (level: string) => {
+        return (level || '').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
     };
 
     return (
@@ -124,9 +124,9 @@ export default function HospitalProfilePage() {
                             </div>
                             <div className="grid grid-cols-2 gap-4 pt-2">
                                 <div className="p-3 bg-gray-50 rounded-lg">
-                                    <p className="text-xs text-gray-500">Tier</p>
+                                    <p className="text-xs text-gray-500">Level</p>
                                     <Badge className="mt-1 bg-blue-100 text-blue-700 border-blue-200" variant="outline">
-                                        {getTierLabel(hospital.tier)}
+                                        {getLevelLabel(hospital.level)}
                                     </Badge>
                                 </div>
                                 <div className="p-3 bg-gray-50 rounded-lg">

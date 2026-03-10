@@ -24,7 +24,10 @@ export interface Physician {
     user_id: string;
     hospital_id: string;
     license_number: string;
+    title?: string;
     specialization?: string;
+    department?: string;
+    grade?: string;
     work_schedule?: Record<string, unknown>;
     digital_signature_path?: string;
     status: 'active' | 'pending' | 'rejected';
@@ -34,12 +37,13 @@ export interface Physician {
     full_name?: string;
     email?: string;
     phone_number?: string;
+    hospital_name?: string;
 }
 
 // Hospital types (maps to HOSPITALS table)
-export type HospitalTier = 'tier_1' | 'tier_2' | 'tier_3';
-export type HospitalType = 'polyclinic' | 'district' | 'regional' | 'teaching' | 'specialist';
-export type HospitalOwnership = 'public' | 'private' | 'faith_based' | 'military';
+export type HospitalLevel = 'teaching' | 'regional' | 'district' | 'polyclinic' | 'health_centre' | 'chps';
+export type HospitalType = 'polyclinic' | 'district' | 'regional' | 'teaching' | 'specialist' | 'health_centre' | 'chps';
+export type HospitalOwnership = 'public' | 'private' | 'faith_based' | 'military' | 'quasi_government';
 export type HospitalStatus = 'active' | 'pending' | 'rejected';
 
 // Hospital interface
@@ -48,8 +52,10 @@ export interface Hospital {
     name: string;
     license_number: string;
     gps_coordinates?: { lat: number; lng: number };
+    lat?: number;
+    lng?: number;
     address: string;
-    tier: HospitalTier;
+    level: HospitalLevel;
     type: HospitalType;
     ownership: HospitalOwnership;
     operating_hours?: string;
@@ -63,6 +69,7 @@ export interface Hospital {
 export interface Patient {
     id: string;
     physician_id: string;
+    hospital_id?: string;
     patient_identifier: string;
     full_name: string;
     date_of_birth?: string;
@@ -259,8 +266,9 @@ export interface Notification {
     id: string;
     user_id: string;
     message: string;
-    type: 'hospital_approval' | 'hospital_rejection' | 'physician_verification' | 'physician_rejection' | 'referral_approved' | 'referral_rejected' | 'referral_completed' | 'patient_arrived' | 'data_flagged';
+    type: 'hospital_approval' | 'hospital_rejection' | 'physician_verification' | 'physician_rejection' | 'referral_created' | 'referral_approved' | 'referral_rejected' | 'referral_completed' | 'referral_status_changed' | 'patient_arrived' | 'data_flagged' | 'account_approved';
     is_read: boolean;
+    email_sent?: boolean;
     created_at: string;
     read_at?: string;
 }
@@ -284,29 +292,8 @@ export interface HospitalStats {
 }
 
 export interface AdminStats {
-    pending_hospitals: number;
+    pending_physicians: number;
     total_physicians: number;
     active_hospitals: number;
     total_hospitals: number;
-}
-
-// Hospital registration form data
-export interface HospitalRegistrationData {
-    // Hospital fields (→ HOSPITALS table)
-    hospital_name: string;
-    license_number: string;
-    address: string;
-    tier: HospitalTier;
-    type: HospitalType;
-    ownership: HospitalOwnership;
-    operating_hours: string;
-    contact_phone: string;
-    gps_lat: string;
-    gps_lng: string;
-    // Admin account fields (→ USERS table)
-    admin_full_name: string;
-    admin_email: string;
-    admin_phone: string;
-    admin_password: string;
-    admin_password_confirm: string;
 }

@@ -1,10 +1,7 @@
 'use client';
 
-import { useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
 import { Hospital } from '@/types';
-import { CheckCircle, XCircle } from 'lucide-react';
 
 interface HospitalDetailsModalProps {
     hospital: Hospital | null;
@@ -13,28 +10,15 @@ interface HospitalDetailsModalProps {
 }
 
 export function HospitalDetailsModal({ hospital, open, onClose }: HospitalDetailsModalProps) {
-    const [loading, setLoading] = useState(false);
-
     if (!hospital) return null;
-
-    const handleAction = async (action: 'approve' | 'reject') => {
-        setLoading(true);
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        alert(`Hospital ${action}d successfully!`);
-        setLoading(false);
-        onClose();
-    };
-
-    const isPending = hospital.status === 'pending';
 
     return (
         <Dialog open={open} onOpenChange={onClose}>
             <DialogContent className="max-w-md">
                 <DialogHeader>
-                    <DialogTitle>Hospital Application Details</DialogTitle>
+                    <DialogTitle>Hospital Details</DialogTitle>
                     <DialogDescription>
-                        Review complete hospital information
+                        View hospital information
                     </DialogDescription>
                 </DialogHeader>
 
@@ -57,15 +41,15 @@ export function HospitalDetailsModal({ hospital, open, onClose }: HospitalDetail
                         <p className="font-semibold">{hospital.address}</p>
                     </div>
 
-                    {/* Contact & Tier */}
+                    {/* Contact & Level */}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <p className="text-sm text-gray-500">Contact Phone</p>
                             <p className="font-semibold">{hospital.contact_phone || '—'}</p>
                         </div>
                         <div>
-                            <p className="text-sm text-gray-500">Tier</p>
-                            <p className="font-semibold">{hospital.tier.replace('_', ' ').toUpperCase()}</p>
+                            <p className="text-sm text-gray-500">Level</p>
+                            <p className="font-semibold">{(hospital.level || '').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</p>
                         </div>
                     </div>
 
@@ -80,30 +64,6 @@ export function HospitalDetailsModal({ hospital, open, onClose }: HospitalDetail
                             <p className="font-semibold text-sm">{hospital.license_number}</p>
                         </div>
                     </div>
-
-                    {/* Action Buttons */}
-                    {isPending && (
-                        <div className="flex gap-3 pt-2">
-                            <Button
-                                variant="outline"
-                                className="flex-1"
-                                onClick={() => handleAction('approve')}
-                                disabled={loading}
-                            >
-                                <CheckCircle className="h-4 w-4 mr-2" />
-                                Approve Application
-                            </Button>
-                            <Button
-                                variant="outline"
-                                className="flex-1 border-red-200 text-red-600 hover:bg-red-50"
-                                onClick={() => handleAction('reject')}
-                                disabled={loading}
-                            >
-                                <XCircle className="h-4 w-4 mr-2" />
-                                Reject Application
-                            </Button>
-                        </div>
-                    )}
                 </div>
             </DialogContent>
         </Dialog>
