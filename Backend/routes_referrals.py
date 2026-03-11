@@ -12,6 +12,7 @@ import uuid
 from pathlib import Path
 
 from fastapi import APIRouter, HTTPException, Query, UploadFile, File, Request
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 from typing import Optional, List
 
@@ -123,6 +124,18 @@ def _row_to_referral(row, details=None, patient=None, attachments=None) -> dict:
             "next_of_kin_name": patient.get("next_of_kin_name"),
             "next_of_kin_contact": patient.get("next_of_kin_contact"),
         }
+        # Top-level convenience fields for frontend table display
+        referral["patient_name"] = patient.get("full_name")
+        if patient.get("date_of_birth"):
+            from datetime import date
+            try:
+                dob = patient["date_of_birth"]
+                if isinstance(dob, str):
+                    dob = date.fromisoformat(dob)
+                today = date.today()
+                referral["patient_age"] = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
+            except Exception:
+                referral["patient_age"] = None
 
     if attachments is not None:
         referral["attachments"] = [
@@ -495,3 +508,36 @@ def list_attachments(referral_id: int):
         }
         for r in rows
     ]
+
+
+@router.get("/attachments/{attachment_id}/download")
+def download_attachment(attachment_id: int):
+    """Download / view a specific attachment file."""
+    with db_cursor() as cur:
+        cur.execute(
+            "SELECT file_name, file_path, file_type FROM referral_attachments WHERE attachment_id = %s",
+            (attachment_id,),
+        )
+        row = cur.fetchone()
+
+    if not row:
+        raise HTTPException(status_code=404, detail="Attachment not found")
+
+    file_path = Path(row["file_path"])
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="File not found on disk")
+
+    media_type_map = {
+        "pdf": "application/pdf",
+        "jpg": "image/jpeg",
+        "jpeg": "image/jpeg",
+        "png": "image/png",
+        "webp": "image/webp",
+    }
+    media_type = media_type_map.get(row["file_type"], "application/octet-stream")
+
+    return FileResponse(
+        path=str(file_path),
+        filename=row["file_name"],
+        media_type=media_type,
+    )

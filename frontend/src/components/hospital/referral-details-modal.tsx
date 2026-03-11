@@ -259,8 +259,26 @@ export function ReferralDetailsModal({ referral, open, onClose, onStatusChanged 
                                 <div className="space-y-1">
                                     {attachments.map((att) => (
                                         <div key={att.id} className="flex items-center justify-between bg-gray-50 p-2 rounded text-sm">
-                                            <span className="font-medium">{att.file_name}</span>
-                                            <span className="text-gray-500 text-xs">{formatFileSize(att.file_size_bytes)}</span>
+                                            <a
+                                                href={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/referrals/attachments/${att.id}/download`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="font-medium text-blue-600 hover:underline flex items-center gap-1"
+                                            >
+                                                {att.file_name}
+                                            </a>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-gray-500 text-xs">{formatFileSize(att.file_size_bytes)}</span>
+                                                <a
+                                                    href={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/referrals/attachments/${att.id}/download`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="text-blue-600 hover:text-blue-800"
+                                                    title="Download"
+                                                >
+                                                    ↓
+                                                </a>
+                                            </div>
                                         </div>
                                     ))}
                                 </div>

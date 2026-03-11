@@ -15,6 +15,7 @@ export interface RecommendRequest {
     emergency_type: EmergencyType;
     severity: ReferralSeverity;
     stability: ReferralStability;
+    referring_hospital_id?: number;
 }
 
 /**

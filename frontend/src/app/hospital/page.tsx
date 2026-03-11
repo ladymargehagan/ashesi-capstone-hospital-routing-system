@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { StatsCard } from '@/components/stats-card';
 import { HospitalReferralsTable } from '@/components/hospital/referrals-table';
@@ -27,7 +27,7 @@ export default function HospitalDashboard() {
         specialists_total: 0,
     });
 
-    useEffect(() => {
+    const fetchData = useCallback(() => {
         if (!user?.hospital_id) return;
         const hospitalId = user.hospital_id;
 
@@ -56,6 +56,10 @@ export default function HospitalDashboard() {
             });
         }).finally(() => setLoading(false));
     }, [user?.hospital_id]);
+
+    useEffect(() => {
+        fetchData();
+    }, [fetchData]);
 
     const pendingReferrals = referrals.filter(r => r.status === 'pending');
 
@@ -121,18 +125,19 @@ export default function HospitalDashboard() {
                     <div className="bg-white rounded-lg border p-6">
                         <h2 className="text-lg font-semibold mb-1">Patient Referrals</h2>
                         <p className="text-sm text-gray-500 mb-4">Review and manage incoming patient referrals</p>
-                        <HospitalReferralsTable referrals={referrals} />
+                        <HospitalReferralsTable referrals={referrals} onStatusChanged={fetchData} />
                     </div>
                 </TabsContent>
 
                 <TabsContent value="resources" className="mt-4">
-                    <ResourcesTab resources={resources} />
+                    <ResourcesTab resources={resources} onResourceUpdated={fetchData} />
                 </TabsContent>
 
                 <TabsContent value="specialists" className="mt-4">
-                    <SpecialistsTab specialists={specialists} />
+                    <SpecialistsTab specialists={specialists} onSpecialistUpdated={fetchData} />
                 </TabsContent>
             </Tabs>
         </div>
     );
 }
+

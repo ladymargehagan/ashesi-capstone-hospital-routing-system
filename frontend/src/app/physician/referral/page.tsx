@@ -184,6 +184,7 @@ function ReferralFormContent() {
                 emergency_type: (formData.emergency_type || 'general') as EmergencyType,
                 severity: formData.severity || 'medium',
                 stability: formData.stability || 'stable',
+                referring_hospital_id: user?.hospital_id ? parseInt(user.hospital_id) : undefined,
             });
 
             setEngineResponse(response);
@@ -226,10 +227,10 @@ function ReferralFormContent() {
         }
         try {
             const payload = {
-                patient_id: formData.patient_id,
-                referring_physician_id: user?.physician_id || user?.id,
-                referring_hospital_id: user?.hospital_id,
-                receiving_hospital_id: formData.receiving_hospital_id,
+                patient_id: parseInt(String(formData.patient_id)),
+                referring_physician_id: parseInt(String(user?.physician_id || user?.id)),
+                referring_hospital_id: parseInt(String(user?.hospital_id)),
+                receiving_hospital_id: parseInt(String(formData.receiving_hospital_id)),
                 emergency_type: formData.emergency_type,
                 severity: formData.severity,
                 stability: formData.stability,

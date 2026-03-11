@@ -244,6 +244,7 @@ class RecommendRequest(BaseModel):
     emergency_type: str = Field(..., description="Type of emergency")
     severity: str = Field(..., description="Severity level")
     stability: str = Field(..., description="Patient stability")
+    referring_hospital_id: Optional[int] = Field(None, description="Hospital making the referral (excluded from results)")
 
 
 # ---------------------------------------------------------------------------
@@ -278,6 +279,11 @@ def recommend(req: RecommendRequest):
 
     now = datetime.utcnow()
     hospitals = _load_hospitals_from_db(now)
+
+    # Exclude the referring hospital so it doesn't recommend itself
+    if req.referring_hospital_id is not None:
+        exclude_id = str(req.referring_hospital_id)
+        hospitals = [h for h in hospitals if h.hospital_id != exclude_id]
 
     engine = ReferralEngine(
         hospitals,
