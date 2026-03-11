@@ -13,6 +13,10 @@ export interface User {
     hospital_name?: string;
     hospital_address?: string;
     contact_phone?: string;
+    // Physician professional details
+    title?: string;
+    specialization?: string;
+    department?: string;
     status: 'active' | 'pending' | 'rejected';
     created_at: string;
     updated_at?: string;
@@ -101,6 +105,7 @@ export interface Referral {
     referring_physician_id: string;
     referring_hospital_id: string;
     receiving_hospital_id: string;
+    assigned_physician_id?: string;
     status: ReferralStatus;
     severity: ReferralSeverity;
     stability: ReferralStability;
@@ -118,6 +123,22 @@ export interface Referral {
     referring_physician_name?: string;
     referring_hospital_name?: string;
     receiving_hospital_name?: string;
+    assigned_physician_name?: string;
+    // Clinical details (from referral_details join)
+    details?: ReferralDetails;
+    // Patient info (from patients join)
+    patient?: Patient;
+    // Attachments
+    attachments?: ReferralAttachment[];
+}
+
+// Referral attachment
+export interface ReferralAttachment {
+    id: string;
+    file_name: string;
+    file_type: string;
+    file_size_bytes: number;
+    uploaded_at?: string;
 }
 
 // Referral details (maps to REFERRAL_DETAILS table)

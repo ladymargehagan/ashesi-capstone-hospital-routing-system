@@ -11,7 +11,7 @@ import os
 import uuid
 from pathlib import Path
 
-from fastapi import APIRouter, HTTPException, Query, UploadFile, File
+from fastapi import APIRouter, HTTPException, Query, UploadFile, File, Request
 from pydantic import BaseModel, Field
 from typing import Optional, List
 
@@ -60,6 +60,10 @@ class ReferralStatusUpdate(BaseModel):
     reason: Optional[str] = None
 
 
+class ReferralAssign(BaseModel):
+    physician_id: int
+
+
 # ---- helpers ----
 
 def _row_to_referral(row, details=None, patient=None, attachments=None) -> dict:
@@ -81,10 +85,12 @@ def _row_to_referral(row, details=None, patient=None, attachments=None) -> dict:
         "rejection_reason": row.get("rejection_reason"),
         "cancellation_reason": row.get("cancellation_reason"),
         "estimated_arrival_minutes": row.get("estimated_arrival_minutes"),
+        "assigned_physician_id": str(row["assigned_physician_id"]) if row.get("assigned_physician_id") else None,
         # Hospital names (joined)
         "referring_hospital_name": row.get("referring_hospital_name"),
         "receiving_hospital_name": row.get("receiving_hospital_name"),
         "referring_physician_name": row.get("physician_name"),
+        "assigned_physician_name": row.get("assigned_physician_name"),
     }
 
     if details:
@@ -139,10 +145,11 @@ def _row_to_referral(row, details=None, patient=None, attachments=None) -> dict:
 def list_referrals(
     physician_id: Optional[int] = None,
     hospital_id: Optional[int] = None,
+    assigned_physician_id: Optional[int] = None,
     status: Optional[str] = None,
 ):
     """
-    List referrals with hospital names and patient info.
+    List referrals with hospital names, patient info, and clinical details.
     hospital_id matches BOTH referring and receiving hospitals.
     """
     with db_cursor() as cur:
@@ -152,13 +159,22 @@ def list_referrals(
                    recvh.name AS receiving_hospital_name,
                    u.full_name AS physician_name,
                    p.full_name AS patient_name,
-                   p.date_of_birth, p.sex, p.nhis_number, p.contact_number
+                   p.date_of_birth, p.sex, p.nhis_number, p.contact_number,
+                   au.full_name AS assigned_physician_name,
+                   rd.presenting_complaint, rd.clinical_history,
+                   rd.initial_diagnosis, rd.current_condition,
+                   rd.examination_findings, rd.working_diagnosis,
+                   rd.reason_for_referral, rd.investigations_done,
+                   rd.treatment_given, rd.additional_notes
             FROM referrals r
             JOIN hospitals rh ON r.referring_hospital_id = rh.hospital_id
             JOIN hospitals recvh ON r.receiving_hospital_id = recvh.hospital_id
             JOIN physicians ph ON r.referring_physician_id = ph.physician_id
             JOIN users u ON ph.user_id = u.user_id
             JOIN patients p ON r.patient_id = p.patient_id
+            LEFT JOIN referral_details rd ON r.referral_id = rd.referral_id
+            LEFT JOIN physicians aph ON r.assigned_physician_id = aph.physician_id
+            LEFT JOIN users au ON aph.user_id = au.user_id
             WHERE 1=1
         """
         params: list = []
@@ -169,6 +185,9 @@ def list_referrals(
         if hospital_id:
             query += " AND (r.referring_hospital_id = %s OR r.receiving_hospital_id = %s)"
             params.extend([hospital_id, hospital_id])
+        if assigned_physician_id:
+            query += " AND r.assigned_physician_id = %s"
+            params.append(assigned_physician_id)
         if status:
             query += " AND r.status = %s"
             params.append(status)
@@ -187,7 +206,19 @@ def list_referrals(
             "nhis_number": row.get("nhis_number"),
             "contact_number": row.get("contact_number"),
         }
-        r = _row_to_referral(row, patient=patient_info)
+        details_info = {
+            "presenting_complaint": row.get("presenting_complaint"),
+            "clinical_history": row.get("clinical_history"),
+            "initial_diagnosis": row.get("initial_diagnosis"),
+            "current_condition": row.get("current_condition"),
+            "examination_findings": row.get("examination_findings"),
+            "working_diagnosis": row.get("working_diagnosis"),
+            "reason_for_referral": row.get("reason_for_referral"),
+            "investigations_done": row.get("investigations_done"),
+            "treatment_given": row.get("treatment_given"),
+            "additional_notes": row.get("additional_notes"),
+        }
+        r = _row_to_referral(row, details=details_info, patient=patient_info)
         results.append(r)
 
     return results
@@ -363,8 +394,11 @@ def update_referral_status(referral_id: int, req: ReferralStatusUpdate):
 # ---- attachment routes ----
 
 @router.post("/{referral_id}/attachments")
-async def upload_attachment(referral_id: int, file: UploadFile = File(...)):
+async def upload_attachment(referral_id: int, request: Request, file: UploadFile = File(...)):
     """Upload a file attachment to a referral."""
+    # Get uploader user_id from cookie
+    uploader_id = request.cookies.get("hrs_user_id", "1")
+
     # Validate referral exists
     with db_cursor() as cur:
         cur.execute("SELECT 1 FROM referrals WHERE referral_id = %s", (referral_id,))
@@ -395,10 +429,10 @@ async def upload_attachment(referral_id: int, file: UploadFile = File(...)):
             """
             INSERT INTO referral_attachments
                 (referral_id, file_name, file_path, file_type, file_size_bytes, uploaded_by)
-            VALUES (%s, %s, %s, %s, %s, 1)
+            VALUES (%s, %s, %s, %s, %s, %s)
             RETURNING attachment_id
             """,
-            (referral_id, file.filename, str(file_path), ext, len(content)),
+            (referral_id, file.filename, str(file_path), ext, len(content), int(uploader_id)),
         )
         attachment_id = cur.fetchone()["attachment_id"]
 
@@ -408,6 +442,34 @@ async def upload_attachment(referral_id: int, file: UploadFile = File(...)):
         "file_name": file.filename,
         "file_size_bytes": len(content),
     }
+
+
+@router.put("/{referral_id}/assign")
+def assign_referral(referral_id: int, req: ReferralAssign, request: Request):
+    """Assign a referral to a physician (hospital admin action)."""
+    # Validate referral exists
+    with db_cursor() as cur:
+        cur.execute("SELECT referral_id FROM referrals WHERE referral_id = %s", (referral_id,))
+        if not cur.fetchone():
+            raise HTTPException(status_code=404, detail="Referral not found")
+
+    # Validate physician exists and is active
+    with db_cursor() as cur:
+        cur.execute(
+            "SELECT physician_id FROM physicians WHERE physician_id = %s AND status = 'active'",
+            (req.physician_id,),
+        )
+        if not cur.fetchone():
+            raise HTTPException(status_code=404, detail="Physician not found or inactive")
+
+    # Assign
+    with db_cursor() as cur:
+        cur.execute(
+            "UPDATE referrals SET assigned_physician_id = %s WHERE referral_id = %s",
+            (req.physician_id, referral_id),
+        )
+
+    return {"success": True, "referral_id": str(referral_id), "assigned_physician_id": str(req.physician_id)}
 
 
 @router.get("/{referral_id}/attachments")

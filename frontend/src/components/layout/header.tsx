@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
@@ -13,13 +13,12 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { NotificationsSidebar } from '@/components/notifications-sidebar';
-import { Building2, Bell, LogOut, User } from 'lucide-react';
+import { NotificationInboxPopover } from '@/components/ui/notification-inbox-popover';
+import { Building2, LogOut, User } from 'lucide-react';
 
 export function Header() {
     const { user, logout } = useAuth();
     const router = useRouter();
-    const [showNotifications, setShowNotifications] = useState(false);
 
     const handleLogout = () => {
         logout();
@@ -41,9 +40,7 @@ export function Header() {
     };
 
     const getHospitalName = () => {
-        if (user?.role === 'physician') return 'Downtown Medical Clinic';
-        if (user?.role === 'hospital_admin') return 'City General Hospital';
-        return null;
+        return user?.hospital_name || null;
     };
 
     return (
@@ -64,14 +61,7 @@ export function Header() {
                     {/* Right side */}
                     <div className="flex items-center gap-4">
                         {/* Notifications */}
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="relative"
-                            onClick={() => setShowNotifications(true)}
-                        >
-                            <Bell className="h-5 w-5 text-gray-600" />
-                        </Button>
+                        <NotificationInboxPopover />
 
                         {/* User menu */}
                         <DropdownMenu>
@@ -110,10 +100,6 @@ export function Header() {
                 </div>
             </header>
 
-            <NotificationsSidebar
-                open={showNotifications}
-                onClose={() => setShowNotifications(false)}
-            />
         </>
     );
 }

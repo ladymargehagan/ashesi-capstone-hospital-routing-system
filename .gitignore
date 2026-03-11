@@ -6,6 +6,8 @@ __pycache__/
 dist/
 build/
 *.egg
+hrs_venv/
+uploads/
 
 # Environment
 .env
@@ -27,3 +29,7 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
+
+
+
+Backend/hrs_venv

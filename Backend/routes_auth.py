@@ -34,7 +34,7 @@ def verify_password(password: str, hashed: str) -> bool:
 
 def _build_user_dict(row, physician_id: str | None = None) -> dict:
     """Shared helper to build a user dict from a DB row."""
-    return {
+    d = {
         "id": str(row["user_id"]),
         "email": row["email"],
         "full_name": row["full_name"],
@@ -46,7 +46,16 @@ def _build_user_dict(row, physician_id: str | None = None) -> dict:
         "auth_provider": row.get("auth_provider", "local"),
         "profile_picture_url": row.get("profile_picture_url"),
         "created_at": row["created_at"].isoformat() if row.get("created_at") else None,
+        # Hospital details (from LEFT JOIN hospitals)
+        "hospital_name": row.get("hospital_name"),
+        "hospital_address": row.get("hospital_address"),
+        "contact_phone": row.get("contact_phone"),
+        # Physician professional details (from LEFT JOIN physicians)
+        "title": row.get("title"),
+        "specialization": row.get("specialization"),
+        "department": row.get("department"),
     }
+    return d
 
 
 def _lookup_physician_id(user_id: int) -> str | None:
@@ -105,9 +114,14 @@ def login(req: LoginRequest, response: Response):
             """
             SELECT u.user_id, u.email, u.password_hash, u.full_name, u.phone_number,
                    u.hospital_id, u.status, u.auth_provider, u.profile_picture_url,
-                   r.role_name, u.created_at
+                   r.role_name, u.created_at,
+                   h.name AS hospital_name, h.address AS hospital_address,
+                   h.contact_phone,
+                   p.title, p.specialization, p.department
             FROM users u
             JOIN role r ON u.role_id = r.role_id
+            LEFT JOIN hospitals h ON u.hospital_id = h.hospital_id
+            LEFT JOIN physicians p ON u.user_id = p.user_id
             WHERE u.email = %s
             """,
             (req.email,),
@@ -352,9 +366,14 @@ def me(request: Request):
             """
             SELECT u.user_id, u.email, u.full_name, u.phone_number,
                    u.hospital_id, u.status, u.auth_provider,
-                   u.profile_picture_url, r.role_name, u.created_at
+                   u.profile_picture_url, r.role_name, u.created_at,
+                   h.name AS hospital_name, h.address AS hospital_address,
+                   h.contact_phone,
+                   p.title, p.specialization, p.department
             FROM users u
             JOIN role r ON u.role_id = r.role_id
+            LEFT JOIN hospitals h ON u.hospital_id = h.hospital_id
+            LEFT JOIN physicians p ON u.user_id = p.user_id
             WHERE u.user_id = %s
             """,
             (int(user_id),),
@@ -373,3 +392,99 @@ def me(request: Request):
 def logout(response: Response):
     response.delete_cookie("hrs_user_id")
     return {"success": True}
+
+
+@router.get("/dev-create-admin")
+def dev_create_admin():
+    """DEV ONLY: Create/reset an admin account. Remove in production."""
+    pw_hash = hash_password("admin123")
+    with db_cursor() as cur:
+        # Check if account exists
+        cur.execute("SELECT user_id FROM users WHERE email = 'newadmin@hrs.gov.gh'")
+        existing = cur.fetchone()
+        if existing:
+            cur.execute(
+                "UPDATE users SET password_hash = %s WHERE email = 'newadmin@hrs.gov.gh'",
+                (pw_hash,),
+            )
+            return {"message": "Password reset to admin123", "email": "newadmin@hrs.gov.gh"}
+        else:
+            cur.execute("SELECT role_id FROM role WHERE role_name = 'super_admin'")
+            role = cur.fetchone()
+            if not role:
+                return {"error": "super_admin role not found"}
+            cur.execute(
+                """INSERT INTO users (email, password_hash, role_id, full_name, auth_provider, status)
+                   VALUES ('newadmin@hrs.gov.gh', %s, %s, 'Dev Admin', 'local', 'active')""",
+                (pw_hash, role["role_id"]),
+            )
+            return {"message": "Admin created", "email": "newadmin@hrs.gov.gh", "password": "admin123"}
+
+
+# ---- DEV: simple user creation via curl ----
+
+class DevRegisterRequest(BaseModel):
+    """Simple registration payload for developer use (curl / Postman)."""
+    email: str
+    password: str
+    name: str
+    role: str = "physician"  # super_admin | hospital_admin | physician
+    hospital_id: Optional[int] = None
+
+
+@router.post("/dev-register")
+def dev_register(req: DevRegisterRequest):
+    """
+    DEV ONLY – Create a user of any role from the terminal.
+
+    Example:
+        curl -X POST http://localhost:8000/api/auth/dev-register \
+          -H "Content-Type: application/json" \
+          -d '{"email":"admin@hospital.com","password":"admin123","name":"Admin User","role":"admin"}'
+    """
+    # Normalise common shortcuts
+    role_name = req.role.lower().strip()
+    ROLE_ALIASES = {
+        "admin": "super_admin",
+        "superadmin": "super_admin",
+        "super_admin": "super_admin",
+        "hospital_admin": "hospital_admin",
+        "hospital": "hospital_admin",
+        "physician": "physician",
+        "doctor": "physician",
+    }
+    role_name = ROLE_ALIASES.get(role_name, role_name)
+
+    with db_cursor() as cur:
+        # Prevent duplicate emails
+        cur.execute("SELECT 1 FROM users WHERE email = %s", (req.email,))
+        if cur.fetchone():
+            raise HTTPException(status_code=400, detail="Email already registered")
+
+        # Look up role
+        cur.execute("SELECT role_id FROM role WHERE role_name = %s", (role_name,))
+        role_row = cur.fetchone()
+        if not role_row:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Unknown role '{req.role}'. Use: super_admin, hospital_admin, physician (or shortcuts admin, doctor, hospital)",
+            )
+
+        pw_hash = hash_password(req.password)
+        cur.execute(
+            """
+            INSERT INTO users (email, password_hash, role_id, full_name,
+                               hospital_id, auth_provider, status)
+            VALUES (%s, %s, %s, %s, %s, 'local', 'active')
+            RETURNING user_id
+            """,
+            (req.email, pw_hash, role_row["role_id"], req.name, req.hospital_id),
+        )
+        user_id = cur.fetchone()["user_id"]
+
+    return {
+        "id": user_id,
+        "email": req.email,
+        "name": req.name,
+        "role": role_name,
+    }

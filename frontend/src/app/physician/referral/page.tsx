@@ -15,7 +15,7 @@ import { patientsApi, hospitalsApi, referralsApi, resourcesApi } from '@/lib/api
 import { getRecommendations } from '@/lib/referral-api';
 import { useAuth } from '@/hooks/use-auth';
 import { ReferralFormData, Patient, Hospital, EngineRecommendation, EngineResponse, EmergencyType } from '@/types';
-import { ArrowLeft, TrendingUp, Loader2, Search, Building2, Bed, Heart, Users, CheckCircle, X, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, TrendingUp, Loader2, Search, Building2, Bed, Heart, Users, CheckCircle, X, AlertTriangle, Paperclip, Upload } from 'lucide-react';
 import Link from 'next/link';
 
 // Maps emergency_type values to user-friendly labels
@@ -53,6 +53,10 @@ function ReferralFormContent() {
     const [activeHospitals, setActiveHospitals] = useState<Hospital[]>([]);
     const [hospitalResources, setHospitalResources] = useState<Record<string, unknown>[]>([]);
     const [dataLoading, setDataLoading] = useState(true);
+
+    // File upload state
+    const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+    const [uploadProgress, setUploadProgress] = useState<string>('');
 
     // Load patients and hospitals from API on mount
     useEffect(() => {
@@ -237,7 +241,21 @@ function ReferralFormContent() {
                 treatment_given: formData.treatment_given,
                 reason_for_referral: formData.reason_for_referral,
             };
-            await referralsApi.create(payload);
+            const result = await referralsApi.create(payload);
+
+            // Upload attachments if any
+            if (selectedFiles.length > 0 && result.referral_id) {
+                setUploadProgress('Uploading attachments...');
+                for (const file of selectedFiles) {
+                    try {
+                        await referralsApi.uploadAttachment(result.referral_id, file);
+                    } catch (uploadErr) {
+                        console.error('Failed to upload attachment:', file.name, uploadErr);
+                    }
+                }
+                setUploadProgress('');
+            }
+
             alert('Referral submitted successfully!');
             router.push('/physician');
         } catch (err) {
@@ -783,6 +801,73 @@ function ReferralFormContent() {
                                     Get Algorithm Recommendations (Top 5)
                                 </Button>
                             </div>
+                        )}
+                    </CardContent>
+                </Card>
+
+                {/* File Attachments Section */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="text-lg">Attachments</CardTitle>
+                        <CardDescription>Attach supporting documents (PDF, JPG, PNG — max 10MB each)</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <div
+                            className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors cursor-pointer"
+                            onClick={() => document.getElementById('file-upload')?.click()}
+                            onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('border-blue-400', 'bg-blue-50'); }}
+                            onDragLeave={(e) => { e.currentTarget.classList.remove('border-blue-400', 'bg-blue-50'); }}
+                            onDrop={(e) => {
+                                e.preventDefault();
+                                e.currentTarget.classList.remove('border-blue-400', 'bg-blue-50');
+                                const files = Array.from(e.dataTransfer.files).filter(f => {
+                                    const ext = f.name.split('.').pop()?.toLowerCase();
+                                    return ['pdf', 'jpg', 'jpeg', 'png', 'webp'].includes(ext || '') && f.size <= 10 * 1024 * 1024;
+                                });
+                                setSelectedFiles(prev => [...prev, ...files]);
+                            }}
+                        >
+                            <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                            <p className="text-sm text-gray-600">Click to browse or drag files here</p>
+                            <p className="text-xs text-gray-400 mt-1">PDF, JPG, PNG, WebP • Max 10MB per file</p>
+                        </div>
+                        <input
+                            id="file-upload"
+                            type="file"
+                            multiple
+                            accept=".pdf,.jpg,.jpeg,.png,.webp"
+                            className="hidden"
+                            onChange={(e) => {
+                                const files = Array.from(e.target.files || []).filter(f => f.size <= 10 * 1024 * 1024);
+                                setSelectedFiles(prev => [...prev, ...files]);
+                                e.target.value = '';
+                            }}
+                        />
+                        {selectedFiles.length > 0 && (
+                            <div className="mt-3 space-y-2">
+                                {selectedFiles.map((file, idx) => (
+                                    <div key={idx} className="flex items-center justify-between bg-gray-50 px-3 py-2 rounded text-sm">
+                                        <div className="flex items-center gap-2">
+                                            <Paperclip className="h-4 w-4 text-gray-400" />
+                                            <span>{file.name}</span>
+                                            <span className="text-xs text-gray-400">({(file.size / 1024).toFixed(0)} KB)</span>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => setSelectedFiles(prev => prev.filter((_, i) => i !== idx))}
+                                            className="text-red-500 hover:text-red-700"
+                                        >
+                                            <X className="h-4 w-4" />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                        {uploadProgress && (
+                            <p className="text-sm text-blue-600 mt-2 flex items-center gap-2">
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                {uploadProgress}
+                            </p>
                         )}
                     </CardContent>
                 </Card>

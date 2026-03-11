@@ -39,6 +39,7 @@ from routes_resources import router as resources_router
 from routes_patients import router as patients_router
 from routes_users import router as users_router
 from routes_specialists import router as specialists_router
+from routes_notifications import router as notifications_router
 
 # ---------------------------------------------------------------------------
 # App setup
@@ -68,6 +69,7 @@ app.include_router(resources_router)
 app.include_router(patients_router)
 app.include_router(users_router)
 app.include_router(specialists_router)
+app.include_router(notifications_router)
 
 
 # ---------------------------------------------------------------------------

@@ -25,11 +25,10 @@ export default function PhysicianDashboard() {
 
         const fetchData = async () => {
             try {
-                // We need the physician_id, but the user might only have user_id
-                // The backend expects physician_id — for now use hospital_id context
+                const physicianId = user?.physician_id || undefined;
                 const [patientsRes, referralsRes] = await Promise.all([
-                    patientsApi.list().catch(() => []),
-                    referralsApi.list().catch(() => []),
+                    patientsApi.list(physicianId).catch(() => []),
+                    referralsApi.list(physicianId ? { physician_id: physicianId } : {}).catch(() => []),
                 ]);
                 setPatients(patientsRes as unknown as Patient[]);
                 setReferrals(referralsRes as unknown as Referral[]);
@@ -54,7 +53,7 @@ export default function PhysicianDashboard() {
             }
         };
         fetchData();
-    }, [user?.id]);
+    }, [user?.id, user?.physician_id]);
 
     if (loading) {
         return (

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/use-auth';
+import { useToast } from '@/components/ui/toast-provider';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -17,6 +18,7 @@ export default function LoginPage() {
     const [loading, setLoading] = useState(false);
     const { login } = useAuth();
     const router = useRouter();
+    const toast = useToast();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -27,6 +29,7 @@ export default function LoginPage() {
             const result = await login(email, password);
 
             if (result.success) {
+                toast.success('Welcome back! Redirecting to your dashboard...', 'Signed In');
                 // Redirect based on role — use the stored user object
                 const cached = localStorage.getItem('currentUser');
                 if (cached) {

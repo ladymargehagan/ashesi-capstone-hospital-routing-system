@@ -5,7 +5,7 @@ Also includes physician-specific queries.
 
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
 from typing import Optional
 
@@ -24,6 +24,11 @@ class UserStatusUpdate(BaseModel):
 class UserProfileUpdate(BaseModel):
     full_name: Optional[str] = None
     phone_number: Optional[str] = None
+
+
+class UserRoleUpdate(BaseModel):
+    role: str = Field(..., pattern="^(physician|hospital_admin|super_admin)$")
+    hospital_id: Optional[int] = None
 
 
 # ---- helpers ----
@@ -118,14 +123,15 @@ def update_user_status(user_id: int, req: UserStatusUpdate):
 
 @router.get("/physicians")
 def list_physicians(hospital_id: Optional[int] = None, status: Optional[str] = None):
-    """List physicians with user and hospital info."""
+    """List physicians with user and hospital info. Only shows users with current physician role."""
     with db_cursor() as cur:
         query = """
             SELECT p.*, u.full_name, u.email, h.name AS hospital_name
             FROM physicians p
             JOIN users u ON p.user_id = u.user_id
+            JOIN role r ON u.role_id = r.role_id
             JOIN hospitals h ON p.hospital_id = h.hospital_id
-            WHERE 1=1
+            WHERE r.role_name = 'physician'
         """
         params: list = []
         if hospital_id:
@@ -166,3 +172,75 @@ def update_user_profile(user_id: int, req: UserProfileUpdate):
             raise HTTPException(status_code=404, detail="User not found")
 
     return {"success": True, "user_id": str(user_id)}
+
+
+@router.put("/{user_id}/role")
+def update_user_role(user_id: int, req: UserRoleUpdate, request: Request):
+    """Change a user's role (super admin only). Handles physician record lifecycle."""
+    # Verify caller is super_admin
+    caller_id = request.cookies.get("hrs_user_id")
+    if not caller_id:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    with db_cursor() as cur:
+        cur.execute(
+            "SELECT r.role_name FROM users u JOIN role r ON u.role_id = r.role_id WHERE u.user_id = %s",
+            (int(caller_id),),
+        )
+        caller = cur.fetchone()
+        if not caller or caller["role_name"] != "super_admin":
+            raise HTTPException(status_code=403, detail="Only super admins can change roles")
+
+    # Validate hospital_id if elevating to hospital_admin
+    if req.role == "hospital_admin" and not req.hospital_id:
+        raise HTTPException(status_code=400, detail="hospital_id is required when assigning hospital_admin role")
+
+    if req.hospital_id:
+        with db_cursor() as cur:
+            cur.execute(
+                "SELECT hospital_id FROM hospitals WHERE hospital_id = %s AND status = 'active'",
+                (req.hospital_id,),
+            )
+            if not cur.fetchone():
+                raise HTTPException(status_code=400, detail="Invalid or inactive hospital")
+
+    with db_cursor() as cur:
+        # Get current role and target role_id
+        cur.execute(
+            "SELECT u.role_id, r.role_name FROM users u JOIN role r ON u.role_id = r.role_id WHERE u.user_id = %s",
+            (user_id,),
+        )
+        current = cur.fetchone()
+        if not current:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        cur.execute("SELECT role_id FROM role WHERE role_name = %s", (req.role,))
+        new_role = cur.fetchone()
+        if not new_role:
+            raise HTTPException(status_code=400, detail=f"Role '{req.role}' not found")
+
+        # Update user role and hospital
+        cur.execute(
+            """
+            UPDATE users SET role_id = %s, hospital_id = %s, updated_at = CURRENT_TIMESTAMP
+            WHERE user_id = %s
+            """,
+            (new_role["role_id"], req.hospital_id, user_id),
+        )
+
+        # Handle physician record lifecycle
+        old_role = current["role_name"]
+        if old_role == "physician" and req.role != "physician":
+            # Elevating FROM physician: deactivate physician record
+            cur.execute(
+                "UPDATE physicians SET status = 'inactive', updated_at = CURRENT_TIMESTAMP WHERE user_id = %s",
+                (user_id,),
+            )
+        elif old_role != "physician" and req.role == "physician":
+            # Demoting TO physician: reactivate physician record if it exists
+            cur.execute(
+                "UPDATE physicians SET status = 'active', updated_at = CURRENT_TIMESTAMP WHERE user_id = %s",
+                (user_id,),
+            )
+
+    return {"success": True, "user_id": str(user_id), "new_role": req.role}

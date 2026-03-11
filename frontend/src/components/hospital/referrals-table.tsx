@@ -62,6 +62,7 @@ export function HospitalReferralsTable({ referrals, onStatusChanged }: HospitalR
                         <TableHead>Severity</TableHead>
                         <TableHead>Stability</TableHead>
                         <TableHead>Referring Physician</TableHead>
+                        <TableHead>Assigned To</TableHead>
                         <TableHead>Submitted</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead>Actions</TableHead>
@@ -70,7 +71,7 @@ export function HospitalReferralsTable({ referrals, onStatusChanged }: HospitalR
                 <TableBody>
                     {referrals.length === 0 ? (
                         <TableRow>
-                            <TableCell colSpan={8} className="text-center text-gray-500 py-8">
+                            <TableCell colSpan={9} className="text-center text-gray-500 py-8">
                                 No referrals found
                             </TableCell>
                         </TableRow>
@@ -93,6 +94,13 @@ export function HospitalReferralsTable({ referrals, onStatusChanged }: HospitalR
                                     </Badge>
                                 </TableCell>
                                 <TableCell>{referral.referring_physician_name}</TableCell>
+                                <TableCell>
+                                    {referral.assigned_physician_name ? (
+                                        <span className="text-green-700 font-medium">{referral.assigned_physician_name}</span>
+                                    ) : (
+                                        <span className="text-gray-400 italic">Unassigned</span>
+                                    )}
+                                </TableCell>
                                 <TableCell>{formatDate(referral.submitted_at)}</TableCell>
                                 <TableCell>
                                     <Badge className={getStatusBadge(referral.status)}>

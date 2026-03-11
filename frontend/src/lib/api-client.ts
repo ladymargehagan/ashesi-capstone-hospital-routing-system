@@ -107,6 +107,29 @@ export const referralsApi = {
             `/api/referrals/${id}/status`,
             { method: 'PUT', body: JSON.stringify({ status, reason }) },
         ),
+
+    assign: (id: string, physicianId: string) =>
+        apiFetch<{ success: boolean }>(
+            `/api/referrals/${id}/assign`,
+            { method: 'PUT', body: JSON.stringify({ physician_id: parseInt(physicianId) }) },
+        ),
+
+    uploadAttachment: async (id: string, file: File) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        const url = `${API_BASE}/api/referrals/${id}/attachments`;
+        const res = await fetch(url, {
+            method: 'POST',
+            credentials: 'include',
+            body: formData,
+            // Do NOT set Content-Type — browser will set it with boundary for multipart
+        });
+        if (!res.ok) {
+            const body = await res.json().catch(() => ({ detail: res.statusText }));
+            throw new Error(typeof body.detail === 'string' ? body.detail : `Upload failed: ${res.status}`);
+        }
+        return res.json() as Promise<{ success: boolean; attachment_id: string; file_name: string }>;
+    },
 };
 
 // ---------------------------------------------------------------------------
@@ -182,6 +205,12 @@ export const usersApi = {
             `/api/users/${id}/profile`,
             { method: 'PUT', body: JSON.stringify(data) },
         ),
+
+    updateRole: (id: string, role: string, hospitalId?: string) =>
+        apiFetch<{ success: boolean; new_role: string }>(
+            `/api/users/${id}/role`,
+            { method: 'PUT', body: JSON.stringify({ role, hospital_id: hospitalId ? parseInt(hospitalId) : null }) },
+        ),
 };
 
 // ---------------------------------------------------------------------------
@@ -255,9 +284,18 @@ export const notificationsApi = {
     list: () =>
         apiFetch<Record<string, unknown>[]>('/api/notifications'),
 
+    unreadCount: () =>
+        apiFetch<{ unread_count: number }>('/api/notifications/unread-count'),
+
     markRead: (id: string) =>
         apiFetch<{ success: boolean }>(
             `/api/notifications/${id}/read`,
+            { method: 'PUT' },
+        ),
+
+    markAllRead: () =>
+        apiFetch<{ success: boolean; marked_read: number }>(
+            '/api/notifications/read-all',
             { method: 'PUT' },
         ),
 };

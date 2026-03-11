@@ -13,7 +13,7 @@ except Exception:  # pragma: no cover
     requests = None
 
 
-# Just keeping this simple: Monday=0 and Sunday=6.
+# Just k=eeping this simple: Monday=0 and Sunday=6.
 DAY_NAMES = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
 
