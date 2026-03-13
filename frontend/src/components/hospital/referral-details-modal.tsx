@@ -7,10 +7,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Referral, ReferralDetails, Physician } from '@/types';
+import { Referral, ReferralDetails, Physician, Hospital } from '@/types';
 import { referralsApi, usersApi } from '@/lib/api-client';
 import { useAuth } from '@/hooks/use-auth';
-import { CheckCircle, XCircle, UserPlus, Loader2, FileText, Paperclip } from 'lucide-react';
+import { Loader2, FileText, CheckCircle, XCircle, AlertCircle, Clock, CheckCircle2, UserPlus, Paperclip, Navigation, MapPin } from 'lucide-react';
+import { TripMap } from './trip-map';
 import { useToast } from '@/components/ui/toast-provider';
 
 interface ReferralDetailsModalProps {
@@ -75,23 +76,30 @@ export function ReferralDetailsModal({ referral, open, onClose, onStatusChanged 
         return styles[status] || styles.pending;
     };
 
-    const handleAction = async (action: 'accept' | 'reject') => {
+    const handleAction = async (action: 'accept' | 'reject' | 'depart' | 'arrive' | 'complete') => {
         setLoading(true);
         setError(null);
         try {
-            const status = action === 'accept' ? 'approved' : 'rejected';
-            await referralsApi.updateStatus(
-                referral.id,
-                status,
-                responseNotes || undefined,
-            );
+            let status = '';
+            if (action === 'accept') status = 'approved';
+            else if (action === 'reject') status = 'rejected';
+            else if (action === 'depart') status = 'en_route';
+            else if (action === 'arrive') status = 'arrived';
+            else if (action === 'complete') status = 'completed';
+
+            const payload: any = { status };
+            if (action === 'reject' && responseNotes) {
+                payload.reason = responseNotes;
+            }
+
+            await referralsApi.updateStatus(referral.id, payload.status, payload.reason);
             setResponseNotes('');
             const patientName = referral.patient_name
                 || (referral as unknown as Record<string, { full_name?: string }>).patient?.full_name
                 || 'the patient';
             if (action === 'accept') {
                 toast.success(`Referral for ${patientName} has been accepted.`, 'Referral Accepted');
-            } else {
+            } else if (action === 'reject') {
                 toast.warning(`Referral for ${patientName} has been rejected.`, 'Referral Rejected');
             }
             onStatusChanged?.();
@@ -352,6 +360,58 @@ export function ReferralDetailsModal({ referral, open, onClose, onStatusChanged 
                                 >
                                     <CheckCircle className="h-4 w-4 mr-2" />
                                     Accept Referral
+                                </Button>
+                            </div>
+                        )}
+
+                        {/* Trip Tracking Buttons */}
+                        {referral.status === 'approved' && user?.hospital_id === referral.referring_hospital_id && (
+                            <div className="flex justify-end pt-2 border-t mt-4">
+                                <Button
+                                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                                    onClick={() => handleAction('depart')}
+                                    disabled={loading}
+                                >
+                                    <Navigation className="h-4 w-4 mr-2" />
+                                    Mark as Departed (En Route)
+                                </Button>
+                            </div>
+                        )}
+
+                        {referral.status === 'en_route' && (
+                            <div className="pt-2 border-t mt-4 space-y-4">
+                                <TripMap
+                                    originLat={5.56} // Default lat for now, would be dynamically sourced
+                                    originLng={-0.20} // Default lng
+                                    destinationLat={5.58} 
+                                    destinationLng={-0.18}
+                                    originName={referral.referring_hospital_name || ''}
+                                    destinationName={referral.receiving_hospital_name || ''}
+                                />
+                                {user?.hospital_id === referral.receiving_hospital_id && (
+                                    <div className="flex justify-end pt-2">
+                                        <Button
+                                            className="bg-purple-600 hover:bg-purple-700 text-white"
+                                            onClick={() => handleAction('arrive')}
+                                            disabled={loading}
+                                        >
+                                            <MapPin className="h-4 w-4 mr-2" />
+                                            Mark as Arrived (Admitted)
+                                        </Button>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {referral.status === 'arrived' && user?.hospital_id === referral.receiving_hospital_id && (
+                            <div className="flex justify-end pt-2 border-t mt-4">
+                                <Button
+                                    className="bg-green-600 hover:bg-green-700 text-white"
+                                    onClick={() => handleAction('complete')}
+                                    disabled={loading}
+                                >
+                                    <CheckCircle className="h-4 w-4 mr-2" />
+                                    Mark Treatment Completed
                                 </Button>
                             </div>
                         )}

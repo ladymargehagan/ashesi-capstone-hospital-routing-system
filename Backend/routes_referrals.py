@@ -381,6 +381,7 @@ def update_referral_status(referral_id: int, req: ReferralStatusUpdate):
         ts_col = {
             "approved": "approved_at",
             "rejected": "rejected_at",
+            "arrived": "arrived_at",
             "completed": "completed_at",
             "cancelled": "cancelled_at",
         }.get(req.status)

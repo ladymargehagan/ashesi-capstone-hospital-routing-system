@@ -13,7 +13,7 @@ import { useToast } from '@/components/ui/toast-provider';
 import { User, Mail, Phone, Building2, Shield, Calendar, Loader2, Edit3, Save, X } from 'lucide-react';
 
 export default function PhysicianProfilePage() {
-    const { user } = useAuth();
+    const { user, refreshUser } = useAuth();
     const toast = useToast();
     
     const [editing, setEditing] = useState(false);
@@ -47,8 +47,8 @@ export default function PhysicianProfilePage() {
         setSaving(true);
         try {
             await usersApi.updateProfile(user.id, formData);
-            // In a real app we might refetch the user or update context here.
-            toast.success('Profile updated successfully! Refresh to see changes.');
+            await refreshUser(); // Update AuthContext local state
+            toast.success('Profile updated successfully!');
             setEditing(false);
         } catch (err: any) {
             toast.error(err.message || 'Failed to update profile');
