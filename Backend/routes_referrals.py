@@ -193,8 +193,8 @@ def list_referrals(
         params: list = []
 
         if physician_id:
-            query += " AND r.referring_physician_id = %s"
-            params.append(physician_id)
+            query += " AND (r.referring_physician_id = %s OR r.assigned_physician_id = %s)"
+            params.extend([physician_id, physician_id])
         if hospital_id:
             query += " AND (r.referring_hospital_id = %s OR r.receiving_hospital_id = %s)"
             params.extend([hospital_id, hospital_id])
@@ -290,21 +290,51 @@ def get_referral(referral_id: int):
 
 @router.post("")
 def create_referral(req: CreateReferral):
-    """Create a new referral + referral details."""
+    from api import _load_hospitals_from_db
+    from referral_engine import ReferralEngine, EngineConfig, PatientCase
+    import json
+    from datetime import datetime
+    
     with db_cursor() as cur:
+        # Get lat/lon of referring hospital
+        cur.execute("SELECT gps_coordinates FROM hospitals WHERE hospital_id = %s", (req.referring_hospital_id,))
+        row = cur.fetchone()
+        lat, lon = 5.56, -0.20
+        if row and row.get("gps_coordinates"):
+            gps = row["gps_coordinates"]
+            if isinstance(gps, str):
+                parts = gps.strip("()").split(",")
+                lat, lon = float(parts[0]), float(parts[1])
+            elif isinstance(gps, tuple):
+                lat, lon = float(gps[0]), float(gps[1])
+        
+        # Run recommendation
+        now = datetime.utcnow()
+        hospitals = _load_hospitals_from_db(now)
+        engine = ReferralEngine(hospitals, config=EngineConfig(top_k=5))
+        patient = PatientCase(lat=lat, lon=lon, emergency_type=req.emergency_type, severity=req.severity, stability=req.stability, at_time=now)
+        res = engine.rank(patient)
+        
+        # Build queue excluding chosen receiving hospital and referring hospital
+        routing_queue = []
+        for r in res.get("recommendations", []):
+            hid = str(r["hospital_id"])
+            if hid != str(req.receiving_hospital_id) and hid != str(req.referring_hospital_id):
+                routing_queue.append(hid)
+
         # Create referral
         cur.execute(
             """
             INSERT INTO referrals
                 (patient_id, referring_physician_id, referring_hospital_id,
                  receiving_hospital_id, severity, stability, emergency_type,
-                 estimated_arrival_minutes)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                 estimated_arrival_minutes, routing_queue)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING referral_id
             """,
             (req.patient_id, req.referring_physician_id, req.referring_hospital_id,
              req.receiving_hospital_id, req.severity, req.stability,
-             req.emergency_type, req.estimated_arrival_minutes),
+             req.emergency_type, req.estimated_arrival_minutes, json.dumps(routing_queue)),
         )
         referral_id = cur.fetchone()["referral_id"]
 

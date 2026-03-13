@@ -71,6 +71,76 @@ app.include_router(users_router)
 app.include_router(specialists_router)
 app.include_router(notifications_router)
 
+# ---------------------------------------------------------------------------
+# Background Tasks
+# ---------------------------------------------------------------------------
+import asyncio
+from email_service import notify_referral_created
+
+async def referral_timeout_sweep():
+    """Background task to automatically reject and reroute timed-out pending referrals."""
+    while True:
+        try:
+            with db_cursor() as cur:
+                cur.execute("SELECT referral_id, patient_id, severity, stability, submitted_at, routing_queue FROM referrals WHERE status = 'pending'")
+                pending = cur.fetchall()
+
+            now = datetime.utcnow()
+            for r in pending:
+                # Dynamic timeout calculation
+                if r["severity"] == "critical" or r["stability"] == "unstable":
+                    timeout_mins = 15
+                elif r["severity"] == "high":
+                    timeout_mins = 30
+                elif r["severity"] == "medium":
+                    timeout_mins = 60
+                else:
+                    timeout_mins = 120
+                
+                # Check for expiration
+                if (now - r.get("submitted_at", now)).total_seconds() > timeout_mins * 60:
+                    queue = r.get("routing_queue") or []
+                    if isinstance(queue, str):
+                        try:
+                            queue = json.loads(queue)
+                        except:
+                            queue = []
+                    
+                    with db_cursor() as cur:
+                        if not queue:
+                            # Exhausted
+                            cur.execute(
+                                "UPDATE referrals SET status = 'needs_manual_routing', updated_at = %s WHERE referral_id = %s",
+                                (now, r["referral_id"])
+                            )
+                            # NOTE: In production, notify referring physician here.
+                        else:
+                            # Pop next hospital
+                            next_hospital_id = queue.pop(0)
+                            cur.execute(
+                                "UPDATE referrals SET receiving_hospital_id = %s, routing_queue = %s, submitted_at = %s, updated_at = %s WHERE referral_id = %s",
+                                (next_hospital_id, json.dumps(queue), now, now, r["referral_id"])
+                            )
+                            
+                            # Notify new receiving hospital
+                            cur.execute("SELECT full_name FROM patients WHERE patient_id = %s", (r["patient_id"],))
+                            p = cur.fetchone()
+                            patient_name = p["full_name"] if p else "Unknown"
+                            try:
+                                # Run synchronously for now in this loop
+                                notify_referral_created(r["referral_id"], patient_name, next_hospital_id)
+                            except Exception as e:
+                                print(f"[WARN] Email notification failed dynamically: {e}")
+
+        except Exception as e:
+            print(f"[WARN] Referral timeout sweep failed: {e}")
+            
+        await asyncio.sleep(60) # Sweep every 60 seconds
+
+@app.on_event("startup")
+async def startup_event():
+    asyncio.create_task(referral_timeout_sweep())
+
 
 # ---------------------------------------------------------------------------
 # Hospital data — loaded from PostgreSQL

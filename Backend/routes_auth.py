@@ -52,8 +52,10 @@ def _build_user_dict(row, physician_id: str | None = None) -> dict:
         "contact_phone": row.get("contact_phone"),
         # Physician professional details (from LEFT JOIN physicians)
         "title": row.get("title"),
+        "license_number": row.get("license_number"),
         "specialization": row.get("specialization"),
         "department": row.get("department"),
+        "grade": row.get("grade"),
     }
     return d
 
@@ -117,7 +119,7 @@ def login(req: LoginRequest, response: Response):
                    r.role_name, u.created_at,
                    h.name AS hospital_name, h.address AS hospital_address,
                    h.contact_phone,
-                   p.title, p.specialization, p.department
+                   p.title, p.license_number, p.specialization, p.department, p.grade
             FROM users u
             JOIN role r ON u.role_id = r.role_id
             LEFT JOIN hospitals h ON u.hospital_id = h.hospital_id
@@ -369,7 +371,7 @@ def me(request: Request):
                    u.profile_picture_url, r.role_name, u.created_at,
                    h.name AS hospital_name, h.address AS hospital_address,
                    h.contact_phone,
-                   p.title, p.specialization, p.department
+                   p.title, p.license_number, p.specialization, p.department, p.grade
             FROM users u
             JOIN role r ON u.role_id = r.role_id
             LEFT JOIN hospitals h ON u.hospital_id = h.hospital_id

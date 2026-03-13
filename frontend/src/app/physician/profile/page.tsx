@@ -178,7 +178,7 @@ export default function PhysicianProfilePage() {
                                 </div>
                             </div>
                         ) : (
-                            <>
+                            <div className="grid grid-cols-2 gap-4">
                                 <div className="flex items-center gap-3">
                                     <Mail className="h-5 w-5 text-gray-400" />
                                     <div>
@@ -193,7 +193,42 @@ export default function PhysicianProfilePage() {
                                         <p className="font-medium">{user.phone_number || 'Not set'}</p>
                                     </div>
                                 </div>
-                            </>
+                                <div className="flex items-center gap-3">
+                                    <User className="h-5 w-5 text-gray-400" />
+                                    <div>
+                                        <p className="text-sm text-gray-500">Title</p>
+                                        <p className="font-medium capitalize">{(user as any).title || 'Not set'}</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <Shield className="h-5 w-5 text-gray-400" />
+                                    <div>
+                                        <p className="text-sm text-gray-500">License Number</p>
+                                        <p className="font-medium">{(user as any).license_number || 'Not set'}</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <Building2 className="h-5 w-5 text-gray-400" />
+                                    <div>
+                                        <p className="text-sm text-gray-500">Specialization</p>
+                                        <p className="font-medium">{(user as any).specialization || 'Not set'}</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <Building2 className="h-5 w-5 text-gray-400" />
+                                    <div>
+                                        <p className="text-sm text-gray-500">Department</p>
+                                        <p className="font-medium">{(user as any).department || 'Not set'}</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <Shield className="h-5 w-5 text-gray-400" />
+                                    <div>
+                                        <p className="text-sm text-gray-500">Grade/Level</p>
+                                        <p className="font-medium">{(user as any).grade || 'Not set'}</p>
+                                    </div>
+                                </div>
+                            </div>
                         )}
                     </CardContent>
                 </Card>

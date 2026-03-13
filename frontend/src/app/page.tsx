@@ -210,9 +210,8 @@ export default function LandingPage() {
       </section>
 
       {/* ── Coverage / CTA ── */}
-      <section id="coverage" className="py-24 relative overflow-hidden">
-        <div className="absolute inset-0 -z-10 bg-gradient-to-br from-blue-600 via-blue-700 to-cyan-600" />
-        <div className="absolute inset-0 -z-10 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)', backgroundSize: '32px 32px' }} />
+      <section id="coverage" className="py-24 relative overflow-hidden bg-gradient-to-br from-blue-600 via-blue-700 to-cyan-600">
+        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)', backgroundSize: '32px 32px' }} />
 
         <div className="max-w-4xl mx-auto px-6 text-center">
           <h2 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight">

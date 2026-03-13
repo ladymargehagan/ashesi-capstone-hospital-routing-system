@@ -18,19 +18,22 @@ import { patientsApi } from '@/lib/api-client';
 import { Patient } from '@/types';
 import { PatientDetailsModal } from '@/components/physician/patient-details-modal';
 import { Search, Eye, Plus, Loader2 } from 'lucide-react';
+import { useAuth } from '@/hooks/use-auth';
 
 export default function PatientsPage() {
+    const { user } = useAuth();
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
     const [patients, setPatients] = useState<Patient[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        patientsApi.list()
+        if (!user?.physician_id) return;
+        patientsApi.list(user.physician_id)
             .then((data) => setPatients(data as unknown as Patient[]))
             .catch((err) => console.error('Failed to load patients:', err))
             .finally(() => setLoading(false));
-    }, []);
+    }, [user?.physician_id]);
 
     const filteredPatients = patients.filter(patient =>
         patient.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||

@@ -18,8 +18,10 @@ import {
 import { referralsApi } from '@/lib/api-client';
 import { Referral } from '@/types';
 import { Search, Plus, Loader2 } from 'lucide-react';
+import { useAuth } from '@/hooks/use-auth';
 
 export default function ReferralsPage() {
+    const { user } = useAuth();
     const [searchQuery, setSearchQuery] = useState('');
     const [statusFilter, setStatusFilter] = useState<string>('all');
     const [severityFilter, setSeverityFilter] = useState<string>('all');
@@ -27,11 +29,12 @@ export default function ReferralsPage() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        referralsApi.list()
+        if (!user?.physician_id) return;
+        referralsApi.list({ physician_id: user.physician_id })
             .then((data) => setReferrals(data as unknown as Referral[]))
             .catch((err) => console.error('Failed to load referrals:', err))
             .finally(() => setLoading(false));
-    }, []);
+    }, [user?.physician_id]);
 
     // Apply filters
     const filteredReferrals = referrals.filter(referral => {
