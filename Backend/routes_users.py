@@ -24,6 +24,11 @@ class UserStatusUpdate(BaseModel):
 class UserProfileUpdate(BaseModel):
     full_name: Optional[str] = None
     phone_number: Optional[str] = None
+    title: Optional[str] = None
+    license_number: Optional[str] = None
+    specialization: Optional[str] = None
+    department: Optional[str] = None
+    grade: Optional[str] = None
 
 
 class UserRoleUpdate(BaseModel):
@@ -148,28 +153,57 @@ def list_physicians(hospital_id: Optional[int] = None, status: Optional[str] = N
 
 @router.put("/{user_id}/profile")
 def update_user_profile(user_id: int, req: UserProfileUpdate):
-    """Update user profile fields (name, phone)."""
+    """Update user profile fields (name, phone) and physician fields if applicable."""
     with db_cursor() as cur:
-        updates = []
-        params = []
+        # 1. Update users table
+        user_updates = []
+        user_params = []
         if req.full_name is not None:
-            updates.append("full_name = %s")
-            params.append(req.full_name)
+            user_updates.append("full_name = %s")
+            user_params.append(req.full_name)
         if req.phone_number is not None:
-            updates.append("phone_number = %s")
-            params.append(req.phone_number)
+            user_updates.append("phone_number = %s")
+            user_params.append(req.phone_number)
 
-        if not updates:
+        if user_updates:
+            user_updates.append("updated_at = CURRENT_TIMESTAMP")
+            user_params.append(user_id)
+            cur.execute(
+                f"UPDATE users SET {', '.join(user_updates)} WHERE user_id = %s RETURNING user_id",
+                user_params,
+            )
+            if not cur.fetchone():
+                raise HTTPException(status_code=404, detail="User not found")
+
+        # 2. Update physicians table
+        physician_updates = []
+        physician_params = []
+        if req.title is not None:
+            physician_updates.append("title = %s")
+            physician_params.append(req.title)
+        if req.license_number is not None:
+            physician_updates.append("license_number = %s")
+            physician_params.append(req.license_number)
+        if req.specialization is not None:
+            physician_updates.append("specialization = %s")
+            physician_params.append(req.specialization)
+        if req.department is not None:
+            physician_updates.append("department = %s")
+            physician_params.append(req.department)
+        if req.grade is not None:
+            physician_updates.append("grade = %s")
+            physician_params.append(req.grade)
+            
+        if physician_updates:
+            physician_updates.append("updated_at = CURRENT_TIMESTAMP")
+            physician_params.append(user_id)
+            cur.execute(
+                f"UPDATE physicians SET {', '.join(physician_updates)} WHERE user_id = %s",
+                physician_params,
+            )
+
+        if not user_updates and not physician_updates:
             raise HTTPException(status_code=400, detail="No fields to update")
-
-        updates.append("updated_at = CURRENT_TIMESTAMP")
-        params.append(user_id)
-        cur.execute(
-            f"UPDATE users SET {', '.join(updates)} WHERE user_id = %s RETURNING user_id",
-            params,
-        )
-        if not cur.fetchone():
-            raise HTTPException(status_code=404, detail="User not found")
 
     return {"success": True, "user_id": str(user_id)}
 

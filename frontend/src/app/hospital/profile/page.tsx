@@ -2,16 +2,51 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/use-auth';
-import { hospitalsApi } from '@/lib/api-client';
+import { hospitalsApi, usersApi } from '@/lib/api-client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useToast } from '@/components/ui/toast-provider';
 import { Hospital } from '@/types';
-import { User, Mail, Phone, Building2, MapPin, Calendar, Clock, Shield, Loader2 } from 'lucide-react';
+import { User, Mail, Phone, Building2, MapPin, Calendar, Clock, Shield, Loader2, Edit3, Save, X } from 'lucide-react';
 
 export default function HospitalProfilePage() {
     const { user } = useAuth();
+    const toast = useToast();
     const [hospital, setHospital] = useState<Hospital | null>(null);
     const [loading, setLoading] = useState(true);
+    
+    // Edit state
+    const [editing, setEditing] = useState(false);
+    const [saving, setSaving] = useState(false);
+    const [formData, setFormData] = useState({
+        full_name: '',
+        phone_number: ''
+    });
+
+    const handleEdit = () => {
+        setFormData({
+            full_name: user?.full_name || '',
+            phone_number: user?.phone_number || ''
+        });
+        setEditing(true);
+    };
+
+    const handleSave = async () => {
+        if (!user) return;
+        setSaving(true);
+        try {
+            await usersApi.updateProfile(user.id, formData);
+            toast.success('Admin profile updated successfully! Refresh to see changes.');
+            setEditing(false);
+        } catch (err: any) {
+            toast.error(err.message || 'Failed to update admin profile');
+        } finally {
+            setSaving(false);
+        }
+    };
 
     useEffect(() => {
         if (!user?.hospital_id) {
@@ -73,24 +108,64 @@ export default function HospitalProfilePage() {
 
                 {/* Contact Information */}
                 <Card>
-                    <CardHeader>
-                        <CardTitle className="text-lg">Contact Information</CardTitle>
+                    <CardHeader className="flex flex-row items-center justify-between">
+                        <div>
+                            <CardTitle className="text-lg">Contact Information</CardTitle>
+                        </div>
+                        {!editing && (
+                            <Button variant="outline" size="sm" onClick={handleEdit}>
+                                <Edit3 className="h-4 w-4 mr-2" />
+                                Edit Profile
+                            </Button>
+                        )}
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        <div className="flex items-center gap-3">
-                            <Mail className="h-5 w-5 text-gray-400" />
-                            <div>
-                                <p className="text-sm text-gray-500">Email</p>
-                                <p className="font-medium">{user.email}</p>
+                        {editing ? (
+                            <div className="space-y-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label>Full Name</Label>
+                                        <Input
+                                            value={formData.full_name}
+                                            onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>Phone Number</Label>
+                                        <Input
+                                            value={formData.phone_number}
+                                            onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
+                                        />
+                                    </div>
+                                </div>
+                                <div className="flex justify-end gap-2 pt-4">
+                                    <Button variant="outline" onClick={() => setEditing(false)} disabled={saving}>
+                                        <X className="h-4 w-4 mr-2" /> Cancel
+                                    </Button>
+                                    <Button onClick={handleSave} disabled={saving}>
+                                        {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />} 
+                                        Save Changes
+                                    </Button>
+                                </div>
                             </div>
-                        </div>
-                        <div className="flex items-center gap-3">
-                            <Phone className="h-5 w-5 text-gray-400" />
-                            <div>
-                                <p className="text-sm text-gray-500">Phone Number</p>
-                                <p className="font-medium">{user.phone_number || 'Not set'}</p>
-                            </div>
-                        </div>
+                        ) : (
+                            <>
+                                <div className="flex items-center gap-3">
+                                    <Mail className="h-5 w-5 text-gray-400" />
+                                    <div>
+                                        <p className="text-sm text-gray-500">Email</p>
+                                        <p className="font-medium">{user.email}</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <Phone className="h-5 w-5 text-gray-400" />
+                                    <div>
+                                        <p className="text-sm text-gray-500">Phone Number</p>
+                                        <p className="font-medium">{user.phone_number || 'Not set'}</p>
+                                    </div>
+                                </div>
+                            </>
+                        )}
                     </CardContent>
                 </Card>
 

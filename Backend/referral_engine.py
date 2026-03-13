@@ -382,6 +382,7 @@ class ReferralEngine:
         severity = patient.severity.lower()
         stability = patient.stability.lower()
         tmax = TMAX_BY_CONTEXT.get((severity, stability), self.config.default_tmax_minutes)
+        alpha, beta = self._dynamic_weights(severity, stability)
 
         rows: List[Dict[str, Any]] = []
         hospitals_list = list(hospitals)
@@ -397,7 +398,7 @@ class ReferralEngine:
                 origin=(patient.lat, patient.lon), hospital=hospital, fallback_distance_km=distance
             )
             proximity = max(0.0, 1.0 - (travel_mins / float(tmax)))
-            partial_score = match_ratio * proximity
+            partial_score = alpha * match_ratio + beta * proximity
             freshness = self._freshness_factor(hospital.last_update, patient.at_time)
 
             resource_breakdown = {}

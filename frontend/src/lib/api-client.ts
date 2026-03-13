@@ -200,7 +200,7 @@ export const usersApi = {
         return apiFetch<Record<string, unknown>[]>(`/api/users/physicians${query ? `?${query}` : ''}`);
     },
 
-    updateProfile: (id: string, data: { full_name?: string; phone_number?: string }) =>
+    updateProfile: (id: string, data: { full_name?: string; phone_number?: string; title?: string; license_number?: string; specialization?: string; department?: string; grade?: string; }) =>
         apiFetch<{ success: boolean }>(
             `/api/users/${id}/profile`,
             { method: 'PUT', body: JSON.stringify(data) },
