@@ -3,7 +3,7 @@ Database connection pool for PostgreSQL (HRSdb).
 
 Reads DATABASE_URL from environment. Defaults to local dev PostgreSQL.
 Usage:
-    from db import get_conn, release_conn
+    from core.db import get_conn, release_conn
     conn = get_conn()
     try:
         with conn.cursor() as cur:

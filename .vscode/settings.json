@@ -1,1 +1,6 @@
-{}
+
+{
+    "files.exclude": {
+        "**/.claude": true
+    }
+}

@@ -16,7 +16,7 @@ import sys
 # Ensure we can import from the Backend directory
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from db import db_cursor
+from core.db import db_cursor
 from routes_auth import hash_password
 
 

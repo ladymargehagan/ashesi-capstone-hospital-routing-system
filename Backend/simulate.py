@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from datetime import datetime, timedelta
 
-from referral_engine import EngineConfig, Hospital, PatientCase, ReferralEngine, ResourceState
+from services.referral_engine import EngineConfig, Hospital, PatientCase, ReferralEngine, ResourceState
 
 
 def sample_hospitals(now: datetime) -> list[Hospital]:

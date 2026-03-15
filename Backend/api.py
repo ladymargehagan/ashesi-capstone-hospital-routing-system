@@ -22,24 +22,24 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
-from referral_engine import (
+from services.referral_engine import (
     EngineConfig,
     Hospital,
     PatientCase,
     ReferralEngine,
     ResourceState,
 )
-from db import db_cursor
+from core.db import db_cursor
 
 # Route modules
-from routes_auth import router as auth_router
-from routes_hospitals import router as hospitals_router
-from routes_referrals import router as referrals_router
-from routes_resources import router as resources_router
-from routes_patients import router as patients_router
-from routes_users import router as users_router
-from routes_specialists import router as specialists_router
-from routes_notifications import router as notifications_router
+from endpoints.auth import router as auth_router
+from endpoints.hospitals import router as hospitals_router
+from endpoints.referrals import router as referrals_router
+from endpoints.resources import router as resources_router
+from endpoints.patients import router as patients_router
+from endpoints.users import router as users_router
+from endpoints.specialists import router as specialists_router
+from endpoints.notifications import router as notifications_router
 
 # ---------------------------------------------------------------------------
 # App setup
@@ -75,7 +75,7 @@ app.include_router(notifications_router)
 # Background Tasks
 # ---------------------------------------------------------------------------
 import asyncio
-from email_service import notify_referral_created
+from services.email_service import notify_referral_created
 
 async def referral_timeout_sweep():
     """Background task to automatically reject and reroute timed-out pending referrals."""

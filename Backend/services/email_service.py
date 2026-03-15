@@ -24,7 +24,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from typing import Optional
 
-from db import db_cursor
+from core.db import db_cursor
 
 # SMTP config from environment
 SMTP_HOST = os.getenv("SMTP_HOST", "smtp.gmail.com")
