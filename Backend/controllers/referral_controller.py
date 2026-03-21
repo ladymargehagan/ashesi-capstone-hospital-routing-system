@@ -162,18 +162,22 @@ def process_create_referral(req_data: dict) -> dict:
     from services.referral_engine import ReferralEngine, EngineConfig, PatientCase
     from core.db import db_cursor
 
-    # Get lat/lon of referring hospital
-    with db_cursor() as cur:
-        cur.execute("SELECT gps_coordinates FROM hospitals WHERE hospital_id = %s", (req_data["referring_hospital_id"],))
-        row = cur.fetchone()
-        lat, lon = 5.56, -0.20
-        if row and row.get("gps_coordinates"):
-            gps = row["gps_coordinates"]
-            if isinstance(gps, str):
-                parts = gps.strip("()").split(",")
-                lat, lon = float(parts[0]), float(parts[1])
-            elif isinstance(gps, tuple):
-                lat, lon = float(gps[0]), float(gps[1])
+    # Use custom incident location if provided, else fallback to referring hospital's lat/lon
+    lat = req_data.get("incident_lat")
+    lon = req_data.get("incident_lon")
+    
+    if lat is None or lon is None:
+        with db_cursor() as cur:
+            cur.execute("SELECT gps_coordinates FROM hospitals WHERE hospital_id = %s", (req_data["referring_hospital_id"],))
+            row = cur.fetchone()
+            lat, lon = 5.56, -0.20
+            if row and row.get("gps_coordinates"):
+                gps = row["gps_coordinates"]
+                if isinstance(gps, str):
+                    parts = gps.strip("()").split(",")
+                    lat, lon = float(parts[0]), float(parts[1])
+                elif isinstance(gps, tuple):
+                    lat, lon = float(gps[0]), float(gps[1])
         
     now = datetime.utcnow()
     hospitals = _load_hospitals_from_db(now)
@@ -190,18 +194,23 @@ def process_create_referral(req_data: dict) -> dict:
         if hid != str(req_data["receiving_hospital_id"]) and hid != str(req_data["referring_hospital_id"]):
             routing_queue.append(hid)
 
+    routing_metadata_json = json.dumps(res.get("recommendations", []))
+
     referral_id = insert_referral(
         req_data["patient_id"], req_data["referring_physician_id"], req_data["referring_hospital_id"],
         req_data["receiving_hospital_id"], req_data["severity"], req_data["stability"],
-        req_data["emergency_type"], req_data.get("estimated_arrival_minutes"), json.dumps(routing_queue)
+        req_data["emergency_type"], req_data.get("estimated_arrival_minutes"), json.dumps(routing_queue),
+        req_data.get("incident_lat"), req_data.get("incident_lon"), routing_metadata_json
     )
+
+    vitals_json = json.dumps(req_data["vital_signs"]) if req_data.get("vital_signs") else None
 
     insert_referral_details(
         referral_id, req_data["presenting_complaint"], req_data.get("clinical_history"),
         req_data.get("initial_diagnosis"), req_data.get("current_condition"), req_data.get("clinical_summary"),
         req_data.get("examination_findings"), req_data.get("working_diagnosis"), req_data.get("reason_for_referral"),
         req_data.get("investigations_done"), req_data.get("treatment_given"), req_data.get("additional_notes"),
-        req_data.get("required_specialist"), req_data.get("required_facility")
+        req_data.get("required_specialist"), req_data.get("required_facility"), vitals_json
     )
 
     try:

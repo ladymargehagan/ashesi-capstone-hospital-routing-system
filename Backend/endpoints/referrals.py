@@ -60,6 +60,10 @@ class CreateReferral(BaseModel):
     additional_notes: Optional[str] = None
     required_specialist: Optional[str] = None
     required_facility: Optional[str] = None
+    # Stage 4 Additions (Vitals and Location)
+    vital_signs: Optional[dict] = None
+    incident_lat: Optional[float] = None
+    incident_lon: Optional[float] = None
 
 
 class ReferralStatusUpdate(BaseModel):

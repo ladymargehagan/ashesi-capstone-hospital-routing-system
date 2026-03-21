@@ -1,8 +1,11 @@
 from __future__ import annotations
 
 import json
+import random
+import argparse
 from datetime import datetime, timedelta
 
+from core.db import db_cursor
 from services.referral_engine import EngineConfig, Hospital, PatientCase, ReferralEngine, ResourceState
 
 
@@ -165,6 +168,60 @@ def run_simulation() -> None:
 
     print(json.dumps(outputs, indent=2, default=str))
 
+def simulate_hms_events(n_events: int = 20) -> None:
+    now = datetime.utcnow()
+    print(f"[{now.isoformat()}] Simulating {n_events} HMS admission/discharge events...")
+
+    with db_cursor() as cur:
+        # Fetch all resources that have a total_count > 0 so we can mutate their available_count
+        cur.execute(
+            "SELECT resource_id, hospital_id, resource_type, total_count, available_count "
+            "FROM hospital_resources WHERE total_count > 0 AND total_count IS NOT NULL"
+        )
+        resources = list(cur.fetchall())
+
+        if not resources:
+            print("No suitable hospital resources found in the database. Exiting.")
+            return
+
+        for i in range(n_events):
+            res = random.choice(resources)
+            action = random.choice(["admission", "discharge"])
+            res_id = res["resource_id"]
+            hospital_id = res["hospital_id"]
+            r_type = res["resource_type"]
+            total = res["total_count"]
+            available = res["available_count"] or 0
+
+            if action == "admission":
+                new_available = max(0, available - 1)
+                log_action = f"Admitting patient -> {r_type} used. Available {available} -> {new_available}/{total}"
+            else:
+                new_available = min(total, available + 1)
+                log_action = f"Discharging patient -> {r_type} freed. Available {available} -> {new_available}/{total}"
+
+            # Update locally to avoid impossible states during loop
+            res["available_count"] = new_available
+
+            cur.execute(
+                """
+                UPDATE hospital_resources 
+                SET available_count = %s, last_updated = CURRENT_TIMESTAMP
+                WHERE resource_id = %s
+                """,
+                (new_available, res_id)
+            )
+            print(f"[Event {i+1:02d}] Hosp {hospital_id:2} | {log_action}")
+
+    print("--- HMS Data Simulation complete ---")
+
 
 if __name__ == "__main__":
-    run_simulation()
+    parser = argparse.ArgumentParser(description="Hospital Routing System Simulations")
+    parser.add_argument("--hms", type=int, nargs='?', const=20, default=0, help="Run the HMS simulation with N events")
+    args = parser.parse_args()
+
+    if args.hms > 0:
+        simulate_hms_events(args.hms)
+    else:
+        run_simulation()

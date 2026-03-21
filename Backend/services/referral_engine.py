@@ -68,7 +68,7 @@ class PatientCase:
 @dataclass
 class EngineConfig:
     radius_km: float = 16.0
-    top_k: int = 3
+    top_k: int = 5
     stale_half_life_hours: float = 6.0
     default_tmax_minutes: int = 60
     base_capability_weight: float = 0.7

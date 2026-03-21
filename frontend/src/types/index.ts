@@ -189,6 +189,19 @@ export interface ReferralFormData {
 
     // Hospital Selection
     receiving_hospital_id?: string;
+
+    // Stage 4 Additions
+    vital_signs?: {
+        temperature?: number;
+        pulse?: number;
+        respiratory_rate?: number;
+        blood_pressure_systolic?: number;
+        blood_pressure_diastolic?: number;
+        spO2?: number;
+        gcs?: number;
+    };
+    incident_lat?: number;
+    incident_lon?: number;
 }
 
 // Specialist interface (maps to SPECIALISTS table)

@@ -126,6 +126,17 @@ function ReferralFormContent() {
         severity: 'medium',
         stability: 'stable',
         referral_datetime: new Date().toISOString().slice(0, 16),
+        vital_signs: {
+            temperature: undefined,
+            pulse: undefined,
+            respiratory_rate: undefined,
+            blood_pressure_systolic: undefined,
+            blood_pressure_diastolic: undefined,
+            spO2: undefined,
+            gcs: undefined,
+        },
+        incident_lat: undefined,
+        incident_lon: undefined,
     });
 
     const handlePatientSelect = (patientId: string) => {
@@ -147,8 +158,18 @@ function ReferralFormContent() {
         }
     };
 
-    const handleInputChange = (field: keyof ReferralFormData, value: string | number) => {
+    const handleInputChange = (field: keyof ReferralFormData, value: string | number | undefined) => {
         setFormData({ ...formData, [field]: value });
+    };
+
+    const handleVitalChange = (field: keyof Required<ReferralFormData>['vital_signs'], value: string) => {
+        setFormData(prev => ({
+            ...prev,
+            vital_signs: {
+                ...prev.vital_signs,
+                [field]: value === '' ? undefined : Number(value)
+            }
+        }));
     };
 
     const handleHospitalSelect = (hospital: Hospital) => {
@@ -241,6 +262,9 @@ function ReferralFormContent() {
                 investigations_done: formData.investigations_done,
                 treatment_given: formData.treatment_given,
                 reason_for_referral: formData.reason_for_referral,
+                vital_signs: formData.vital_signs,
+                incident_lat: formData.incident_lat,
+                incident_lon: formData.incident_lon,
             };
             const result = await referralsApi.create(payload);
 
@@ -496,6 +520,118 @@ function ReferralFormContent() {
                                 placeholder="Treatment provided so far"
                                 rows={2}
                             />
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* Vital Signs & Initial Measurements Section */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="text-lg">Vital Signs & Location</CardTitle>
+                        <CardDescription>Record patient vitals and optionally override incident location</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="temp">Temp (°C)</Label>
+                                <Input
+                                    id="temp"
+                                    type="number"
+                                    step="0.1"
+                                    value={formData.vital_signs?.temperature ?? ''}
+                                    onChange={(e) => handleVitalChange('temperature', e.target.value)}
+                                    placeholder="37.0"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="pulse">Pulse (bpm)</Label>
+                                <Input
+                                    id="pulse"
+                                    type="number"
+                                    value={formData.vital_signs?.pulse ?? ''}
+                                    onChange={(e) => handleVitalChange('pulse', e.target.value)}
+                                    placeholder="80"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="respRate">Resp Rate (/min)</Label>
+                                <Input
+                                    id="respRate"
+                                    type="number"
+                                    value={formData.vital_signs?.respiratory_rate ?? ''}
+                                    onChange={(e) => handleVitalChange('respiratory_rate', e.target.value)}
+                                    placeholder="16"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="spo2">SpO2 (%)</Label>
+                                <Input
+                                    id="spo2"
+                                    type="number"
+                                    value={formData.vital_signs?.spO2 ?? ''}
+                                    onChange={(e) => handleVitalChange('spO2', e.target.value)}
+                                    placeholder="98"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="bpSys">BP Sys (mmHg)</Label>
+                                <Input
+                                    id="bpSys"
+                                    type="number"
+                                    value={formData.vital_signs?.blood_pressure_systolic ?? ''}
+                                    onChange={(e) => handleVitalChange('blood_pressure_systolic', e.target.value)}
+                                    placeholder="120"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="bpDia">BP Dia (mmHg)</Label>
+                                <Input
+                                    id="bpDia"
+                                    type="number"
+                                    value={formData.vital_signs?.blood_pressure_diastolic ?? ''}
+                                    onChange={(e) => handleVitalChange('blood_pressure_diastolic', e.target.value)}
+                                    placeholder="80"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="gcs">GCS Score</Label>
+                                <Input
+                                    id="gcs"
+                                    type="number"
+                                    min="3" max="15"
+                                    value={formData.vital_signs?.gcs ?? ''}
+                                    onChange={(e) => handleVitalChange('gcs', e.target.value)}
+                                    placeholder="15"
+                                />
+                            </div>
+                        </div>
+
+                        <Separator className="my-2" />
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="incidentLat">Incident Latitude (override)</Label>
+                                <Input
+                                    id="incidentLat"
+                                    type="number"
+                                    step="0.000001"
+                                    value={formData.incident_lat ?? ''}
+                                    onChange={(e) => handleInputChange('incident_lat', e.target.value === '' ? undefined : Number(e.target.value))}
+                                    placeholder="e.g. 5.6037"
+                                />
+                                <p className="text-xs text-gray-400">Leave blank to use referring hospital location.</p>
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="incidentLon">Incident Longitude (override)</Label>
+                                <Input
+                                    id="incidentLon"
+                                    type="number"
+                                    step="0.000001"
+                                    value={formData.incident_lon ?? ''}
+                                    onChange={(e) => handleInputChange('incident_lon', e.target.value === '' ? undefined : Number(e.target.value))}
+                                    placeholder="e.g. -0.1870"
+                                />
+                            </div>
                         </div>
                     </CardContent>
                 </Card>

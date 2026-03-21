@@ -81,7 +81,9 @@ def fetch_referral_details_db(referral_id: int):
 def insert_referral(
     patient_id: int, referring_physician_id: int, referring_hospital_id: int,
     receiving_hospital_id: int, severity: str, stability: str, emergency_type: str,
-    estimated_arrival_minutes: Optional[int], routing_queue_json: str
+    estimated_arrival_minutes: Optional[int], routing_queue_json: str,
+    incident_lat: Optional[float] = None, incident_lon: Optional[float] = None,
+    routing_metadata: Optional[str] = None
 ) -> int:
     with db_cursor() as cur:
         cur.execute(
@@ -89,13 +91,15 @@ def insert_referral(
             INSERT INTO referrals
                 (patient_id, referring_physician_id, referring_hospital_id,
                  receiving_hospital_id, severity, stability, emergency_type,
-                 estimated_arrival_minutes, routing_queue)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                 estimated_arrival_minutes, routing_queue, incident_lat, incident_lon,
+                 routing_metadata)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING referral_id
             """,
             (patient_id, referring_physician_id, referring_hospital_id,
              receiving_hospital_id, severity, stability,
-             emergency_type, estimated_arrival_minutes, routing_queue_json),
+             emergency_type, estimated_arrival_minutes, routing_queue_json,
+             incident_lat, incident_lon, routing_metadata),
         )
         return cur.fetchone()["referral_id"]
 
@@ -105,7 +109,8 @@ def insert_referral_details(
     initial_diagnosis: Optional[str], current_condition: Optional[str], clinical_summary: Optional[str],
     examination_findings: Optional[str], working_diagnosis: Optional[str], reason_for_referral: Optional[str],
     investigations_done: Optional[str], treatment_given: Optional[str], additional_notes: Optional[str],
-    required_specialist: Optional[str], required_facility: Optional[str]
+    required_specialist: Optional[str], required_facility: Optional[str],
+    vital_signs: Optional[str] = None
 ):
     with db_cursor() as cur:
         cur.execute(
@@ -115,14 +120,14 @@ def insert_referral_details(
                  initial_diagnosis, current_condition, clinical_summary,
                  examination_findings, working_diagnosis, reason_for_referral,
                  investigations_done, treatment_given, additional_notes,
-                 required_specialist, required_facility)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                 required_specialist, required_facility, vital_signs)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """,
             (referral_id, presenting_complaint, clinical_history,
              initial_diagnosis, current_condition, clinical_summary,
              examination_findings, working_diagnosis, reason_for_referral,
              investigations_done, treatment_given, additional_notes,
-             required_specialist, required_facility),
+             required_specialist, required_facility, vital_signs),
         )
 
 
