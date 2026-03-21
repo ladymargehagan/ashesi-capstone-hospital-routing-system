@@ -5,7 +5,11 @@ from models.hospital import (
     fetch_hospital_by_id,
     fetch_hospital_resources,
     fetch_hospital_specialists,
+    update_hospital_in_db,
+    set_hospital_status,
+    count_active_hospitals,
 )
+from utils.audit import log_action
 
 
 def _row_to_hospital(row) -> dict:
@@ -59,3 +63,66 @@ def get_hospital_details(hospital_id: int) -> Optional[dict]:
     hospital["specialists"] = [dict(r) for r in specialists]
 
     return hospital
+
+
+# ---------------------------------------------------------------------------
+# Write operations (Stage 3)
+# ---------------------------------------------------------------------------
+
+def update_hospital_profile(hospital_id: int, data: dict, actor_user_id: int) -> dict:
+    """Validate and update a hospital's profile."""
+    updates = []
+    params = []
+
+    # Map the JSON keys to DB columns
+    fields = ["name", "license_number", "address", "level", "type", "ownership", "operating_hours", "contact_phone", "email"]
+    for field in fields:
+        if data.get(field) is not None:
+            updates.append(f"{field} = %s")
+            params.append(data[field])
+
+    if not updates:
+        return {"error": True, "message": "No fields to update"}
+
+    params.append(hospital_id)
+    
+    success = update_hospital_in_db(hospital_id, updates, params)
+    
+    if not success:
+        return {"error": True, "message": "Hospital not found"}
+
+    log_action(
+        actor_user_id,
+        "hospital_profile_updated",
+        entity_type="hospital",
+        entity_id=hospital_id,
+        details=data,
+    )
+
+    return {"success": True, "hospital_id": str(hospital_id)}
+
+
+def toggle_hospital_status(hospital_id: int, status: str, actor_user_id: int, reason: Optional[str] = None) -> dict:
+    """Toggle a hospital between 'active' and 'inactive'."""
+    if status == "inactive":
+        # Guard: Never deactivate the last active hospital
+        if count_active_hospitals() <= 1:
+            # Verify if this specific hospital is the one active
+            hospital = fetch_hospital_by_id(hospital_id)
+            if hospital and hospital["status"] == "active":
+                return {"error": True, "code": 400, "message": "Cannot deactivate the last active hospital in the system"}
+
+    success = set_hospital_status(hospital_id, status)
+    
+    if not success:
+        return {"error": True, "code": 404, "message": "Hospital not found"}
+
+    log_action(
+        actor_user_id,
+        "hospital_status_changed",
+        entity_type="hospital",
+        entity_id=hospital_id,
+        details={"status": status, "reason": reason},
+    )
+
+    return {"success": True, "hospital_id": str(hospital_id), "status": status}

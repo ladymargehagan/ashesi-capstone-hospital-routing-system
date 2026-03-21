@@ -42,3 +42,33 @@ def fetch_hospital_specialists(hospital_id: int):
             (hospital_id,),
         )
         return cur.fetchall()
+
+
+# ---------------------------------------------------------------------------
+# Write functions (Stage 3)
+# ---------------------------------------------------------------------------
+
+def update_hospital_in_db(hospital_id: int, updates: list, params: list) -> bool:
+    """Run a parameterised UPDATE on the hospitals table."""
+    with db_cursor() as cur:
+        sql = f"UPDATE hospitals SET {', '.join(updates)}, updated_at = CURRENT_TIMESTAMP WHERE hospital_id = %s"
+        cur.execute(sql, params)
+        return cur.rowcount > 0
+
+
+def set_hospital_status(hospital_id: int, status: str) -> bool:
+    """Toggle hospital active/inactive status."""
+    with db_cursor() as cur:
+        cur.execute(
+            "UPDATE hospitals SET status = %s, updated_at = CURRENT_TIMESTAMP WHERE hospital_id = %s",
+            (status, hospital_id),
+        )
+        return cur.rowcount > 0
+
+
+def count_active_hospitals() -> int:
+    """Return the number of currently active hospitals."""
+    with db_cursor() as cur:
+        cur.execute("SELECT COUNT(*) as count FROM hospitals WHERE status = 'active'")
+        row = cur.fetchone()
+        return row["count"] if row else 0

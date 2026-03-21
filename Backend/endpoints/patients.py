@@ -69,7 +69,7 @@ def create_patient(
     current_user: dict = Depends(require_role("physician")),
 ):
     """Create a patient record. Physicians only."""
-    result = create_new_patient(req.dict())
+    result = create_new_patient(req.model_dump())
     if result.get("error"):
         raise HTTPException(status_code=400, detail=result.get("message"))
     return {"success": True, "patient_id": result["patient_id"]}

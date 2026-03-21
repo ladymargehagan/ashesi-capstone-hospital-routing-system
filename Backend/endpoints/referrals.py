@@ -106,7 +106,7 @@ def create_referral(
     current_user: dict = Depends(require_role("physician")),
 ):
     """Create a referral. Physicians only."""
-    result = process_create_referral(req.dict())
+    result = process_create_referral(req.model_dump())
     return result
 
 

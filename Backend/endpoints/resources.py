@@ -40,7 +40,7 @@ def update_resource(
     current_user: dict = Depends(require_role("hospital_admin", "super_admin")),
 ):
     """Update a resource's counts or availability. Hospital admin only."""
-    result = modify_resource(resource_id, req.dict(exclude_unset=True), actor_user_id=current_user["id"])
+    result = modify_resource(resource_id, req.model_dump(exclude_unset=True), actor_user_id=current_user["id"])
     if result.get("error"):
         if result.get("message") == "No fields to update":
             raise HTTPException(status_code=400, detail=result["message"])

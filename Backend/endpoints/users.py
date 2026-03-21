@@ -84,7 +84,7 @@ def update_user_profile(
     current_user: dict = Depends(get_current_user),
 ):
     """Update profile fields (name, phone, physician details). Self-service for any logged-in user."""
-    result = modify_user_profile(user_id, req.dict(exclude_unset=True))
+    result = modify_user_profile(user_id, req.model_dump(exclude_unset=True))
     if result.get("error"):
         if result.get("message") == "No fields to update":
             raise HTTPException(status_code=400, detail=result["message"])

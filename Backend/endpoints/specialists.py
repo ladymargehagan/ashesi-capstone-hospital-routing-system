@@ -51,7 +51,7 @@ def create_specialist(
     current_user: dict = Depends(require_role("hospital_admin", "super_admin")),
 ):
     """Add a new specialist. Hospital admin only."""
-    return create_new_specialist(req.dict())
+    return create_new_specialist(req.model_dump())
 
 
 @router.put("/{specialist_id}")
@@ -61,7 +61,7 @@ def update_specialist(
     current_user: dict = Depends(require_role("hospital_admin", "super_admin")),
 ):
     """Update specialist info or on-call availability. Hospital admin only."""
-    result = modify_specialist(specialist_id, req.dict(exclude_unset=True))
+    result = modify_specialist(specialist_id, req.model_dump(exclude_unset=True))
     if result.get("error"):
         if result.get("message") == "No fields to update":
             raise HTTPException(status_code=400, detail=result["message"])

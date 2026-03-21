@@ -90,7 +90,7 @@ def login(req: LoginRequest, response: Response):
 @router.post("/register")
 def register_doctor(req: DoctorRegisterRequest):
     """Doctor self-registration. Creates user + physician record, both pending."""
-    result = process_doctor_registration(req.dict())
+    result = process_doctor_registration(req.model_dump())
     
     if result.get("error"):
         raise HTTPException(status_code=result.get("code", 400), detail=result["message"])
@@ -106,7 +106,7 @@ def google_auth(req: GoogleAuthRequest, response: Response):
     - If email exists but no Google ID → link Google and log in.
     - If new user → create (pending), optionally with professional details.
     """
-    result = process_google_auth(req.token, req.dict(exclude={'token'}))
+    result = process_google_auth(req.token, req.model_dump(exclude={'token'}))
     
     if result.get("error"):
         raise HTTPException(status_code=result.get("code", 400), detail=result["message"])
@@ -165,7 +165,7 @@ def dev_register(req: DevRegisterRequest):
     """
     DEV ONLY – Create a user of any role from the terminal.
     """
-    result = process_dev_register(req.dict())
+    result = process_dev_register(req.model_dump())
     
     if result.get("error"):
         raise HTTPException(status_code=result.get("code", 400), detail=result["message"])
