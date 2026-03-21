@@ -241,6 +241,51 @@ def modify_referral_status(referral_id: int, status: str, reason: str = None) ->
     if status not in valid_statuses:
         return {"error": True, "code": 400, "message": f"Status must be one of: {valid_statuses}"}
 
+    existing = fetch_referral_metadata(referral_id)
+    if not existing:
+        return {"error": True, "code": 404, "message": "Referral not found"}
+        
+    info = fetch_referral_status_info(referral_id)
+    physician_user_id = info["physician_user_id"] if info else existing["referring_physician_id"]
+    patient_name = info["patient_name"] if info else "Unknown patient"
+
+    # --- Uber-style Cascade Logic ---
+    if status == "rejected":
+        routing_queue_str = existing.get("routing_queue")
+        if routing_queue_str:
+            try:
+                queue = json.loads(routing_queue_str)
+                if queue and len(queue) > 0:
+                    next_hospital_id = queue.pop(0)
+                    new_queue_str = json.dumps(queue)
+                    
+                    updates = ["receiving_hospital_id = %s", "status = %s", "routing_queue = %s"]
+                    params = [next_hospital_id, 'pending', new_queue_str, referral_id]
+                    success = update_referral_status_in_db(referral_id, updates, params)
+                    
+                    if success:
+                        log_action(
+                            physician_user_id,
+                            "referral_cascaded",
+                            entity_type="referral",
+                            entity_id=referral_id,
+                            details={
+                                "reason_for_rejection": reason, 
+                                "previous_hospital_id": existing["receiving_hospital_id"], 
+                                "new_hospital_id": next_hospital_id
+                            }
+                        )
+                        try:
+                            # Notify new hospital & referring physician
+                            notify_referral_created(referral_id, patient_name, next_hospital_id)
+                            notify_referral_status_changed(referral_id, patient_name, "cascaded", physician_user_id)
+                        except Exception as e:
+                            print(f"[WARN] Email notification failed for cascade: {e}")
+                            
+                        return {"success": True, "cascaded": True, "referral_id": str(referral_id), "new_hospital_id": str(next_hospital_id)}
+            except json.JSONDecodeError:
+                pass
+
     ts_col = {
         "approved": "approved_at",
         "rejected": "rejected_at",
@@ -267,16 +312,15 @@ def modify_referral_status(referral_id: int, status: str, reason: str = None) ->
     success = update_referral_status_in_db(referral_id, updates, params)
 
     if not success:
-        return {"error": True, "code": 404, "message": "Referral not found"}
+        return {"error": True, "code": 404, "message": "Referral update failed"}
 
     try:
-        info = fetch_referral_status_info(referral_id)
         if info:
             notify_referral_status_changed(
-                referral_id, info["patient_name"], status, info["physician_user_id"]
+                referral_id, patient_name, status, physician_user_id
             )
             log_action(
-                info["physician_user_id"],
+                physician_user_id,
                 "referral_status_changed",
                 entity_type="referral",
                 entity_id=referral_id,
