@@ -1,5 +1,6 @@
 from typing import Optional
 from services.email_service import notify_account_approved
+from utils.audit import log_action
 
 from models.user import (
     fetch_users,
@@ -77,6 +78,7 @@ def change_user_status(user_id: int, status: str) -> dict:
             except Exception as e:
                 print(f"[WARN] Account approval notification failed: {e}")
 
+    log_action(user_id, "user_status_changed", entity_type="user", entity_id=user_id, details={"status": status})
     return {"success": True, "user_id": str(user_id), "status": status}
 
 

@@ -9,11 +9,12 @@ Patients are visible to:
 
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from typing import Optional
 
 from controllers.patient_controller import get_patients_list, get_patient_details, create_new_patient
+from core.auth import get_current_user, require_role
 
 router = APIRouter(prefix="/api/patients", tags=["patients"])
 
@@ -22,7 +23,7 @@ router = APIRouter(prefix="/api/patients", tags=["patients"])
 
 class CreatePatient(BaseModel):
     physician_id: int
-    hospital_id: int             # NEW: the facility where the patient is registered
+    hospital_id: int
     patient_identifier: str
     full_name: str
     date_of_birth: Optional[str] = None
@@ -41,6 +42,7 @@ class CreatePatient(BaseModel):
 def list_patients(
     physician_id: Optional[int] = None,
     hospital_id: Optional[int] = None,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     List patients.
@@ -51,7 +53,10 @@ def list_patients(
 
 
 @router.get("/{patient_id}")
-def get_patient(patient_id: int):
+def get_patient(
+    patient_id: int,
+    current_user: dict = Depends(get_current_user),
+):
     patient = get_patient_details(patient_id)
     if not patient:
         raise HTTPException(status_code=404, detail="Patient not found")
@@ -59,7 +64,11 @@ def get_patient(patient_id: int):
 
 
 @router.post("")
-def create_patient(req: CreatePatient):
+def create_patient(
+    req: CreatePatient,
+    current_user: dict = Depends(require_role("physician")),
+):
+    """Create a patient record. Physicians only."""
     result = create_new_patient(req.dict())
     if result.get("error"):
         raise HTTPException(status_code=400, detail=result.get("message"))

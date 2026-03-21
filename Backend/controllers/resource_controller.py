@@ -1,6 +1,7 @@
 from typing import Optional
 
 from models.resource import fetch_resources_by_hospital, update_resource_in_db, insert_resource
+from utils.audit import log_action
 
 
 def _row_to_resource(row) -> dict:
@@ -23,7 +24,7 @@ def get_hospital_resources(hospital_id: int) -> list[dict]:
     return [_row_to_resource(r) for r in rows]
 
 
-def modify_resource(resource_id: int, data: dict) -> dict:
+def modify_resource(resource_id: int, data: dict, actor_user_id: Optional[int] = None) -> dict:
     """Validate and update a resource."""
     updates = []
     params = []
@@ -45,9 +46,18 @@ def modify_resource(resource_id: int, data: dict) -> dict:
     params.append(resource_id)
 
     success = update_resource_in_db(resource_id, updates, params)
-    
+
     if not success:
         return {"error": True, "message": "Resource not found"}
+
+    if actor_user_id:
+        log_action(
+            actor_user_id,
+            "resource_updated",
+            entity_type="resource",
+            entity_id=resource_id,
+            details=data,
+        )
 
     return {"success": True, "resource_id": str(resource_id)}
 

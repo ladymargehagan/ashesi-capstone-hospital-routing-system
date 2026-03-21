@@ -22,6 +22,7 @@ from models.referral import (
 )
 from models.patient import fetch_patient_by_id
 from services.email_service import notify_referral_created, notify_referral_status_changed
+from utils.audit import log_action
 
 
 # Same serialization logic from the original monolithic route
@@ -210,6 +211,19 @@ def process_create_referral(req_data: dict) -> dict:
     except Exception as e:
         print(f"[WARN] Email notification failed: {e}")
 
+    log_action(
+        req_data["referring_physician_id"],
+        "referral_created",
+        entity_type="referral",
+        entity_id=int(referral_id),
+        details={
+            "patient_id": req_data["patient_id"],
+            "receiving_hospital_id": req_data["receiving_hospital_id"],
+            "emergency_type": req_data["emergency_type"],
+            "severity": req_data["severity"],
+        },
+    )
+
     return {"success": True, "referral_id": str(referral_id)}
 
 
@@ -251,6 +265,13 @@ def modify_referral_status(referral_id: int, status: str, reason: str = None) ->
         if info:
             notify_referral_status_changed(
                 referral_id, info["patient_name"], status, info["physician_user_id"]
+            )
+            log_action(
+                info["physician_user_id"],
+                "referral_status_changed",
+                entity_type="referral",
+                entity_id=referral_id,
+                details={"new_status": status, "reason": reason},
             )
     except Exception as e:
         print(f"[WARN] Email notification failed: {e}")

@@ -20,6 +20,7 @@ from models.auth import (
     fetch_physician_id_by_user
 )
 from models.hospital import fetch_hospital_by_id
+from utils.audit import log_action
 
 JWT_SECRET = os.getenv("JWT_SECRET", "hrs-dev-secret-change-in-prod")
 
@@ -85,7 +86,9 @@ def process_login(email: str, password: str) -> dict:
     physician_id = fetch_physician_id_by_user(row["user_id"])
     user = _build_user_dict(row, physician_id)
 
+    log_action(row["user_id"], "login")
     return {"success": True, "status": "active", "user": user, "user_id_cookie": str(row["user_id"])}
+
 
 
 def process_doctor_registration(data: dict) -> dict:
