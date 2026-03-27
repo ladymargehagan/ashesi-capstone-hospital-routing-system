@@ -38,6 +38,12 @@ class HospitalStatusUpdate(BaseModel):
     reason: Optional[str] = None
 
 
+class HospitalFlagCreate(BaseModel):
+    category: str
+    notes: Optional[str] = None
+    referral_id: Optional[int] = None
+
+
 # ---- routes ----
 
 @router.get("")
@@ -82,3 +88,22 @@ def update_status(
     if result.get("error"):
         raise HTTPException(status_code=result.get("code", 400), detail=result["message"])
     return result
+
+
+@router.post("/{hospital_id}/flag")
+def flag_hospital_data(
+    hospital_id: int,
+    req: HospitalFlagCreate,
+    current_user: dict = Depends(require_role("physician")),
+):
+    """Flag a hospital's data as inconsistent. Requires physician role."""
+    from models.hospital import insert_hospital_flag
+    
+    flag_id = insert_hospital_flag(
+        hospital_id=hospital_id,
+        referral_id=req.referral_id,
+        flagging_physician_id=current_user.get("physician_id") or current_user["id"],
+        category=req.category,
+        notes=req.notes
+    )
+    return {"message": "Data flag created successfully", "flag_id": flag_id}

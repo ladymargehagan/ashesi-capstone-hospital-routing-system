@@ -72,3 +72,33 @@ def count_active_hospitals() -> int:
         cur.execute("SELECT COUNT(*) as count FROM hospitals WHERE status = 'active'")
         row = cur.fetchone()
         return row["count"] if row else 0
+
+
+def insert_hospital_flag(hospital_id: int, referral_id: Optional[int], flagging_physician_id: int, category: str, notes: Optional[str] = None) -> int:
+    with db_cursor() as cur:
+        cur.execute(
+            """
+            INSERT INTO hospital_data_flags 
+                (hospital_id, referral_id, flagging_physician_id, category, notes)
+            VALUES (%s, %s, %s, %s, %s)
+            RETURNING flag_id
+            """,
+            (hospital_id, referral_id, flagging_physician_id, category, notes)
+        )
+        return cur.fetchone()["flag_id"]
+
+
+def fetch_active_hospital_flags(hospital_id: int):
+    with db_cursor() as cur:
+        cur.execute(
+            """
+            SELECT f.flag_id, f.category, f.notes, f.created_at, u.full_name as flagging_physician_name
+            FROM hospital_data_flags f
+            JOIN physicians p ON f.flagging_physician_id = p.physician_id
+            JOIN users u ON p.user_id = u.user_id
+            WHERE f.hospital_id = %s AND f.resolved = FALSE
+            ORDER BY f.created_at DESC
+            """,
+            (hospital_id,)
+        )
+        return cur.fetchall()

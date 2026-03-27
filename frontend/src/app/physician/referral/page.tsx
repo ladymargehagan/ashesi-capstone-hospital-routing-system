@@ -14,12 +14,12 @@ import { RecommendationsModal } from '@/components/physician/recommendations-mod
 import { patientsApi, hospitalsApi, referralsApi, resourcesApi } from '@/lib/api-client';
 import { getRecommendations } from '@/lib/referral-api';
 import { useAuth } from '@/hooks/use-auth';
-import { ReferralFormData, Patient, Hospital, EngineRecommendation, EngineResponse, EmergencyType } from '@/types';
+import { ReferralFormData, Patient, Hospital, EngineRecommendation, EngineResponse, ReferralReason } from '@/types';
 import { ArrowLeft, TrendingUp, Loader2, Search, Building2, Bed, Heart, Users, CheckCircle, X, AlertTriangle, Paperclip, Upload } from 'lucide-react';
 import Link from 'next/link';
 
-// Maps emergency_type values to user-friendly labels
-const EMERGENCY_TYPE_LABELS: Record<EmergencyType, string> = {
+// Maps referral_reason values to user-friendly labels
+const EMERGENCY_TYPE_LABELS: Record<ReferralReason, string> = {
     cardiac: 'Cardiac (Heart)',
     trauma: 'Trauma (Injury)',
     respiratory: 'Respiratory (Breathing)',
@@ -122,7 +122,10 @@ function ReferralFormContent() {
         investigations_done: '',
         treatment_given: '',
         reason_for_referral: '',
-        emergency_type: 'general',
+        referral_reason: 'general',
+        urgency_level: 'routine',
+        known_allergies: '',
+        pre_existing_conditions: '',
         severity: 'medium',
         stability: 'stable',
         referral_datetime: new Date().toISOString().slice(0, 16),
@@ -135,11 +138,26 @@ function ReferralFormContent() {
             spO2: undefined,
             gcs: undefined,
         },
-        incident_lat: undefined,
-        incident_lon: undefined,
     });
 
     const handlePatientSelect = (patientId: string) => {
+        if (patientId === '-1') {
+            setFormData({
+                ...formData,
+                patient_id: '-1',
+                full_name: '',
+                date_of_birth: '',
+                sex: 'male',
+                address: '',
+                nhis_number: '',
+                nhis_status: 'None',
+                contact_number: '',
+                presenting_complaint: '',
+                working_diagnosis: '',
+            });
+            return;
+        }
+
         const patient = allPatients.find(p => p.id === patientId);
         if (patient) {
             setFormData({
@@ -202,7 +220,7 @@ function ReferralFormContent() {
             const response = await getRecommendations({
                 lat: referringHospitalGps.lat,
                 lon: referringHospitalGps.lng,
-                emergency_type: (formData.emergency_type || 'general') as EmergencyType,
+                referral_reason: (formData.referral_reason || 'general') as ReferralReason,
                 severity: formData.severity || 'medium',
                 stability: formData.stability || 'stable',
                 referring_hospital_id: user?.hospital_id ? parseInt(user.hospital_id) : undefined,
@@ -272,9 +290,12 @@ function ReferralFormContent() {
                 referring_physician_id: parseInt(String(user?.physician_id || user?.id)),
                 referring_hospital_id: parseInt(String(user?.hospital_id)),
                 receiving_hospital_id: parseInt(String(formData.receiving_hospital_id)),
-                emergency_type: formData.emergency_type,
+                referral_reason: formData.referral_reason,
                 severity: formData.severity,
                 stability: formData.stability,
+                urgency_level: formData.urgency_level,
+                known_allergies: formData.known_allergies,
+                pre_existing_conditions: formData.pre_existing_conditions,
                 presenting_complaint: formData.presenting_complaint,
                 clinical_history: formData.clinical_history,
                 examination_findings: formData.examination_findings,
@@ -283,8 +304,18 @@ function ReferralFormContent() {
                 treatment_given: formData.treatment_given,
                 reason_for_referral: formData.reason_for_referral,
                 vital_signs: formData.vital_signs,
-                incident_lat: formData.incident_lat,
-                incident_lon: formData.incident_lon,
+                patient_details: formData.patient_id === '-1' ? {
+                    patient_identifier: `PAT-${Date.now()}`,
+                    full_name: formData.full_name,
+                    date_of_birth: formData.date_of_birth,
+                    sex: formData.sex,
+                    address: formData.address,
+                    contact_number: formData.contact_number,
+                    nhis_number: formData.nhis_number,
+                    nhis_status: formData.nhis_status,
+                    hospital_id: user?.hospital_id,
+                    physician_id: user?.physician_id || user?.id,
+                } : undefined,
             };
             const result = await referralsApi.create(payload);
 
@@ -376,9 +407,12 @@ function ReferralFormContent() {
                                 onValueChange={handlePatientSelect}
                             >
                                 <SelectTrigger>
-                                    <SelectValue placeholder="Select a patient" />
+                                    <SelectValue placeholder="Select a patient or Create New" />
                                 </SelectTrigger>
                                 <SelectContent>
+                                    <SelectItem value="-1" className="font-semibold text-blue-600">
+                                        + Create New Patient
+                                    </SelectItem>
                                     {allPatients.map((patient) => (
                                         <SelectItem key={patient.id} value={patient.id}>
                                             {patient.full_name} — {patient.patient_identifier}
@@ -390,7 +424,7 @@ function ReferralFormContent() {
 
                         <Separator />
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <fieldset disabled={formData.patient_id !== '-1'} className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label htmlFor="fullName">Full Name *</Label>
                                 <Input
@@ -468,7 +502,7 @@ function ReferralFormContent() {
                                     </SelectContent>
                                 </Select>
                             </div>
-                        </div>
+                        </fieldset>
                     </CardContent>
                 </Card>
 
@@ -626,30 +660,26 @@ function ReferralFormContent() {
                             </div>
                         </div>
 
-                        <Separator className="my-2" />
+                        <Separator className="my-6" />
                         
+                        {/* Clinical Additional Fields */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label htmlFor="incidentLat">Incident Latitude (override)</Label>
+                                <Label htmlFor="known_allergies">Known Allergies (Optional)</Label>
                                 <Input
-                                    id="incidentLat"
-                                    type="number"
-                                    step="0.000001"
-                                    value={formData.incident_lat ?? ''}
-                                    onChange={(e) => handleInputChange('incident_lat', e.target.value === '' ? undefined : Number(e.target.value))}
-                                    placeholder="e.g. 5.6037"
+                                    id="known_allergies"
+                                    value={formData.known_allergies || ''}
+                                    onChange={(e) => handleInputChange('known_allergies', e.target.value)}
+                                    placeholder="e.g. Penicillin, Peanuts"
                                 />
-                                <p className="text-xs text-gray-400">Leave blank to use referring hospital location.</p>
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="incidentLon">Incident Longitude (override)</Label>
+                                <Label htmlFor="pre_existing_conditions">Pre-existing Conditions / Comorbidities (Optional)</Label>
                                 <Input
-                                    id="incidentLon"
-                                    type="number"
-                                    step="0.000001"
-                                    value={formData.incident_lon ?? ''}
-                                    onChange={(e) => handleInputChange('incident_lon', e.target.value === '' ? undefined : Number(e.target.value))}
-                                    placeholder="e.g. -0.1870"
+                                    id="pre_existing_conditions"
+                                    value={formData.pre_existing_conditions || ''}
+                                    onChange={(e) => handleInputChange('pre_existing_conditions', e.target.value)}
+                                    placeholder="e.g. Type 2 Diabetes, Hypertension"
                                 />
                             </div>
                         </div>
@@ -660,7 +690,7 @@ function ReferralFormContent() {
                 <Card>
                     <CardHeader>
                         <CardTitle className="text-lg">Referral Details</CardTitle>
-                        <CardDescription>Specify emergency type, severity, and stability — these drive the hospital recommendation algorithm</CardDescription>
+                        <CardDescription>Specify referral reason, severity, and stability — these drive the hospital recommendation algorithm</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div className="space-y-2">
@@ -675,18 +705,18 @@ function ReferralFormContent() {
                             />
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                            {/* Emergency Type — feeds directly into the algorithm */}
+                            {/* Referral Reason — feeds directly into the algorithm */}
                             <div className="space-y-2">
-                                <Label htmlFor="emergency_type">Emergency Type *</Label>
+                                <Label htmlFor="referral_reason">Referral Reason *</Label>
                                 <Select
-                                    value={formData.emergency_type}
-                                    onValueChange={(v) => handleInputChange('emergency_type', v)}
+                                    value={formData.referral_reason}
+                                    onValueChange={(v) => handleInputChange('referral_reason', v)}
                                 >
                                     <SelectTrigger>
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {(Object.entries(EMERGENCY_TYPE_LABELS) as [EmergencyType, string][]).map(
+                                        {(Object.entries(EMERGENCY_TYPE_LABELS) as [ReferralReason, string][]).map(
                                             ([value, label]) => (
                                                 <SelectItem key={value} value={value}>
                                                     {label}
@@ -695,9 +725,22 @@ function ReferralFormContent() {
                                         )}
                                     </SelectContent>
                                 </Select>
-                                <p className="text-xs text-gray-400">
-                                    Determines which hospital capabilities are required
-                                </p>
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="urgency_level">Urgency Level *</Label>
+                                <Select
+                                    value={formData.urgency_level}
+                                    onValueChange={(v) => handleInputChange('urgency_level', v)}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="routine">Routine</SelectItem>
+                                        <SelectItem value="urgent">Urgent</SelectItem>
+                                        <SelectItem value="emergency">Emergency</SelectItem>
+                                    </SelectContent>
+                                </Select>
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="severity">Severity *</Label>

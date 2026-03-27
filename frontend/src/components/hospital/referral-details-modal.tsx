@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Referral, ReferralDetails, Physician, Hospital } from '@/types';
-import { referralsApi, usersApi } from '@/lib/api-client';
+import { referralsApi, usersApi, hospitalsApi } from '@/lib/api-client';
 import { useAuth } from '@/hooks/use-auth';
 import { Loader2, FileText, CheckCircle, XCircle, AlertCircle, Clock, CheckCircle2, UserPlus, Paperclip, Navigation, MapPin } from 'lucide-react';
 import { TripMap } from './trip-map';
@@ -31,6 +31,14 @@ export function ReferralDetailsModal({ referral, open, onClose, onStatusChanged 
     const [physicians, setPhysicians] = useState<Physician[]>([]);
     const [assignLoading, setAssignLoading] = useState(false);
     const toast = useToast();
+
+    const [showFlagForm, setShowFlagForm] = useState(false);
+    const [flagCategory, setFlagCategory] = useState('');
+    const [flagNotes, setFlagNotes] = useState('');
+    const [flagLoading, setFlagLoading] = useState(false);
+
+    const [showOutcomeForm, setShowOutcomeForm] = useState(false);
+    const [finalOutcome, setFinalOutcome] = useState('');
 
     // Fetch full details when modal opens
     useEffect(() => {
@@ -108,6 +116,49 @@ export function ReferralDetailsModal({ referral, open, onClose, onStatusChanged 
             const message = err instanceof Error ? err.message : `Failed to ${action} referral`;
             setError(message);
             toast.error(message, 'Action Failed');
+            setLoading(false);
+        }
+    };
+
+    const handleFlagSubmit = async () => {
+        if (!flagCategory) {
+            toast.error('Please select a flag category.', 'Missing Data');
+            return;
+        }
+        setFlagLoading(true);
+        try {
+            await hospitalsApi.flagData(
+                String(referral.referring_hospital_id),
+                flagCategory,
+                flagNotes,
+                referral.id
+            );
+            toast.success('Hospital data flagged for review.', 'Flag Submitted');
+            setShowFlagForm(false);
+            setFlagCategory('');
+            setFlagNotes('');
+        } catch (err) {
+            toast.error(err instanceof Error ? err.message : 'Failed to submit flag', 'Error');
+        } finally {
+            setFlagLoading(false);
+        }
+    };
+
+    const handleOutcomeSubmit = async () => {
+        if (!finalOutcome.trim()) {
+            toast.error('Please provide a final outcome summary.', 'Missing Data');
+            return;
+        }
+        setLoading(true);
+        try {
+            await referralsApi.updateOutcome(referral.id, finalOutcome);
+            await referralsApi.updateStatus(referral.id, 'completed');
+            toast.success('Treatment marked completed and outcome recorded.', 'Completed');
+            setShowOutcomeForm(false);
+            onStatusChanged?.();
+            onClose();
+        } catch (err) {
+            toast.error(err instanceof Error ? err.message : 'Failed to record outcome', 'Error');
         } finally {
             setLoading(false);
         }
@@ -404,15 +455,86 @@ export function ReferralDetailsModal({ referral, open, onClose, onStatusChanged 
                         )}
 
                         {referral.status === 'arrived' && user?.hospital_id === referral.receiving_hospital_id && (
-                            <div className="flex justify-end pt-2 border-t mt-4">
-                                <Button
-                                    className="bg-green-600 hover:bg-green-700 text-white"
-                                    onClick={() => handleAction('complete')}
-                                    disabled={loading}
-                                >
-                                    <CheckCircle className="h-4 w-4 mr-2" />
-                                    Mark Treatment Completed
-                                </Button>
+                            <div className="pt-4 border-t mt-4 space-y-4">
+                                <div className="flex justify-between items-center">
+                                    <h4 className="font-semibold text-gray-900">Treatment Conclusion</h4>
+                                    <Button
+                                        variant="outline"
+                                        className="text-amber-600 border-amber-200 hover:bg-amber-50"
+                                        onClick={() => setShowFlagForm(!showFlagForm)}
+                                    >
+                                        <AlertCircle className="h-4 w-4 mr-2" />
+                                        Flag Inconsistent Data
+                                    </Button>
+                                </div>
+
+                                {/* Flag Form */}
+                                {showFlagForm && (
+                                    <div className="bg-amber-50 p-4 rounded-lg space-y-3 border border-amber-200">
+                                        <h5 className="font-medium text-amber-900 text-sm">Report Inconsistent Hospital Data</h5>
+                                        <div className="space-y-2">
+                                            <Label>Category</Label>
+                                            <Select value={flagCategory} onValueChange={setFlagCategory}>
+                                                <SelectTrigger className="bg-white">
+                                                    <SelectValue placeholder="Select issue category" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="Bed count mismatch">Bed count mismatch</SelectItem>
+                                                    <SelectItem value="Equipment listed as unavailable on arrival">Equipment listed as unavailable on arrival</SelectItem>
+                                                    <SelectItem value="Incorrect department information">Incorrect department information</SelectItem>
+                                                    <SelectItem value="Other">Other</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label>Notes (Optional)</Label>
+                                            <Textarea
+                                                value={flagNotes}
+                                                onChange={(e) => setFlagNotes(e.target.value)}
+                                                placeholder="Provide more details..."
+                                                className="bg-white"
+                                            />
+                                        </div>
+                                        <div className="flex justify-end gap-2">
+                                            <Button variant="ghost" onClick={() => setShowFlagForm(false)}>Cancel</Button>
+                                            <Button className="bg-amber-600 hover:bg-amber-700 text-white" onClick={handleFlagSubmit} disabled={flagLoading}>
+                                                Submit Flag
+                                            </Button>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Outcome Form */}
+                                {!showOutcomeForm ? (
+                                    <div className="flex justify-end pt-2">
+                                        <Button
+                                            className="bg-green-600 hover:bg-green-700 text-white"
+                                            onClick={() => setShowOutcomeForm(true)}
+                                            disabled={loading}
+                                        >
+                                            <CheckCircle className="h-4 w-4 mr-2" />
+                                            Mark Treatment Completed
+                                        </Button>
+                                    </div>
+                                ) : (
+                                    <div className="bg-green-50 p-4 rounded-lg space-y-3 border border-green-200 pt-2 border-t mt-4">
+                                        <h5 className="font-medium text-green-900 text-sm">Final Referral Outcome</h5>
+                                        <p className="text-xs text-green-700">Provide a summary for the referring doctor before closing.</p>
+                                        <Textarea
+                                            value={finalOutcome}
+                                            onChange={(e) => setFinalOutcome(e.target.value)}
+                                            placeholder="Patient discharged safely after successful observation... etc."
+                                            rows={3}
+                                            className="bg-white"
+                                        />
+                                        <div className="flex justify-end gap-2 pt-2">
+                                            <Button variant="ghost" onClick={() => setShowOutcomeForm(false)}>Cancel</Button>
+                                            <Button className="bg-green-600 hover:bg-green-700 text-white" onClick={handleOutcomeSubmit} disabled={loading}>
+                                                Submit & Complete
+                                            </Button>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>

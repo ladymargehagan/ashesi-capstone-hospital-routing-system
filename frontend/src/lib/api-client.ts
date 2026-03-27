@@ -77,6 +77,19 @@ export const hospitalsApi = {
 
     get: (id: string) =>
         apiFetch<Record<string, unknown>>(`/api/hospitals/${id}`),
+
+    flagData: (id: string, category: string, notes?: string, referralId?: string) =>
+        apiFetch<{ success: boolean; flag_id: string }>(
+            `/api/hospitals/${id}/flag`,
+            {
+                method: 'POST',
+                body: JSON.stringify({
+                    category,
+                    notes,
+                    referral_id: referralId ? parseInt(referralId) : undefined
+                })
+            }
+        ),
 };
 
 // ---------------------------------------------------------------------------
@@ -84,10 +97,11 @@ export const hospitalsApi = {
 // ---------------------------------------------------------------------------
 
 export const referralsApi = {
-    list: (params?: { physician_id?: string; hospital_id?: string; status?: string }) => {
+    list: (params?: { physician_id?: string; hospital_id?: string; status?: string; patient_id?: string }) => {
         const qs = new URLSearchParams();
         if (params?.physician_id) qs.set('physician_id', params.physician_id);
         if (params?.hospital_id) qs.set('hospital_id', params.hospital_id);
+        if (params?.patient_id) qs.set('patient_id', params.patient_id);
         if (params?.status) qs.set('status', params.status);
         const query = qs.toString();
         return apiFetch<Record<string, unknown>[]>(`/api/referrals${query ? `?${query}` : ''}`);
@@ -106,6 +120,12 @@ export const referralsApi = {
         apiFetch<{ success: boolean }>(
             `/api/referrals/${id}/status`,
             { method: 'PUT', body: JSON.stringify({ status, reason }) },
+        ),
+
+    updateOutcome: (id: string, final_outcome: string) =>
+        apiFetch<{ success: boolean }>(
+            `/api/referrals/${id}/outcome`,
+            { method: 'PUT', body: JSON.stringify({ final_outcome }) },
         ),
 
     assign: (id: string, physicianId: string) =>
@@ -260,7 +280,7 @@ export const statsApi = {
 // ---------------------------------------------------------------------------
 
 export const recommendApi = {
-    rank: (data: { lat: number; lon: number; emergency_type: string; severity: string; stability: string }) =>
+    rank: (data: { lat: number; lon: number; referral_reason: string; severity: string; stability: string }) =>
         apiFetch<Record<string, unknown>>(
             '/api/recommend',
             { method: 'POST', body: JSON.stringify(data) },

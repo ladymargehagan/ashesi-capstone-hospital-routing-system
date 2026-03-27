@@ -309,7 +309,7 @@ def _load_hospitals_mock(now: datetime) -> list[Hospital]:
 # Request / Response models
 # ---------------------------------------------------------------------------
 
-VALID_EMERGENCY_TYPES = {
+VALID_REFERRAL_REASONS = {
     "cardiac", "trauma", "respiratory", "stroke",
     "obstetric", "seizure", "general",
 }
@@ -320,7 +320,7 @@ VALID_STABILITIES = {"stable", "unstable"}
 class RecommendRequest(BaseModel):
     lat: float = Field(..., description="Patient latitude (use referring hospital GPS)")
     lon: float = Field(..., description="Patient longitude (use referring hospital GPS)")
-    emergency_type: str = Field(..., description="Type of emergency")
+    referral_reason: str = Field(..., description="Type of emergency")
     severity: str = Field(..., description="Severity level")
     stability: str = Field(..., description="Patient stability")
     referring_hospital_id: Optional[int] = Field(None, description="Hospital making the referral (excluded from results)")
@@ -337,11 +337,11 @@ def recommend(req: RecommendRequest):
     This function does NOT modify the engine — it only calls engine.rank().
     """
     # Validate enums
-    if req.emergency_type.lower() not in VALID_EMERGENCY_TYPES:
+    if req.referral_reason.lower() not in VALID_REFERRAL_REASONS:
         raise HTTPException(
             status_code=400,
-            detail=f"Invalid emergency_type '{req.emergency_type}'. "
-                   f"Must be one of: {', '.join(sorted(VALID_EMERGENCY_TYPES))}",
+            detail=f"Invalid referral_reason '{req.referral_reason}'. "
+                   f"Must be one of: {', '.join(sorted(VALID_REFERRAL_REASONS))}",
         )
     if req.severity.lower() not in VALID_SEVERITIES:
         raise HTTPException(
@@ -377,7 +377,7 @@ def recommend(req: RecommendRequest):
     patient = PatientCase(
         lat=req.lat,
         lon=req.lon,
-        emergency_type=req.emergency_type.lower(),
+        referral_reason=req.referral_reason.lower(),
         severity=req.severity.lower(),
         stability=req.stability.lower(),
         at_time=now,

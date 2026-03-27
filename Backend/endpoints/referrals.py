@@ -38,13 +38,18 @@ MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
 # ---- models ----
 
 class CreateReferral(BaseModel):
+    # If patient_id is -1, dynamic patient_details must be provided
     patient_id: int
+    patient_details: Optional[dict] = None
     referring_physician_id: int
     referring_hospital_id: int
     receiving_hospital_id: int
     severity: str
     stability: str
-    emergency_type: str = "general"
+    referral_reason: str = "general"
+    urgency_level: str = "routine"
+    known_allergies: Optional[str] = None
+    pre_existing_conditions: Optional[str] = None
     estimated_arrival_minutes: Optional[int] = None
     # Clinical details
     presenting_complaint: str
@@ -75,6 +80,10 @@ class ReferralAssign(BaseModel):
     physician_id: int
 
 
+class ReferralOutcomeUpdate(BaseModel):
+    final_outcome: str
+
+
 # ---- referral routes ----
 
 @router.get("")
@@ -82,6 +91,7 @@ def list_referrals(
     physician_id: Optional[int] = None,
     hospital_id: Optional[int] = None,
     assigned_physician_id: Optional[int] = None,
+    patient_id: Optional[int] = None,
     status: Optional[str] = None,
     current_user: dict = Depends(get_current_user),
 ):
@@ -89,7 +99,7 @@ def list_referrals(
     List referrals with hospital names, patient info, and clinical details.
     hospital_id matches BOTH referring and receiving hospitals.
     """
-    return get_referrals_list(physician_id, hospital_id, assigned_physician_id, status)
+    return get_referrals_list(physician_id, hospital_id, assigned_physician_id, patient_id, status)
 
 
 @router.get("/{referral_id}")
@@ -127,6 +137,21 @@ def update_referral_status(
     if result.get("error"):
         raise HTTPException(status_code=result.get("code", 400), detail=result["message"])
     return result
+
+
+@router.put("/{referral_id}/outcome")
+def update_referral_outcome(
+    referral_id: int,
+    req: ReferralOutcomeUpdate,
+    current_user: dict = Depends(require_role("physician")),
+):
+    """Add a final outcome to a completed referral. Receiving physician only."""
+    from models.referral import update_referral_status_in_db
+    
+    success = update_referral_status_in_db(referral_id, ["final_outcome = %s"], [req.final_outcome, referral_id])
+    if not success:
+        raise HTTPException(status_code=400, detail="Failed to update final outcome")
+    return {"message": "Final outcome recorded successfully"}
 
 
 # ---- attachment routes ----

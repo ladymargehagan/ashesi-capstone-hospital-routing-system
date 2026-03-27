@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Building2, Search, MapPin, Tag, Loader2, AlertCircle } from 'lucide-react';
+import { HospitalDetailsModal } from '@/components/physician/hospital-details-modal';
 
 // Shape of a hospital record from GET /api/hospitals
 interface Hospital {
@@ -26,6 +27,7 @@ const LEVEL_COLORS: Record<string, string> = {
 };
 
 export default function HospitalsDirectoryPage() {
+    const [selectedHospitalId, setSelectedHospitalId] = useState<number | null>(null);
     const [hospitals, setHospitals] = useState<Hospital[]>([]);
     const [filtered, setFiltered] = useState<Hospital[]>([]);
     const [loading, setLoading] = useState(true);
@@ -140,7 +142,8 @@ export default function HospitalsDirectoryPage() {
                     {filtered.map(hospital => (
                         <div
                             key={hospital.id}
-                            className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm transition hover:shadow-md"
+                            className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm transition hover:shadow-md cursor-pointer hover:border-blue-200"
+                            onClick={() => setSelectedHospitalId(hospital.id)}
                         >
                             {/* Name + level badge */}
                             <div className="flex items-start justify-between gap-2">
@@ -185,6 +188,12 @@ export default function HospitalsDirectoryPage() {
                     ))}
                 </div>
             )}
+
+            <HospitalDetailsModal
+                hospitalId={selectedHospitalId}
+                open={selectedHospitalId !== null}
+                onClose={() => setSelectedHospitalId(null)}
+            />
         </div>
     );
 }

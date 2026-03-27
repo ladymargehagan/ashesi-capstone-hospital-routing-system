@@ -134,7 +134,7 @@ def run_simulation() -> None:
     cardiac_case = PatientCase(
         lat=5.556,
         lon=-0.196,
-        emergency_type="cardiac",
+        referral_reason="cardiac",
         severity="critical",
         stability="unstable",
         at_time=now,
@@ -144,7 +144,7 @@ def run_simulation() -> None:
     trauma_case = PatientCase(
         lat=5.556,
         lon=-0.196,
-        emergency_type="trauma",
+        referral_reason="trauma",
         severity="high",
         stability="stable",
         at_time=now,
@@ -154,7 +154,7 @@ def run_simulation() -> None:
     respiratory_case = PatientCase(
         lat=5.556,
         lon=-0.196,
-        emergency_type="respiratory",
+        referral_reason="respiratory",
         severity="medium",
         stability="stable",
         at_time=now.replace(hour=23),

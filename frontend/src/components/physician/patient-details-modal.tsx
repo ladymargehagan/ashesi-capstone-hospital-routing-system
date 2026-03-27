@@ -1,9 +1,11 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Patient } from '@/types';
-import { User, Calendar, Phone, MapPin, Shield, Heart, UserCheck } from 'lucide-react';
+import { Patient, Referral } from '@/types';
+import { referralsApi } from '@/lib/api-client';
+import { User, Calendar, Phone, MapPin, Shield, Heart, UserCheck, Clock, Loader2 } from 'lucide-react';
 
 interface PatientDetailsModalProps {
     patient: Patient | null;
@@ -12,6 +14,19 @@ interface PatientDetailsModalProps {
 }
 
 export function PatientDetailsModal({ patient, open, onClose }: PatientDetailsModalProps) {
+    const [referrals, setReferrals] = useState<Referral[]>([]);
+    const [loadingReferrals, setLoadingReferrals] = useState(false);
+
+    useEffect(() => {
+        if (open && patient?.id) {
+            setLoadingReferrals(true);
+            referralsApi.list({ patient_id: patient.id })
+                .then((data) => setReferrals(data as unknown as Referral[]))
+                .catch(console.error)
+                .finally(() => setLoadingReferrals(false));
+        }
+    }, [open, patient?.id]);
+
     if (!patient) return null;
 
     const formatDate = (dateStr?: string) => {
@@ -153,6 +168,55 @@ export function PatientDetailsModal({ patient, open, onClose }: PatientDetailsMo
                     <p className="text-xs text-gray-400 text-right">
                         Registered: {formatDate(patient.registered_at)}
                     </p>
+
+                    {/* Referral History */}
+                    <div className="pt-4 border-t mt-4">
+                        <h4 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                            <Clock className="h-4 w-4" />
+                            Referral History
+                        </h4>
+                        
+                        {loadingReferrals ? (
+                            <div className="flex justify-center py-4">
+                                <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
+                            </div>
+                        ) : referrals.length === 0 ? (
+                            <p className="text-sm text-gray-500 italic text-center py-2">No past referrals found.</p>
+                        ) : (
+                            <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2">
+                                {referrals.map((ref) => (
+                                    <div key={ref.id} className="bg-white border rounded-lg p-3 text-sm shadow-sm">
+                                        <div className="flex justify-between items-start mb-2">
+                                            <div>
+                                                <p className="font-medium text-gray-900">To: {ref.receiving_hospital_name}</p>
+                                                <p className="text-xs text-gray-500">{formatDate(ref.submitted_at)}</p>
+                                            </div>
+                                            <Badge variant="outline" className={
+                                                ref.status === 'completed' ? 'bg-green-50 text-green-700' :
+                                                ref.status === 'rejected' ? 'bg-red-50 text-red-700' :
+                                                'bg-blue-50 text-blue-700'
+                                            }>
+                                                {ref.status}
+                                            </Badge>
+                                        </div>
+                                        
+                                        <div className="space-y-1 mt-2">
+                                            <p className="text-xs"><span className="font-medium text-gray-700">Reason:</span> {ref.referral_reason}</p>
+                                            {ref.rejection_reason && (
+                                                <p className="text-xs text-red-600 bg-red-50 p-1 rounded"><span className="font-medium">Rejected:</span> {ref.rejection_reason}</p>
+                                            )}
+                                            {(ref as any).final_outcome && (
+                                                <p className="text-xs text-green-700 bg-green-50 p-1.5 rounded border border-green-100 mt-1">
+                                                    <span className="font-semibold block mb-0.5">Final Outcome:</span> 
+                                                    {(ref as any).final_outcome}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
                 </div>
             </DialogContent>
         </Dialog>

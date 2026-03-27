@@ -41,7 +41,7 @@ def _get_backup_suggestions(referral_row: dict) -> list:
         patient = PatientCase(
             lat=float(referral_row.get("incident_lat") or 5.56),
             lon=float(referral_row.get("incident_lon") or -0.20),
-            emergency_type=referral_row.get("emergency_type", "general"),
+            referral_reason=referral_row.get("referral_reason", "general"),
             severity=referral_row.get("severity", "medium"),
             stability=referral_row.get("stability", "stable"),
             at_time=now,
@@ -76,7 +76,7 @@ def _row_to_referral(row, details=None, patient=None, attachments=None) -> dict:
         "status": row["status"],
         "severity": row["severity"],
         "stability": row["stability"],
-        "emergency_type": row.get("emergency_type", "general"),
+        "referral_reason": row.get("referral_reason", "general"),
         "submitted_at": row["submitted_at"].isoformat() if row.get("submitted_at") else None,
         "approved_at": row["approved_at"].isoformat() if row.get("approved_at") else None,
         "rejected_at": row["rejected_at"].isoformat() if row.get("rejected_at") else None,
@@ -155,9 +155,14 @@ def get_referrals_list(
     physician_id: Optional[int] = None,
     hospital_id: Optional[int] = None,
     assigned_physician_id: Optional[int] = None,
+    patient_id: Optional[int] = None,
     status: Optional[str] = None,
 ) -> list[dict]:
-    rows = fetch_referrals(physician_id, hospital_id, assigned_physician_id, status)
+    try:
+        rows = fetch_referrals(physician_id, hospital_id, assigned_physician_id, patient_id, status)
+    except Exception as e:
+        print(f"[ERROR] Failed to fetch referrals: {e}")
+        return []
     results = []
     for row in rows:
         patient_info = {
@@ -201,6 +206,42 @@ def process_create_referral(req_data: dict) -> dict:
     from api import _load_hospitals_from_db
     from services.referral_engine import ReferralEngine, EngineConfig, PatientCase
     from core.db import db_cursor
+    from controllers.patient_controller import create_new_patient
+    
+    # Check if this is a new patient onboarding
+    patient_id = req_data.get("patient_id")
+    if int(patient_id) == -1 and req_data.get("patient_details"):
+        pd = req_data["patient_details"]
+        # Deduplication check: Do we already have this patient by NHIS or Identifier?
+        with db_cursor() as cur:
+            nhis = pd.get("nhis_number")
+            pid_str = pd.get("patient_identifier")
+            query = "SELECT patient_id FROM patients WHERE "
+            conditions = []
+            params = []
+            if nhis and nhis != "None":
+                conditions.append("nhis_number = %s")
+                params.append(nhis)
+            if pid_str:
+                conditions.append("patient_identifier = %s")
+                params.append(pid_str)
+            if not conditions:
+                # Fallback check by name and dob
+                conditions.append("(full_name = %s AND date_of_birth = %s)")
+                params.extend([pd.get("full_name"), pd.get("date_of_birth")])
+            
+            cur.execute(query + " OR ".join(conditions) + " LIMIT 1", params)
+            existing_row = cur.fetchone()
+            if existing_row:
+                patient_id = existing_row["patient_id"]
+            else:
+                # Actually create
+                res = create_new_patient(pd)
+                if res.get("error"):
+                    return res
+                patient_id = int(res["patient_id"])
+        
+        req_data["patient_id"] = patient_id
 
     # Use custom incident location if provided, else fallback to referring hospital's lat/lon
     lat = req_data.get("incident_lat")
@@ -223,7 +264,7 @@ def process_create_referral(req_data: dict) -> dict:
     hospitals = _load_hospitals_from_db(now)
     engine = ReferralEngine(hospitals, config=EngineConfig(top_k=5))
     patient = PatientCase(
-        lat=lat, lon=lon, emergency_type=req_data["emergency_type"],
+        lat=lat, lon=lon, referral_reason=req_data["referral_reason"],
         severity=req_data["severity"], stability=req_data["stability"], at_time=now
     )
     res = engine.rank(patient)
@@ -239,8 +280,12 @@ def process_create_referral(req_data: dict) -> dict:
     referral_id = insert_referral(
         req_data["patient_id"], req_data["referring_physician_id"], req_data["referring_hospital_id"],
         req_data["receiving_hospital_id"], req_data["severity"], req_data["stability"],
-        req_data["emergency_type"], req_data.get("estimated_arrival_minutes"), json.dumps(routing_queue),
-        req_data.get("incident_lat"), req_data.get("incident_lon"), routing_metadata_json
+        req_data["referral_reason"], req_data.get("estimated_arrival_minutes"), json.dumps(routing_queue),
+        urgency_level=req_data.get("urgency_level", "routine"),
+        known_allergies=req_data.get("known_allergies"),
+        pre_existing_conditions=req_data.get("pre_existing_conditions"),
+        incident_lat=req_data.get("incident_lat"), incident_lon=req_data.get("incident_lon"),
+        routing_metadata=routing_metadata_json
     )
 
     vitals_json = json.dumps(req_data["vital_signs"]) if req_data.get("vital_signs") else None
@@ -268,7 +313,7 @@ def process_create_referral(req_data: dict) -> dict:
         details={
             "patient_id": req_data["patient_id"],
             "receiving_hospital_id": req_data["receiving_hospital_id"],
-            "emergency_type": req_data["emergency_type"],
+            "referral_reason": req_data["referral_reason"],
             "severity": req_data["severity"],
         },
     )

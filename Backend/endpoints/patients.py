@@ -46,9 +46,13 @@ def list_patients(
 ):
     """
     List patients.
-    - physician_id: patients registered by this physician
-    - hospital_id: patients at this hospital OR referred to this hospital
+    Doctors ONLY see patients referred out by them OR assigned to them.
+    Admins see hospital specific or all.
     """
+    if current_user.get("role") == "physician":
+        my_phys_id = current_user.get("physician_id")
+        return get_patients_list(my_phys_id, None, strict_rule=True)
+        
     return get_patients_list(physician_id, hospital_id)
 
 

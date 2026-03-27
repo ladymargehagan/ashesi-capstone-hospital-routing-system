@@ -3,9 +3,20 @@ from typing import Optional
 from core.db import db_cursor
 
 
-def fetch_patients(physician_id: Optional[int] = None, hospital_id: Optional[int] = None):
+def fetch_patients(physician_id: Optional[int] = None, hospital_id: Optional[int] = None, strict_rule: bool = False):
     with db_cursor() as cur:
-        if hospital_id:
+        if strict_rule and physician_id:
+            # Patients referred by this physician OR assigned to this physician
+            cur.execute(
+                """
+                SELECT DISTINCT p.* FROM patients p
+                LEFT JOIN referrals r ON p.patient_id = r.patient_id
+                WHERE p.physician_id = %s OR r.referring_physician_id = %s OR r.assigned_physician_id = %s
+                ORDER BY p.full_name
+                """,
+                (physician_id, physician_id, physician_id),
+            )
+        elif hospital_id:
             # Patients registered at this hospital PLUS patients referred to it
             cur.execute(
                 """

@@ -1,5 +1,3 @@
-from typing import Optional
-
 from models.hospital import (
     fetch_all_hospitals,
     fetch_hospital_by_id,
@@ -8,6 +6,7 @@ from models.hospital import (
     update_hospital_in_db,
     set_hospital_status,
     count_active_hospitals,
+    fetch_active_hospital_flags,
 )
 from utils.audit import log_action
 
@@ -61,6 +60,23 @@ def get_hospital_details(hospital_id: int) -> Optional[dict]:
     # Attach specialist count
     specialists = fetch_hospital_specialists(hospital_id)
     hospital["specialists"] = [dict(r) for r in specialists]
+
+    # Attach active flags
+    try:
+        flags = fetch_active_hospital_flags(hospital_id)
+        hospital["active_flags"] = [
+            {
+                "flag_id": r["flag_id"],
+                "category": r["category"],
+                "notes": r["notes"],
+                "created_at": r["created_at"].isoformat() if r["created_at"] else None,
+                "flagging_physician_name": r["flagging_physician_name"]
+            }
+            for r in flags
+        ]
+    except Exception as e:
+        print("[WARN] Could not fetch hospital flags:", e)
+        hospital["active_flags"] = []
 
     return hospital
 

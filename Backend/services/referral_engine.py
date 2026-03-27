@@ -59,7 +59,7 @@ class Hospital:
 class PatientCase:
     lat: float
     lon: float
-    emergency_type: str
+    referral_reason: str
     severity: str
     stability: str
     at_time: datetime = field(default_factory=datetime.utcnow)
@@ -221,7 +221,7 @@ def haversine_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
 
 
 # ---------------------------------------------------------------------------
-# Required resources per emergency type.
+# Required resources per referral reason.
 # Keys must match the resource_type values in the HOSPITAL_RESOURCES table.
 # Weights must sum to 1.0.
 # ---------------------------------------------------------------------------
@@ -272,7 +272,7 @@ class ReferralEngine:
         self.travel_time_provider = TravelTimeProvider(self.config)
 
     def rank(self, patient: PatientCase) -> Dict[str, Any]:
-        required = self._required_resources(patient.emergency_type)
+        required = self._required_resources(patient.referral_reason)
         warnings: List[str] = []
 
         # first, we calcualte distance for everyone, and keep nearby hospitals.
@@ -386,7 +386,7 @@ class ReferralEngine:
 
         return {
             "input_summary": {
-                "emergency_type": patient.emergency_type,
+                "referral_reason": patient.referral_reason,
                 "severity": patient.severity,
                 "stability": patient.stability,
                 "time": patient.at_time.isoformat(),
@@ -498,7 +498,7 @@ class ReferralEngine:
 
         return {
             "input_summary": {
-                "emergency_type": patient.emergency_type,
+                "referral_reason": patient.referral_reason,
                 "severity": patient.severity,
                 "stability": patient.stability,
                 "time": patient.at_time.isoformat(),
@@ -549,11 +549,11 @@ class ReferralEngine:
             "distance_band_density_estimate": row["distance_band_density_estimate"],
         }
 
-    def _required_resources(self, emergency_type: str) -> Dict[str, float]:
-        key = emergency_type.lower().strip()
+    def _required_resources(self, referral_reason: str) -> Dict[str, float]:
+        key = referral_reason.lower().strip()
         if key not in REQUIRED_RESOURCES:
             raise ValueError(
-                f"Unknown emergency type '{emergency_type}'. Supported: {', '.join(sorted(REQUIRED_RESOURCES.keys()))}"
+                f"Unknown referral reason '{referral_reason}'. Supported: {', '.join(sorted(REQUIRED_RESOURCES.keys()))}"
             )
         return REQUIRED_RESOURCES[key]
 

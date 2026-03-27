@@ -96,7 +96,7 @@ export type ReferralStability = 'stable' | 'unstable';
 export type ReferralStatus = 'pending' | 'approved' | 'rejected' | 'en_route' | 'arrived' | 'completed' | 'cancelled';
 
 // Emergency types supported by the referral engine (referral_engine.py REQUIRED_RESOURCES keys)
-export type EmergencyType = 'cardiac' | 'trauma' | 'respiratory' | 'stroke' | 'obstetric' | 'seizure' | 'general';
+export type ReferralReason = 'cardiac' | 'trauma' | 'respiratory' | 'stroke' | 'obstetric' | 'seizure' | 'general';
 
 // Referral interface
 export interface Referral {
@@ -116,6 +116,8 @@ export interface Referral {
     cancelled_at?: string;
     rejection_reason?: string;
     cancellation_reason?: string;
+    referral_reason?: string;
+    final_outcome?: string;
     estimated_arrival_minutes?: number;
     // Derived fields for display
     patient_name?: string;
@@ -184,7 +186,10 @@ export interface ReferralFormData {
     // Referral Details (REFERRALS)
     severity: ReferralSeverity;
     stability: ReferralStability;
-    emergency_type: EmergencyType;
+    urgency_level: 'routine' | 'urgent' | 'emergency';
+    known_allergies?: string;
+    pre_existing_conditions?: string;
+    referral_reason: ReferralReason;
     referral_datetime: string;
 
     // Hospital Selection
@@ -200,8 +205,6 @@ export interface ReferralFormData {
         spO2?: number;
         gcs?: number;
     };
-    incident_lat?: number;
-    incident_lon?: number;
 }
 
 // Specialist interface (maps to SPECIALISTS table)
@@ -271,7 +274,7 @@ export interface EngineRecommendation {
 
 export interface EngineResponse {
     input_summary: {
-        emergency_type: string;
+        referral_reason: string;
         severity: string;
         stability: string;
         time: string;

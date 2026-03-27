@@ -5,14 +5,14 @@
  * without modifying it.
  */
 
-import { EngineResponse, EmergencyType, ReferralSeverity, ReferralStability } from '@/types';
+import { EngineResponse, ReferralReason, ReferralSeverity, ReferralStability } from '@/types';
 
 const API_BASE = process.env.NEXT_PUBLIC_ENGINE_API_URL || 'http://127.0.0.1:8000';
 
 export interface RecommendRequest {
     lat: number;
     lon: number;
-    emergency_type: EmergencyType;
+    referral_reason: ReferralReason;
     severity: ReferralSeverity;
     stability: ReferralStability;
     referring_hospital_id?: number;

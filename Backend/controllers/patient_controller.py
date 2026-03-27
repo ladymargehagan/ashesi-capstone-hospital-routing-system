@@ -23,9 +23,9 @@ def _row_to_patient(row) -> dict:
     }
 
 
-def get_patients_list(physician_id: Optional[int] = None, hospital_id: Optional[int] = None) -> list[dict]:
+def get_patients_list(physician_id: Optional[int] = None, hospital_id: Optional[int] = None, strict_rule: bool = False) -> list[dict]:
     """Retrieve and format a list of patients."""
-    rows = fetch_patients(physician_id, hospital_id)
+    rows = fetch_patients(physician_id, hospital_id, strict_rule)
     return [_row_to_patient(r) for r in rows]
 
 

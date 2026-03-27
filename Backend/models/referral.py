@@ -6,6 +6,7 @@ def fetch_referrals(
     physician_id: Optional[int] = None,
     hospital_id: Optional[int] = None,
     assigned_physician_id: Optional[int] = None,
+    patient_id: Optional[int] = None,
     status: Optional[str] = None,
 ):
     with db_cursor() as cur:
@@ -46,6 +47,9 @@ def fetch_referrals(
         if assigned_physician_id:
             query += " AND r.assigned_physician_id = %s"
             params.append(assigned_physician_id)
+        if patient_id:
+            query += " AND r.patient_id = %s"
+            params.append(patient_id)
         if status:
             query += " AND r.status = %s"
             params.append(status)
@@ -83,8 +87,10 @@ def fetch_referral_details_db(referral_id: int):
 
 def insert_referral(
     patient_id: int, referring_physician_id: int, referring_hospital_id: int,
-    receiving_hospital_id: int, severity: str, stability: str, emergency_type: str,
+    receiving_hospital_id: int, severity: str, stability: str, referral_reason: str,
     estimated_arrival_minutes: Optional[int], routing_queue_json: str,
+    urgency_level: Optional[str] = None, known_allergies: Optional[str] = None,
+    pre_existing_conditions: Optional[str] = None,
     incident_lat: Optional[float] = None, incident_lon: Optional[float] = None,
     routing_metadata: Optional[str] = None
 ) -> int:
@@ -93,16 +99,17 @@ def insert_referral(
             """
             INSERT INTO referrals
                 (patient_id, referring_physician_id, referring_hospital_id,
-                 receiving_hospital_id, severity, stability, emergency_type,
+                 receiving_hospital_id, severity, stability, referral_reason,
                  estimated_arrival_minutes, routing_queue, incident_lat, incident_lon,
-                 routing_metadata)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                 routing_metadata, urgency_level, known_allergies, pre_existing_conditions)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING referral_id
             """,
             (patient_id, referring_physician_id, referring_hospital_id,
              receiving_hospital_id, severity, stability,
-             emergency_type, estimated_arrival_minutes, routing_queue_json,
-             incident_lat, incident_lon, routing_metadata),
+             referral_reason, estimated_arrival_minutes, routing_queue_json,
+             incident_lat, incident_lon, routing_metadata,
+             urgency_level, known_allergies, pre_existing_conditions),
         )
         return cur.fetchone()["referral_id"]
 
