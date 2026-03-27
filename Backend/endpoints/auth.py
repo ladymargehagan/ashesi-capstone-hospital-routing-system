@@ -70,6 +70,28 @@ class DoctorRegisterRequest(BaseModel):
     department: Optional[str] = None
     grade: Optional[str] = None
 
+class AdminRegisterRequest(BaseModel):
+    """Hospital admin registration via invite link."""
+    token: str
+    full_name: str
+    password: str
+    phone_number: Optional[str] = None
+    
+    @field_validator("password")
+    @classmethod
+    def validate_password(cls, v):
+        if len(v) < 8:
+            raise ValueError("Password must be at least 8 characters long")
+        if not re.search(r"[A-Z]", v):
+            raise ValueError("Password must contain at least one uppercase letter")
+        if not re.search(r"[a-z]", v):
+            raise ValueError("Password must contain at least one lowercase letter")
+        if not re.search(r"[0-9]", v):
+            raise ValueError("Password must contain at least one number")
+        if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", v):
+            raise ValueError("Password must contain at least one special character")
+        return v
+
 
 class GoogleAuthRequest(BaseModel):
     """Google OAuth: token from frontend Google Sign-In."""
@@ -120,6 +142,17 @@ def register_doctor(req: DoctorRegisterRequest):
     if result.get("error"):
         raise HTTPException(status_code=result.get("code", 400), detail=result["message"])
 
+    return result
+
+@router.post("/register-admin")
+def register_admin(req: AdminRegisterRequest):
+    """Hospital Admin registration consuming a secure invite token."""
+    from controllers.auth_controller import process_admin_registration
+    result = process_admin_registration(req.model_dump())
+    
+    if result.get("error"):
+        raise HTTPException(status_code=result.get("code", 400), detail=result["message"])
+        
     return result
 
 

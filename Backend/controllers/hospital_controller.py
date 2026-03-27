@@ -1,3 +1,4 @@
+from typing import Optional
 from models.hospital import (
     fetch_all_hospitals,
     fetch_hospital_by_id,

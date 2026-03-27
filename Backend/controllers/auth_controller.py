@@ -126,6 +126,49 @@ def process_doctor_registration(data: dict) -> dict:
     }
 
 
+def process_admin_registration(data: dict) -> dict:
+    from models.admin_invite import get_valid_invite, mark_invite_used
+    from core.db import db_cursor
+    
+    invite = get_valid_invite(data["token"])
+    if not invite:
+        return {"error": True, "code": 400, "message": "Invalid or expired invite token"}
+
+    email = invite["email"]
+    hospital_id = invite["hospital_id"]
+
+    if check_email_exists(email):
+        return {"error": True, "code": 400, "message": "Email already registered for an account"}
+
+    role_id = fetch_role_id_by_name("hospital_admin")
+    if not role_id:
+        return {"error": True, "code": 500, "message": "Hospital Admin role not found"}
+
+    pw_hash = hash_password(data["password"])
+    
+    try:
+        with db_cursor() as cur:
+            cur.execute(
+                """
+                INSERT INTO users (email, password_hash, role_id, full_name, phone_number, hospital_id, status)
+                VALUES (%s, %s, %s, %s, %s, %s, 'active')
+                RETURNING user_id
+                """,
+                (email, pw_hash, role_id, data["full_name"], data.get("phone_number"), hospital_id)
+            )
+            user_id = cur.fetchone()["user_id"]
+            
+        mark_invite_used(data["token"])
+        
+        return {
+            "success": True,
+            "user_id": str(user_id),
+            "message": "Hospital Admin account created successfully. You can now log in.",
+        }
+    except Exception as e:
+        return {"error": True, "code": 500, "message": f"Database error: {e}"}
+
+
 def process_google_auth(token: str, data: dict) -> dict:
     try:
         from google.oauth2 import id_token

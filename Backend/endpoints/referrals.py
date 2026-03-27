@@ -183,7 +183,7 @@ def assign_referral(
     current_user: dict = Depends(require_role("hospital_admin", "super_admin")),
 ):
     """Assign a referral to a physician (hospital admin action)."""
-    result = handle_referral_assignment(referral_id, req.physician_id)
+    result = handle_referral_assignment(referral_id, req.physician_id, current_user.get("id"))
     if result.get("error"):
         raise HTTPException(status_code=result.get("code", 400), detail=result["message"])
     return result

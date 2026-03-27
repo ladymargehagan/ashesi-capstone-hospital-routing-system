@@ -87,6 +87,7 @@ export function HospitalDetailsModal({ hospitalId, open, onClose }: HospitalDeta
     return (
         <Dialog open={open} onOpenChange={onClose}>
             <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+                <DialogTitle className="sr-only">Hospital Details</DialogTitle>
                 {loading ? (
                     <div className="flex items-center justify-center p-12">
                         <Loader2 className="w-8 h-8 animate-spin text-blue-600" />

@@ -432,7 +432,7 @@ def modify_referral_status(referral_id: int, status: str, reason: str = None) ->
     return {"success": True, "referral_id": str(referral_id), "status": status}
 
 
-def handle_referral_assignment(referral_id: int, physician_id: int) -> dict:
+def handle_referral_assignment(referral_id: int, physician_id: int, actor_user_id: int = None) -> dict:
     if not check_referral_exists(referral_id):
         return {"error": True, "code": 404, "message": "Referral not found"}
         
@@ -440,6 +440,22 @@ def handle_referral_assignment(referral_id: int, physician_id: int) -> dict:
         return {"error": True, "code": 404, "message": "Physician not found or inactive"}
 
     assign_referral_to_physician(referral_id, physician_id)
+    
+    from core.db import db_cursor
+    with db_cursor() as cur:
+        cur.execute("SELECT user_id FROM physicians WHERE physician_id = %s", (physician_id,))
+        p_user = cur.fetchone()
+        if p_user:
+            notify_user(
+                user_id=p_user["user_id"],
+                message=f"You have been assigned to Referral #{referral_id}. Please review the patient's file.",
+                notification_type="referral_assigned"
+            )
+            
+    if actor_user_id:
+        log_action(actor_user_id, "referral_assigned", entity_type="referral",
+                   entity_id=referral_id, details={"assigned_physician_id": physician_id})
+
     return {"success": True, "referral_id": str(referral_id), "assigned_physician_id": str(physician_id)}
 
 

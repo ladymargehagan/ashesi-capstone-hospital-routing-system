@@ -345,7 +345,7 @@ export function ReferralDetailsModal({ referral, open, onClose, onStatusChanged 
                         )}
 
                         {/* Assign Doctor (hospital admin only) */}
-                        {user?.role === 'hospital_admin' && user?.hospital_id === referral.receiving_hospital_id && (
+                        {user?.role === 'hospital_admin' && user?.hospital_id === referral.receiving_hospital_id && ['approved', 'en_route', 'arrived'].includes(referral.status) && (
                             <div>
                                 <h3 className="text-sm font-semibold text-gray-900 mb-2 flex items-center gap-2">
                                     <UserPlus className="h-4 w-4" />

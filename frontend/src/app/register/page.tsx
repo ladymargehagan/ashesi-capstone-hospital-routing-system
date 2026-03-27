@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,8 +19,13 @@ interface Hospital {
     address: string;
 }
 
-export default function RegisterPage() {
+function RegisterForm() {
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const inviteToken = searchParams.get('invite');
+
+    // Admin invite state
+    const [isAdminInvite, setIsAdminInvite] = useState(false);
 
     // Form state
     const [fullName, setFullName] = useState('');
@@ -58,7 +63,24 @@ export default function RegisterPage() {
             .then((res) => res.json())
             .then((data) => setSpecializationsList(data))
             .catch(() => console.warn('Could not load specializations'));
-    }, []);
+            
+        if (inviteToken) {
+            setLoading(true);
+            fetch(`${API_BASE}/api/super-admin/invites/${inviteToken}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        setIsAdminInvite(true);
+                        setEmail(data.email);
+                        setHospitalId(data.hospital_id.toString());
+                    } else {
+                        setError('Invalid or expired invite link.');
+                    }
+                })
+                .catch(() => setError('Could not validate invite link.'))
+                .finally(() => setLoading(false));
+        }
+    }, [inviteToken]);
 
     const filteredHospitals = hospitals.filter(h =>
         h.name.toLowerCase().includes(hospitalSearch.toLowerCase())
@@ -105,10 +127,15 @@ export default function RegisterPage() {
         setLoading(true);
 
         try {
-            const res = await fetch(`${API_BASE}/api/auth/register`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
+            const url = isAdminInvite ? `${API_BASE}/api/auth/register-admin` : `${API_BASE}/api/auth/register`;
+            const payload = isAdminInvite 
+                ? {
+                    token: inviteToken,
+                    full_name: fullName,
+                    password,
+                    phone_number: phoneNumber,
+                }
+                : {
                     full_name: fullName,
                     email,
                     password,
@@ -119,7 +146,12 @@ export default function RegisterPage() {
                     specialization,
                     department,
                     grade,
-                }),
+                };
+
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
             });
 
             const data = await res.json();
@@ -146,8 +178,9 @@ export default function RegisterPage() {
                         </div>
                         <h2 className="text-2xl font-bold text-slate-900 mb-2">Registration Submitted!</h2>
                         <p className="text-slate-500 leading-relaxed mb-8">
-                            Your account is pending approval by your hospital administrator.
-                            You&apos;ll receive an email notification once approved.
+                            {isAdminInvite 
+                                ? "Your Hospital Admin account has been activated." 
+                                : "Your account is pending approval by your hospital administrator. You'll receive an email notification once approved."}
                         </p>
                         <Link href="/login">
                             <Button className="bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 rounded-xl px-8 shadow-md shadow-blue-200/50">
@@ -204,27 +237,35 @@ export default function RegisterPage() {
                             <div className="lg:hidden mx-auto mb-4 h-12 w-12 rounded-xl bg-gradient-to-br from-blue-600 to-cyan-500 flex items-center justify-center shadow-md shadow-blue-200">
                                 <Activity className="h-6 w-6 text-white" />
                             </div>
-                            <CardTitle className="text-2xl font-bold text-center lg:text-left">Doctor Registration</CardTitle>
-                            <CardDescription className="text-center lg:text-left">Create your HRS account to start referring patients</CardDescription>
+                            <CardTitle className="text-2xl font-bold text-center lg:text-left">{isAdminInvite ? 'Hospital Admin Setup' : 'Doctor Registration'}</CardTitle>
+                            <CardDescription className="text-center lg:text-left">{isAdminInvite ? 'Complete your admin account' : 'Create your HRS account to start referring patients'}</CardDescription>
                         </CardHeader>
 
                         <CardContent className="pt-4">
                             {/* Step indicator */}
-                            <div className="flex items-center gap-2 mb-6">
-                                <button
-                                    onClick={() => setStep(1)}
-                                    className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-colors ${step === 1 ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
-                                >
-                                    1. Account Details
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={handleNextStep}
-                                    className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-colors ${step === 2 ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
-                                >
-                                    2. Professional Info
-                                </button>
-                            </div>
+                            {!isAdminInvite && (
+                                <div className="flex items-center gap-2 mb-6">
+                                    <button
+                                        onClick={() => setStep(1)}
+                                        className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-colors ${step === 1 ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
+                                    >
+                                        1. Account Details
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={handleNextStep}
+                                        className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-colors ${step === 2 ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
+                                    >
+                                        2. Professional Info
+                                    </button>
+                                </div>
+                            )}
+
+                            {error && (
+                                <div className="mb-4 bg-red-50 text-red-600 p-3 rounded-lg text-sm border border-red-100">
+                                    {error}
+                                </div>
+                            )}
 
                             <form onSubmit={handleSubmit} className="space-y-4">
                                 {step === 1 && (
@@ -235,7 +276,7 @@ export default function RegisterPage() {
                                         </div>
                                         <div className="space-y-2">
                                             <Label htmlFor="regEmail">Email Address *</Label>
-                                            <Input id="regEmail" type="email" placeholder="kwame.mensah@hospital.gov.gh" value={email} onChange={(e) => {setEmail(e.target.value); setEmailError('');}} required className={`h-11 ${emailError ? 'border-red-500' : ''}`} />
+                                            <Input id="regEmail" type="email" placeholder="kwame.mensah@hospital.gov.gh" value={email} onChange={(e) => {setEmail(e.target.value); setEmailError('');}} required disabled={isAdminInvite} className={`h-11 ${emailError ? 'border-red-500' : ''} ${isAdminInvite ? 'bg-slate-100' : ''}`} />
                                             {emailError && <p className="text-xs text-red-500">{emailError}</p>}
                                         </div>
                                         <div className="space-y-2">
@@ -253,8 +294,14 @@ export default function RegisterPage() {
                                             </div>
                                         </div>
                                         {passwordError && <p className="text-xs text-red-500">{passwordError}</p>}
-                                        <Button type="button" onClick={handleNextStep} className="w-full h-11 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 shadow-md shadow-blue-200/50 font-semibold mt-2">
-                                            Continue to Professional Info
+                                        <Button 
+                                            type="button" 
+                                            onClick={isAdminInvite ? handleSubmit : handleNextStep} 
+                                            disabled={loading || (isAdminInvite && !hospitalId)}
+                                            className="w-full h-11 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 shadow-md shadow-blue-200/50 font-semibold mt-2"
+                                        >
+                                            {loading ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : null}
+                                            {isAdminInvite ? 'Create Admin Account' : 'Continue to Professional Info'}
                                         </Button>
                                     </>
                                 )}
@@ -383,5 +430,13 @@ export default function RegisterPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function RegisterPage() {
+    return (
+        <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-slate-50"><Loader2 className="h-8 w-8 animate-spin text-blue-600" /></div>}>
+            <RegisterForm />
+        </Suspense>
     );
 }
