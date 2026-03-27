@@ -146,22 +146,29 @@ async def startup_event():
 # Hospital data — loaded from PostgreSQL
 # ---------------------------------------------------------------------------
 
-# Mapping from DB resource_type to engine capability/resource names
+# Maps the DB resource_type column to the capability key the engine uses.
+# We keep both in snake_case so there's no translation ambiguity.
+# If a new resource type is added to the DB schema, add it here too.
 RESOURCE_TYPE_MAP = {
-    "icu_beds": "ICU_beds",
-    "general_beds": "General_beds",
-    "pediatric_beds": "Pediatric_beds",
-    "maternity_beds": "Maternity_beds",
-    "theatre": "OR",
-    "blood_bank": "Blood_bank",
-    "ventilators": "Ventilator",
-    "oxygen": "Oxygen",
-    "ct_scan": "CT_scan",
-    "mri": "MRI",
-    "ultrasound": "Ultrasound",
-    "xray": "Xray",
-    "lab": "Lab",
-    "dialysis": "Dialysis",
+    "general_beds":    "general_beds",
+    "emergency_beds":  "emergency_beds",
+    "icu_beds":        "icu_beds",
+    "stroke_beds":     "stroke_beds",
+    "pediatric_beds":  "pediatric_beds",
+    "maternity_beds":  "maternity_beds",
+    "oxygen_beds":     "oxygen_beds",
+    "monitored_beds":  "monitored_beds",
+    "adjustable_beds": "adjustable_beds",
+    "theatre":         "theatre",
+    "blood_bank":      "blood_bank",
+    "lab":             "lab",
+    "xray":            "xray",
+    "ct_scan":         "ct_scan",
+    "mri":             "mri",
+    "ultrasound":      "ultrasound",
+    "dialysis":        "dialysis",
+    "ventilators":     "ventilators",
+    "oxygen":          "oxygen",
 }
 
 

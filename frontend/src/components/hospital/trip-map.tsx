@@ -19,40 +19,27 @@ const containerStyle = {
     height: '300px'
 };
 
-export function TripMap({
+function TripMapInner({
+    apiKey,
     originLat,
     originLng,
     destinationLat,
     destinationLng,
     originName,
     destinationName
-}: TripMapProps) {
-    const [apiKey, setApiKey] = useState<string | null>(null);
+}: TripMapProps & { apiKey: string }) {
     const [directions, setDirections] = useState<google.maps.DirectionsResult | null>(null);
     const [distance, setDistance] = useState<string>('');
     const [duration, setDuration] = useState<string>('');
-    const [error, setError] = useState<string | null>(null);
-
-    useEffect(() => {
-        // Fetch API key securely from backend
-        fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/maps-key`)
-            .then(res => res.json())
-            .then(data => {
-                if (data.key) setApiKey(data.key);
-                else setError('Google Maps not configured');
-            })
-            .catch(() => setError('Failed to load Maps config'));
-    }, []);
+    const [routeError, setRouteError] = useState<string | null>(null);
 
     const { isLoaded, loadError } = useJsApiLoader({
         id: 'google-map-script',
-        googleMapsApiKey: apiKey || '',
+        googleMapsApiKey: apiKey,
     });
 
     const onLoad = useCallback(
         function onLoad() {
-            if (!apiKey) return;
-
             const directionsService = new window.google.maps.DirectionsService();
 
             directionsService.route(
@@ -69,37 +56,35 @@ export function TripMap({
                             setDuration(result.routes[0].legs[0].duration?.text || '');
                         }
                     } else {
-                        setError('Could not calculate driving route.');
+                        setRouteError('Could not calculate driving route.');
                     }
                 }
             );
         },
-        [originLat, originLng, destinationLat, destinationLng, apiKey]
+        [originLat, originLng, destinationLat, destinationLng]
     );
 
-    if (error) {
+    if (routeError) {
         return (
             <div className="w-full h-[300px] bg-gray-100 flex items-center justify-center rounded-lg border border-gray-200">
                 <div className="text-gray-500 flex flex-col items-center">
                     <MapPin className="h-8 w-8 mb-2 opacity-50" />
-                    <p className="text-sm font-medium">{error}</p>
+                    <p className="text-sm font-medium">{routeError}</p>
                     <p className="text-xs">Map visualization is unavailable.</p>
                 </div>
             </div>
         );
     }
 
-    if (!isLoaded || !apiKey) {
+    if (loadError) return <div className="p-4 text-red-500">Error loading maps</div>;
+
+    if (!isLoaded) {
         return (
             <div className="w-full h-[300px] bg-gray-50 flex items-center justify-center rounded-lg border border-gray-200">
                 <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
                 <span className="ml-2 text-sm text-gray-500">Loading Map...</span>
             </div>
         );
-    }
-
-    if (loadError) {
-        return <div>Error loading maps</div>;
     }
 
     return (
@@ -148,4 +133,42 @@ export function TripMap({
             </Card>
         </div>
     );
+}
+
+export function TripMap(props: TripMapProps) {
+    const [apiKey, setApiKey] = useState<string | null>(null);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/maps-key`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.key) setApiKey(data.key);
+                else setError('Google Maps not configured');
+            })
+            .catch(() => setError('Failed to load Maps config'));
+    }, []);
+
+    if (error) {
+        return (
+            <div className="w-full h-[300px] bg-gray-100 flex items-center justify-center rounded-lg border border-gray-200">
+                <div className="text-gray-500 flex flex-col items-center">
+                    <MapPin className="h-8 w-8 mb-2 opacity-50" />
+                    <p className="text-sm font-medium">{error}</p>
+                    <p className="text-xs">Map visualization is unavailable.</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (!apiKey) {
+        return (
+            <div className="w-full h-[300px] bg-gray-50 flex items-center justify-center rounded-lg border border-gray-200">
+                <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
+                <span className="ml-2 text-sm text-gray-500">Loading Map Config...</span>
+            </div>
+        );
+    }
+
+    return <TripMapInner apiKey={apiKey} {...props} />;
 }

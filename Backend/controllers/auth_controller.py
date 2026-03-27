@@ -67,6 +67,8 @@ def process_login(email: str, password: str) -> dict:
     if not row:
         return {"error": True, "code": 401, "message": "Invalid email or password"}
 
+    # Security check: if the user signed up with Google, they shouldn't have a local password.
+    # We force them to use the "Sign in with Google" button to prevent account takeovers.
     if row["auth_provider"] == "google" and not row["password_hash"]:
         return {
             "error": True, 

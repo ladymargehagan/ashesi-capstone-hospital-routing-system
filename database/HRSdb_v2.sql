@@ -141,9 +141,27 @@ CREATE TABLE HOSPITAL_RESOURCES (
     resource_id SERIAL PRIMARY KEY,
     hospital_id INTEGER NOT NULL REFERENCES HOSPITALS(hospital_id),
     resource_type VARCHAR(30) NOT NULL CHECK (resource_type IN (
-        'general_beds', 'icu_beds', 'pediatric_beds', 'maternity_beds',
-        'theatre', 'blood_bank', 'lab', 'xray', 'ct_scan', 'mri',
-        'ultrasound', 'dialysis', 'ventilators', 'oxygen'
+        -- Bed categories (granular)
+        'general_beds',         -- standard inpatient beds
+        'emergency_beds',       -- dedicated A&E beds for immediate intake
+        'icu_beds',             -- intensive care unit beds
+        'stroke_beds',          -- dedicated stroke unit beds
+        'pediatric_beds',       -- paediatric wards
+        'maternity_beds',       -- obstetric / labour ward beds
+        'oxygen_beds',          -- beds with piped oxygen supply
+        'monitored_beds',       -- beds with continuous cardiac/vitals monitoring
+        'adjustable_beds',      -- motorised beds (post-op, neurological patients)
+        -- Equipment & services
+        'theatre',              -- operating theatre
+        'blood_bank',
+        'lab',
+        'xray',
+        'ct_scan',
+        'mri',
+        'ultrasound',
+        'dialysis',
+        'ventilators',
+        'oxygen'                -- bulk oxygen supply (cylinders / plant)
     )),
     total_count INTEGER,
     available_count INTEGER,

@@ -9,6 +9,9 @@ def fetch_referrals(
     status: Optional[str] = None,
 ):
     with db_cursor() as cur:
+        # We perform a massive JOIN here to grab patient info, hospital names,
+        # and clinical details all at once. This avoids the N+1 query problem 
+        # when displaying large tables on the frontend.
         query = """
             SELECT r.*,
                    rh.name AS referring_hospital_name,

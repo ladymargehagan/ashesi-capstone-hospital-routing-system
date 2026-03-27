@@ -131,6 +131,7 @@ class TravelTimeProvider:
         origin: Tuple[float, float],
         hospital: Hospital,
         fallback_distance_km: float,
+        at_time: Optional[datetime] = None,
     ) -> float:
         if hospital.travel_time_override_mins is not None:
             return max(0.0, float(hospital.travel_time_override_mins))
@@ -140,11 +141,35 @@ class TravelTimeProvider:
             if api_time is not None:
                 return api_time
 
-        return self._estimated_drive_time_minutes(fallback_distance_km)
+        return self._estimated_drive_time_minutes(fallback_distance_km, at_time)
 
-    def _estimated_drive_time_minutes(self, distance_km: float) -> float:
+    # ------------------------------------------------------------------
+    # Accra peak-hour speed table (WAT = UTC+0, so UTC hour == local hour)
+    # Sources: Accra Circle interchange, Spintex Road, Tema Motorway
+    # observed congestion patterns.
+    # Each tuple is (start_hour_inclusive, end_hour_exclusive): speed_kmh
+    # ------------------------------------------------------------------
+    _ACCRA_HOURLY_SPEED: List[Tuple[Tuple[int, int], float]] = [
+        ((7, 9),   15.0),   # heavy morning rush: Lapaz, Circle, Adabraka
+        ((12, 14), 22.0),   # midday moderate congestion
+        ((17, 20), 12.0),   # worst evening rush: Kasoa corridor, Spintex
+        ((20, 22), 20.0),   # post-rush thinning out
+    ]
+    _ACCRA_DEFAULT_SPEED: float = 30.0  # free-flow / late night
+
+    def _speed_for_hour(self, hour: int) -> float:
+        for (start, end), speed in self._ACCRA_HOURLY_SPEED:
+            if start <= hour < end:
+                return speed
+        return self._ACCRA_DEFAULT_SPEED
+
+    def _estimated_drive_time_minutes(
+        self, distance_km: float, at_time: Optional[datetime] = None
+    ) -> float:
+        hour = at_time.hour if at_time is not None else datetime.utcnow().hour
+        speed = self._speed_for_hour(hour)
         effective_km = distance_km * self.config.road_multiplier
-        minutes = (effective_km / self.config.road_speed_kmh) * 60.0
+        minutes = (effective_km / speed) * 60.0
         return max(1.0, minutes)
 
     def _google_distance_matrix_minutes(
@@ -195,14 +220,26 @@ def haversine_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     return radius * (2 * math.atan2(math.sqrt(a), math.sqrt(1 - a)))
 
 
+# ---------------------------------------------------------------------------
+# Required resources per emergency type.
+# Keys must match the resource_type values in the HOSPITAL_RESOURCES table.
+# Weights must sum to 1.0.
+# ---------------------------------------------------------------------------
 REQUIRED_RESOURCES: Dict[str, Dict[str, float]] = {
-    "cardiac": {"ICU_beds": 0.5, "Cardiologist": 0.3, "Cath_lab": 0.2},
-    "trauma": {"Trauma_team": 0.4, "OR": 0.3, "Blood_bank": 0.3},
-    "respiratory": {"Ventilator": 0.5, "ICU_beds": 0.3, "Pulmonologist": 0.2},
-    "stroke": {"Neurologist": 0.4, "CT_scan": 0.3, "ICU_beds": 0.3},
-    "obstetric": {"OB_team": 0.5, "OR": 0.3, "Neonatal_ICU": 0.2},
-    "seizure": {"Neurologist": 0.4, "EEG": 0.3, "ICU_beds": 0.3},
-    "general": {"General_beds": 0.5, "On_call_doctor": 0.3, "Basic_equipment": 0.2},
+    # Cardiac: needs monitored + ICU beds (oxygen support) and theatre access
+    "cardiac":     {"icu_beds": 0.4, "monitored_beds": 0.35, "theatre": 0.25},
+    # Trauma: emergency beds, theatre, blood bank are the critical triad
+    "trauma":      {"emergency_beds": 0.35, "theatre": 0.35, "blood_bank": 0.30},
+    # Respiratory: oxygen-connected and ICU beds are primary; ventilators if available
+    "respiratory": {"oxygen_beds": 0.45, "icu_beds": 0.35, "ventilators": 0.20},
+    # Stroke: dedicated stroke beds, CT scan within the golden hour, then ICU
+    "stroke":      {"stroke_beds": 0.45, "ct_scan": 0.30, "icu_beds": 0.25},
+    # Obstetric: maternity beds + theatre (C-section capability)
+    "obstetric":   {"maternity_beds": 0.50, "theatre": 0.30, "blood_bank": 0.20},
+    # Seizure: monitored beds so vitals can be observed continuously
+    "seizure":     {"monitored_beds": 0.45, "icu_beds": 0.30, "ct_scan": 0.25},
+    # General: standard emergency or adjustable beds, basic lab
+    "general":     {"emergency_beds": 0.50, "general_beds": 0.30, "lab": 0.20},
 }
 
 
@@ -293,6 +330,7 @@ class ReferralEngine:
                 origin=(patient.lat, patient.lon),
                 hospital=hospital,
                 fallback_distance_km=distance_km,
+                at_time=patient.at_time,
             )
             # close hospitals get higher score; beyond thresehold goes to 0.
             proximity_score = max(0.0, 1.0 - (travel_mins / float(tmax)))
@@ -395,10 +433,20 @@ class ReferralEngine:
             matched = len(req_keys.intersection(hospital.capabilities))
             match_ratio = matched / max(1, len(req_keys))
             travel_mins = self.travel_time_provider.get_travel_time_minutes(
-                origin=(patient.lat, patient.lon), hospital=hospital, fallback_distance_km=distance
+                origin=(patient.lat, patient.lon),
+                hospital=hospital,
+                fallback_distance_km=distance,
+                at_time=patient.at_time,
             )
+            # Calculate the two main factors:
+            # 1. Match Ratio: How many of the required resources the hospital actually has.
+            # 2. Proximity: How close they are, based on time-of-day traffic.
             proximity = max(0.0, 1.0 - (travel_mins / float(tmax)))
+            
+            # Combine them using our dynamic weights (e.g. prioritize hospital capability over distance for critical cases)
             partial_score = alpha * match_ratio + beta * proximity
+            
+            # Freshness penalizes hospitals that haven't updated their data recently
             freshness = self._freshness_factor(hospital.last_update, patient.at_time)
 
             resource_breakdown = {}
@@ -419,7 +467,8 @@ class ReferralEngine:
                     "resource_score": match_ratio,
                     "proximity_score": proximity,
                     "freshness_factor": freshness,
-                    # in fallback mode we recieve a softer score: partial capability * proximity * freshness.
+                    # In fallback mode, we use a softer composite score: 
+                    # (Capability Score + Distance Score) scaled by how fresh their bed data is.
                     "composite_score": partial_score * freshness,
                     "resource_breakdown": resource_breakdown,
                     "distance_band_density_estimate": distance_lookup.estimate_density_near(distance),

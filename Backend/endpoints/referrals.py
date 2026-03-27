@@ -110,6 +110,8 @@ def create_referral(
     current_user: dict = Depends(require_role("physician")),
 ):
     """Create a referral. Physicians only."""
+    # Convert the validated Pydantic model into a plain dictionary 
+    # to pass down to the controller logic.
     result = process_create_referral(req.model_dump())
     return result
 

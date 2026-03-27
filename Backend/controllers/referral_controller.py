@@ -21,11 +21,51 @@ from models.referral import (
     fetch_attachment_by_id
 )
 from models.patient import fetch_patient_by_id
-from services.email_service import notify_referral_created, notify_referral_status_changed
+from services.email_service import notify_referral_created, notify_referral_status_changed, notify_user
 from utils.audit import log_action
 
 
-# Same serialization logic from the original monolithic route
+def _get_backup_suggestions(referral_row: dict) -> list:
+    """
+    When all cascade options are exhausted, run one more engine pass with a
+    wider radius — so the physician always has something to look at.
+    The system is decision support; a blank result is never acceptable.
+    """
+    try:
+        from api import _load_hospitals_from_db
+        from services.referral_engine import ReferralEngine, EngineConfig, PatientCase
+        now = datetime.utcnow()
+        hospitals = _load_hospitals_from_db(now)
+        # Expand the search window from 16km to 40km and ask for up to 5 partial matches
+        engine = ReferralEngine(hospitals, config=EngineConfig(radius_km=40, top_k=5))
+        patient = PatientCase(
+            lat=float(referral_row.get("incident_lat") or 5.56),
+            lon=float(referral_row.get("incident_lon") or -0.20),
+            emergency_type=referral_row.get("emergency_type", "general"),
+            severity=referral_row.get("severity", "medium"),
+            stability=referral_row.get("stability", "stable"),
+            at_time=now,
+        )
+        result = engine.rank(patient)
+        return result.get("recommendations", [])
+    except Exception as e:
+        print(f"[WARN] Backup suggestion engine pass failed: {e}")
+        return []
+
+
+def _notify_no_capacity(physician_user_id: int, referral_id: int, patient_name: str, backup_msg: str):
+    """Tell the physician that all 5 routing options were rejected, with backup alternatives."""
+    notify_user(
+        user_id=physician_user_id,
+        message=(
+            f"Referral #{referral_id} for {patient_name}: all recommended hospitals are at capacity."
+            f"{backup_msg} Please review and re-submit or contact a hospital directly."
+        ),
+        notification_type="referral_no_capacity",
+    )
+
+
+# Converts a raw DB row into the dict shape the frontend expects
 def _row_to_referral(row, details=None, patient=None, attachments=None) -> dict:
     referral = {
         "id": str(row["referral_id"]),
@@ -237,55 +277,80 @@ def process_create_referral(req_data: dict) -> dict:
 
 
 def modify_referral_status(referral_id: int, status: str, reason: str = None) -> dict:
-    valid_statuses = {"pending", "approved", "rejected", "en_route", "completed", "cancelled"}
+    # 'arrived' and 'no_capacity' were missing — both are real states in the lifecycle
+    valid_statuses = {"pending", "approved", "rejected", "en_route", "arrived", "completed", "cancelled", "no_capacity"}
     if status not in valid_statuses:
         return {"error": True, "code": 400, "message": f"Status must be one of: {valid_statuses}"}
 
     existing = fetch_referral_metadata(referral_id)
     if not existing:
         return {"error": True, "code": 404, "message": "Referral not found"}
-        
+
     info = fetch_referral_status_info(referral_id)
     physician_user_id = info["physician_user_id"] if info else existing["referring_physician_id"]
     patient_name = info["patient_name"] if info else "Unknown patient"
 
-    # --- Uber-style Cascade Logic ---
+    # --- Cascade logic: when a hospital rejects, auto-reroute to the next in the queue ---
     if status == "rejected":
         routing_queue_str = existing.get("routing_queue")
         if routing_queue_str:
             try:
                 queue = json.loads(routing_queue_str)
+
                 if queue and len(queue) > 0:
-                    next_hospital_id = queue.pop(0)
+                    # Still have backups — reroute to the next hospital
+                    next_hospital_id = int(queue.pop(0))
                     new_queue_str = json.dumps(queue)
-                    
-                    updates = ["receiving_hospital_id = %s", "status = %s", "routing_queue = %s"]
-                    params = [next_hospital_id, 'pending', new_queue_str, referral_id]
+
+                    updates = ["receiving_hospital_id = %s", "status = %s", "routing_queue = %s",
+                               "cascade_count = cascade_count + 1"]
+                    params = [next_hospital_id, "pending", new_queue_str, referral_id]
                     success = update_referral_status_in_db(referral_id, updates, params)
-                    
+
                     if success:
-                        log_action(
-                            physician_user_id,
-                            "referral_cascaded",
-                            entity_type="referral",
-                            entity_id=referral_id,
-                            details={
-                                "reason_for_rejection": reason, 
-                                "previous_hospital_id": existing["receiving_hospital_id"], 
-                                "new_hospital_id": next_hospital_id
-                            }
-                        )
+                        log_action(physician_user_id, "referral_cascaded", entity_type="referral",
+                                   entity_id=referral_id,
+                                   details={"rejection_reason": reason,
+                                            "previous_hospital_id": existing["receiving_hospital_id"],
+                                            "new_hospital_id": next_hospital_id})
                         try:
-                            # Notify new hospital & referring physician
                             notify_referral_created(referral_id, patient_name, next_hospital_id)
                             notify_referral_status_changed(referral_id, patient_name, "cascaded", physician_user_id)
                         except Exception as e:
-                            print(f"[WARN] Email notification failed for cascade: {e}")
-                            
-                        return {"success": True, "cascaded": True, "referral_id": str(referral_id), "new_hospital_id": str(next_hospital_id)}
-            except json.JSONDecodeError:
+                            print(f"[WARN] Cascade notification failed: {e}")
+
+                    return {"success": True, "cascaded": True, "referral_id": str(referral_id),
+                            "new_hospital_id": str(next_hospital_id)}
+
+                else:
+                    # Queue is empty — all 5 options have been tried and rejected.
+                    # Run a backup engine pass with expanded radius so the physician
+                    # still gets something to work with (system is decision support, not a dead end).
+                    backup_suggestions = _get_backup_suggestions(existing)
+
+                    updates = ["status = %s", "rejected_at = CURRENT_TIMESTAMP", "rejection_reason = %s"]
+                    params = ["no_capacity", reason or "All recommended hospitals at capacity", referral_id]
+                    update_referral_status_in_db(referral_id, updates, params)
+
+                    log_action(physician_user_id, "referral_no_capacity", entity_type="referral",
+                               entity_id=referral_id, details={"reason": reason})
+                    try:
+                        # Notify the physician with the backup suggestions list
+                        backup_msg = ""
+                        if backup_suggestions:
+                            names = ", ".join(s["hospital_name"] for s in backup_suggestions[:3])
+                            backup_msg = f" Suggested alternatives to try: {names}."
+                        _notify_no_capacity(physician_user_id, referral_id, patient_name, backup_msg)
+                    except Exception as e:
+                        print(f"[WARN] No-capacity notification failed: {e}")
+
+                    return {"success": True, "no_capacity": True, "referral_id": str(referral_id),
+                            "backup_suggestions": backup_suggestions}
+
+            except (json.JSONDecodeError, TypeError):
                 pass
 
+    # --- Standard status update (approved, en_route, arrived, completed, cancelled) ---
     ts_col = {
         "approved": "approved_at",
         "rejected": "rejected_at",
@@ -294,10 +359,7 @@ def modify_referral_status(referral_id: int, status: str, reason: str = None) ->
         "cancelled": "cancelled_at",
     }.get(status)
 
-    reason_col = {
-        "rejected": "rejection_reason",
-        "cancelled": "cancellation_reason",
-    }.get(status)
+    reason_col = {"rejected": "rejection_reason", "cancelled": "cancellation_reason"}.get(status)
 
     updates = ["status = %s"]
     params = [status]
@@ -307,7 +369,7 @@ def modify_referral_status(referral_id: int, status: str, reason: str = None) ->
     if reason_col and reason:
         updates.append(f"{reason_col} = %s")
         params.append(reason)
-    
+
     params.append(referral_id)
     success = update_referral_status_in_db(referral_id, updates, params)
 
@@ -316,18 +378,11 @@ def modify_referral_status(referral_id: int, status: str, reason: str = None) ->
 
     try:
         if info:
-            notify_referral_status_changed(
-                referral_id, patient_name, status, physician_user_id
-            )
-            log_action(
-                physician_user_id,
-                "referral_status_changed",
-                entity_type="referral",
-                entity_id=referral_id,
-                details={"new_status": status, "reason": reason},
-            )
+            notify_referral_status_changed(referral_id, patient_name, status, physician_user_id)
+            log_action(physician_user_id, "referral_status_changed", entity_type="referral",
+                       entity_id=referral_id, details={"new_status": status, "reason": reason})
     except Exception as e:
-        print(f"[WARN] Email notification failed: {e}")
+        print(f"[WARN] Status notification failed: {e}")
 
     return {"success": True, "referral_id": str(referral_id), "status": status}
 
