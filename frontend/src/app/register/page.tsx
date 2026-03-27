@@ -43,29 +43,60 @@ export default function RegisterPage() {
     const [hospitalSearch, setHospitalSearch] = useState('');
     const [step, setStep] = useState(1); // 1 = account, 2 = professional
 
+    // Inline validation state
+    const [emailError, setEmailError] = useState('');
+    const [passwordError, setPasswordError] = useState('');
+    const [specializationsList, setSpecializationsList] = useState<string[]>([]);
+
     // Load hospitals
     useEffect(() => {
         hospitalsApi.list()
             .then((data) => setHospitals(data as unknown as Hospital[]))
             .catch(() => console.warn('Could not load hospitals'));
+            
+        fetch(`${API_BASE}/api/options/specializations`)
+            .then((res) => res.json())
+            .then((data) => setSpecializationsList(data))
+            .catch(() => console.warn('Could not load specializations'));
     }, []);
 
     const filteredHospitals = hospitals.filter(h =>
         h.name.toLowerCase().includes(hospitalSearch.toLowerCase())
     );
 
+    const handleNextStep = () => {
+        setEmailError('');
+        setPasswordError('');
+
+        let hasError = false;
+        
+        if (!fullName.trim()) {
+            hasError = true;
+        }
+        
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            setEmailError('Please enter a valid email format');
+            hasError = true;
+        }
+
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>]).{8,}$/;
+        if (!passwordRegex.test(password)) {
+            setPasswordError('Password must be at least 8 chars, with uppercase, lowercase, number, and special character.');
+            hasError = true;
+        } else if (password !== confirmPassword) {
+            setPasswordError('Passwords do not match');
+            hasError = true;
+        }
+
+        if (!hasError) {
+            setStep(2);
+        }
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
 
-        if (password !== confirmPassword) {
-            setError('Passwords do not match');
-            return;
-        }
-        if (password.length < 6) {
-            setError('Password must be at least 6 characters');
-            return;
-        }
         if (!hospitalId) {
             setError('Please select your hospital');
             return;
@@ -187,7 +218,8 @@ export default function RegisterPage() {
                                     1. Account Details
                                 </button>
                                 <button
-                                    onClick={() => setStep(2)}
+                                    type="button"
+                                    onClick={handleNextStep}
                                     className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-colors ${step === 2 ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
                                 >
                                     2. Professional Info
@@ -203,7 +235,8 @@ export default function RegisterPage() {
                                         </div>
                                         <div className="space-y-2">
                                             <Label htmlFor="regEmail">Email Address *</Label>
-                                            <Input id="regEmail" type="email" placeholder="kwame.mensah@hospital.gov.gh" value={email} onChange={(e) => setEmail(e.target.value)} required className="h-11" />
+                                            <Input id="regEmail" type="email" placeholder="kwame.mensah@hospital.gov.gh" value={email} onChange={(e) => {setEmail(e.target.value); setEmailError('');}} required className={`h-11 ${emailError ? 'border-red-500' : ''}`} />
+                                            {emailError && <p className="text-xs text-red-500">{emailError}</p>}
                                         </div>
                                         <div className="space-y-2">
                                             <Label htmlFor="phone">Phone Number</Label>
@@ -212,14 +245,15 @@ export default function RegisterPage() {
                                         <div className="grid grid-cols-2 gap-3">
                                             <div className="space-y-2">
                                                 <Label htmlFor="regPassword">Password *</Label>
-                                                <Input id="regPassword" type="password" placeholder="Min 6 characters" value={password} onChange={(e) => setPassword(e.target.value)} required className="h-11" />
+                                                <Input id="regPassword" type="password" placeholder="Min 8 characters, complex" value={password} onChange={(e) => {setPassword(e.target.value); setPasswordError('');}} required className={`h-11 ${passwordError ? 'border-red-500' : ''}`} />
                                             </div>
                                             <div className="space-y-2">
                                                 <Label htmlFor="confirm">Confirm Password *</Label>
-                                                <Input id="confirm" type="password" placeholder="Repeat password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required className="h-11" />
+                                                <Input id="confirm" type="password" placeholder="Repeat password" value={confirmPassword} onChange={(e) => {setConfirmPassword(e.target.value); setPasswordError('');}} required className={`h-11 ${passwordError ? 'border-red-500' : ''}`} />
                                             </div>
                                         </div>
-                                        <Button type="button" onClick={() => setStep(2)} className="w-full h-11 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 shadow-md shadow-blue-200/50 font-semibold mt-2">
+                                        {passwordError && <p className="text-xs text-red-500">{passwordError}</p>}
+                                        <Button type="button" onClick={handleNextStep} className="w-full h-11 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 shadow-md shadow-blue-200/50 font-semibold mt-2">
                                             Continue to Professional Info
                                         </Button>
                                     </>
@@ -274,17 +308,38 @@ export default function RegisterPage() {
 
                                         <div className="space-y-2">
                                             <Label htmlFor="spec">Specialization *</Label>
-                                            <Input id="spec" placeholder="e.g. General Practice, Surgery, Cardiology" value={specialization} onChange={(e) => setSpecialization(e.target.value)} required className="h-11" />
+                                            <select id="spec" value={specialization} onChange={(e) => setSpecialization(e.target.value)} className="h-11 w-full rounded-lg border border-slate-200 px-3 text-sm bg-white" required>
+                                                <option value="" disabled>Select Specialization</option>
+                                                {specializationsList.map(s => <option key={s} value={s}>{s}</option>)}
+                                            </select>
                                         </div>
 
                                         <div className="grid grid-cols-2 gap-3">
                                             <div className="space-y-2">
                                                 <Label htmlFor="dept">Department</Label>
-                                                <Input id="dept" placeholder="e.g. A&E, Surgery" value={department} onChange={(e) => setDepartment(e.target.value)} className="h-11" />
+                                                <select id="dept" value={department} onChange={(e) => setDepartment(e.target.value)} className="h-11 w-full rounded-lg border border-slate-200 px-3 text-sm bg-white">
+                                                    <option value="" disabled>Select Department</option>
+                                                    <option value="Emergency (A&E)">Emergency (A&E)</option>
+                                                    <option value="Internal Medicine">Internal Medicine</option>
+                                                    <option value="Surgery">Surgery</option>
+                                                    <option value="Pediatrics">Pediatrics</option>
+                                                    <option value="Obstetrics & Gynecology">Obstetrics & Gynecology</option>
+                                                    <option value="Cardiology">Cardiology</option>
+                                                    <option value="Neurology">Neurology</option>
+                                                    <option value="Orthopedics">Orthopedics</option>
+                                                </select>
                                             </div>
                                             <div className="space-y-2">
-                                                <Label htmlFor="grade">Grade</Label>
-                                                <Input id="grade" placeholder="e.g. Medical Officer" value={grade} onChange={(e) => setGrade(e.target.value)} className="h-11" />
+                                                <Label htmlFor="grade">Clinical Rank</Label>
+                                                <select id="grade" value={grade} onChange={(e) => setGrade(e.target.value)} className="h-11 w-full rounded-lg border border-slate-200 px-3 text-sm bg-white">
+                                                    <option value="" disabled>Select Rank</option>
+                                                    <option value="House Officer">House Officer</option>
+                                                    <option value="Medical Officer">Medical Officer</option>
+                                                    <option value="Senior Medical Officer">Senior Medical Officer</option>
+                                                    <option value="Specialist">Specialist</option>
+                                                    <option value="Consultant">Consultant</option>
+                                                    <option value="Senior Consultant">Senior Consultant</option>
+                                                </select>
                                             </div>
                                         </div>
 

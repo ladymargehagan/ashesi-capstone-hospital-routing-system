@@ -241,11 +241,31 @@ function ReferralFormContent() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
+
+        if (!formData.patient_id) {
+            alert('Please select a patient before submitting the referral.');
+            setLoading(false);
+            return;
+        }
+
+        if (!formData.receiving_hospital_id) {
+            alert('Please select a receiving hospital.');
+            setLoading(false);
+            return;
+        }
+
+        if (!user || (!user.physician_id && !user.id) || !user.hospital_id) {
+            alert('User profile information is incomplete. Please log in again.');
+            setLoading(false);
+            return;
+        }
+
         if (String(formData.receiving_hospital_id) === String(user?.hospital_id)) {
             alert('You cannot refer a patient to your own hospital. Please select a different receiving hospital.');
             setLoading(false);
             return;
         }
+
         try {
             const payload = {
                 patient_id: parseInt(String(formData.patient_id)),

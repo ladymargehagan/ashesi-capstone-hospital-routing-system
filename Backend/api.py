@@ -40,6 +40,7 @@ from endpoints.patients import router as patients_router
 from endpoints.users import router as users_router
 from endpoints.specialists import router as specialists_router
 from endpoints.notifications import router as notifications_router
+from endpoints.options import router as options_router
 
 # ---------------------------------------------------------------------------
 # App setup
@@ -70,6 +71,7 @@ app.include_router(patients_router)
 app.include_router(users_router)
 app.include_router(specialists_router)
 app.include_router(notifications_router)
+app.include_router(options_router)
 
 # ---------------------------------------------------------------------------
 # Background Tasks

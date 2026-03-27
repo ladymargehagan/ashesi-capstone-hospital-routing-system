@@ -25,6 +25,9 @@ router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 # ---- request models ----
 
+import re
+from pydantic import BaseModel, Field, field_validator
+
 class LoginRequest(BaseModel):
     email: str
     password: str
@@ -37,6 +40,28 @@ class DoctorRegisterRequest(BaseModel):
     email: str
     password: str
     phone_number: Optional[str] = None
+    
+    @field_validator("email")
+    @classmethod
+    def validate_email(cls, v):
+        if not re.match(r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)", v):
+            raise ValueError("Invalid email format")
+        return v
+        
+    @field_validator("password")
+    @classmethod
+    def validate_password(cls, v):
+        if len(v) < 8:
+            raise ValueError("Password must be at least 8 characters long")
+        if not re.search(r"[A-Z]", v):
+            raise ValueError("Password must contain at least one uppercase letter")
+        if not re.search(r"[a-z]", v):
+            raise ValueError("Password must contain at least one lowercase letter")
+        if not re.search(r"[0-9]", v):
+            raise ValueError("Password must contain at least one number")
+        if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", v):
+            raise ValueError("Password must contain at least one special character")
+        return v
     # Professional
     hospital_id: int
     license_number: str
