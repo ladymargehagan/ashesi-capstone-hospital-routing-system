@@ -116,16 +116,16 @@ async def referral_timeout_sweep():
                         if not queue:
                             # Exhausted
                             cur.execute(
-                                "UPDATE referrals SET status = 'needs_manual_routing', updated_at = %s WHERE referral_id = %s",
-                                (now, r["referral_id"])
+                                "UPDATE referrals SET status = 'cancelled', cancellation_reason = 'Routing queue exhausted — no hospitals accepted' WHERE referral_id = %s",
+                                (r["referral_id"],)
                             )
                             # NOTE: In production, notify referring physician here.
                         else:
                             # Pop next hospital
                             next_hospital_id = queue.pop(0)
                             cur.execute(
-                                "UPDATE referrals SET receiving_hospital_id = %s, routing_queue = %s, submitted_at = %s, updated_at = %s WHERE referral_id = %s",
-                                (next_hospital_id, json.dumps(queue), now, now, r["referral_id"])
+                                "UPDATE referrals SET receiving_hospital_id = %s, routing_queue = %s, submitted_at = %s WHERE referral_id = %s",
+                                (next_hospital_id, json.dumps(queue), now, r["referral_id"])
                             )
                             
                             # Notify new receiving hospital

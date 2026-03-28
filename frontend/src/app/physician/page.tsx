@@ -117,14 +117,8 @@ export default function PhysicianDashboard() {
                 />
             </div>
 
-            <div className="mb-6 grid grid-cols-1 md:grid-cols-[1fr_300px] gap-6">
-                <div>
-                     {/* We can place something here later or leave the chart full width. Actually, let's keep the chart full width or centered */}
-                </div>
-            </div>
-
             {/* Outcomes Chart */}
-            <div className="mb-6 h-72 lg:w-1/2">
+            <div className="mb-6 lg:w-1/2">
                 <ReferralOutcomesChart referrals={outgoingReferrals} />
             </div>
 

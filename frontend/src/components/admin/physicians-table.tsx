@@ -16,6 +16,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { usersApi } from '@/lib/api-client';
 import { Check, X, Loader2, Search } from 'lucide-react';
+import { useToast } from '@/components/ui/toast-provider';
 
 interface PhysiciansTableProps {
     physicians: Physician[];
@@ -24,6 +25,7 @@ interface PhysiciansTableProps {
 
 export function PhysiciansTable({ physicians, onStatusChanged }: PhysiciansTableProps) {
     const [actionLoading, setActionLoading] = useState<string | null>(null);
+    const toast = useToast();
     const [nameFilter, setNameFilter] = useState('');
     const [hospitalFilter, setHospitalFilter] = useState('all');
     const [specFilter, setSpecFilter] = useState('all');
@@ -54,7 +56,7 @@ export function PhysiciansTable({ physicians, onStatusChanged }: PhysiciansTable
             await usersApi.updateStatus(physician.user_id, status);
             onStatusChanged?.();
         } catch (err) {
-            alert(err instanceof Error ? err.message : `Failed to ${action} physician`);
+            toast.error(err instanceof Error ? err.message : `Failed to ${action} physician`);
         } finally {
             setActionLoading(null);
         }

@@ -13,12 +13,14 @@ import { Badge } from '@/components/ui/badge';
 
 import { User, Mail, Building2, Shield, Calendar, Loader2, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+import { useToast } from '@/components/ui/toast-provider';
 
 export default function ProfilePage() {
     const { user, logout } = useAuth();
     const router = useRouter();
     const [loading, setLoading] = useState(false);
     const [editing, setEditing] = useState(false);
+    const toast = useToast();
 
     // Form state
     const [name, setName] = useState(user?.full_name || '');
@@ -67,7 +69,7 @@ export default function ProfilePage() {
         await new Promise(resolve => setTimeout(resolve, 1000));
         setLoading(false);
         setEditing(false);
-        alert('Profile updated successfully!');
+        toast.success('Profile updated successfully!');
     };
 
     const handleSignOut = () => {

@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { RecommendationsModal } from '@/components/physician/recommendations-modal';
 import { patientsApi, hospitalsApi, referralsApi, resourcesApi } from '@/lib/api-client';
 import { getRecommendations } from '@/lib/referral-api';
+import { useToast } from '@/components/ui/toast-provider';
 import { useAuth } from '@/hooks/use-auth';
 import { ReferralFormData, Patient, Hospital, EngineRecommendation, EngineResponse, ReferralReason } from '@/types';
 import { ArrowLeft, TrendingUp, Loader2, Search, Building2, Bed, Heart, Users, CheckCircle, X, AlertTriangle, Paperclip, Upload } from 'lucide-react';
@@ -33,6 +34,7 @@ function ReferralFormContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const { user } = useAuth();
+    const toast = useToast();
     const preselectedPatientId = searchParams.get('patientId') || searchParams.get('patient');
 
     const [showRecommendations, setShowRecommendations] = useState(false);
@@ -93,7 +95,7 @@ function ReferralFormContent() {
 
     // Find preselected patient
     const preselectedPatient = preselectedPatientId
-        ? allPatients.find(p => p.id === preselectedPatientId)
+        ? allPatients.find(p => String(p.id) === String(preselectedPatientId))
         : null;
 
     const getAge = (dob?: string) => {
@@ -142,8 +144,8 @@ function ReferralFormContent() {
 
     // Auto-select patient when data loads
     useEffect(() => {
-        if (preselectedPatientId && allPatients.length > 0 && formData.patient_id !== preselectedPatientId) {
-            handlePatientSelect(preselectedPatientId);
+        if (preselectedPatientId && allPatients.length > 0 && String(formData.patient_id) !== String(preselectedPatientId)) {
+            handlePatientSelect(String(preselectedPatientId));
         }
     }, [allPatients, preselectedPatientId]);
 
@@ -165,11 +167,11 @@ function ReferralFormContent() {
             return;
         }
 
-        const patient = allPatients.find(p => p.id === patientId);
+        const patient = allPatients.find(p => String(p.id) === String(patientId));
         if (patient) {
             setFormData({
                 ...formData,
-                patient_id: patient.id,
+                patient_id: String(patient.id),
                 full_name: patient.full_name,
                 date_of_birth: patient.date_of_birth || '',
                 sex: patient.sex || 'male',
@@ -268,25 +270,25 @@ function ReferralFormContent() {
         setLoading(true);
 
         if (!formData.patient_id) {
-            alert('Please select a patient before submitting the referral.');
+            toast.warning('Please select a patient before submitting the referral.');
             setLoading(false);
             return;
         }
 
         if (!formData.receiving_hospital_id) {
-            alert('Please select a receiving hospital.');
+            toast.warning('Please select a receiving hospital.');
             setLoading(false);
             return;
         }
 
         if (!user || (!user.physician_id && !user.id) || !user.hospital_id) {
-            alert('User profile information is incomplete. Please log in again.');
+            toast.error('User profile information is incomplete. Please log in again.');
             setLoading(false);
             return;
         }
 
         if (String(formData.receiving_hospital_id) === String(user?.hospital_id)) {
-            alert('You cannot refer a patient to your own hospital. Please select a different receiving hospital.');
+            toast.warning('You cannot refer a patient to your own hospital. Please select a different receiving hospital.');
             setLoading(false);
             return;
         }
@@ -339,11 +341,11 @@ function ReferralFormContent() {
                 setUploadProgress('');
             }
 
-            alert('Referral submitted successfully!');
+            toast.success('Referral submitted successfully!');
             router.push('/physician');
         } catch (err) {
             console.error('Failed to create referral:', err);
-            alert('Failed to submit referral. Please try again.');
+            toast.error('Failed to submit referral. Please try again.');
         } finally {
             setLoading(false);
         }
@@ -428,7 +430,7 @@ function ReferralFormContent() {
                         <div className="space-y-2">
                             <Label htmlFor="patient">Select Patient</Label>
                             <Select
-                                value={formData.patient_id}
+                                value={String(formData.patient_id || '')}
                                 onValueChange={handlePatientSelect}
                             >
                                 <SelectTrigger>
@@ -439,7 +441,7 @@ function ReferralFormContent() {
                                         + Create New Patient
                                     </SelectItem>
                                     {allPatients.map((patient) => (
-                                        <SelectItem key={patient.id} value={patient.id}>
+                                        <SelectItem key={patient.id} value={String(patient.id)}>
                                             {patient.full_name} — {patient.patient_identifier}
                                         </SelectItem>
                                     ))}

@@ -13,6 +13,7 @@ import { hospitalsApi, usersApi, healthApi } from '@/lib/api-client';
 import { Hospital, Physician } from '@/types';
 import { Building2, Users, CheckCircle, Clock, Search, Loader2, Stethoscope, Activity, Plus, ShieldAlert, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useToast } from '@/components/ui/toast-provider';
 
 export default function AdminDashboard() {
     const [activeTab, setActiveTab] = useState('physicians');
@@ -23,6 +24,7 @@ export default function AdminDashboard() {
     const [healthData, setHealthData] = useState<any[]>([]);
     const [auditLoading, setAuditLoading] = useState(false);
     const [loading, setLoading] = useState(true);
+    const toast = useToast();
 
     const loadData = () => {
         setLoading(true);
@@ -41,10 +43,10 @@ export default function AdminDashboard() {
         setAuditLoading(true);
         try {
             const res = await healthApi.runAudit();
-            alert(`Audit Complete:\n${res.summary}`);
+            toast.success(res.summary, 'Audit Complete');
             loadData(); // refresh health data
         } catch (err: any) {
-            alert(err.message || 'Failed to trigger audit');
+            toast.error(err.message || 'Failed to trigger audit');
         } finally {
             setAuditLoading(false);
         }

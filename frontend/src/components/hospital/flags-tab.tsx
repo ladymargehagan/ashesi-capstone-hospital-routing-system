@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { hospitalsApi } from '@/lib/api-client';
 import { CheckCircle, AlertTriangle, Loader2 } from 'lucide-react';
+import { useToast } from '@/components/ui/toast-provider';
 
 interface FlagsTabProps {
     flags: any[];
@@ -14,6 +15,7 @@ interface FlagsTabProps {
 
 export function FlagsTab({ flags, onFlagResolved }: FlagsTabProps) {
     const [resolvingId, setResolvingId] = useState<string | null>(null);
+    const toast = useToast();
 
     const handleResolve = async (flagId: string) => {
         setResolvingId(flagId);
@@ -23,7 +25,7 @@ export function FlagsTab({ flags, onFlagResolved }: FlagsTabProps) {
                 onFlagResolved();
             }
         } catch (err: any) {
-            alert(err.message || 'Failed to resolve flag');
+            toast.error(err.message || 'Failed to resolve flag');
         } finally {
             setResolvingId(null);
         }

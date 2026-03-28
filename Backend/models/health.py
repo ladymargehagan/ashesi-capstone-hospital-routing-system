@@ -164,7 +164,7 @@ def execute_system_audit(triggered_by_user_id: int):
         for sa in super_admins:
             cur.execute("""
                 INSERT INTO notifications (user_id, message, type)
-                VALUES (%s, %s, 'system_alert')
+                VALUES (%s, %s, 'data_flagged')
             """, (sa["user_id"], f"System Audit: {message}"))
             
     return {"success": True, "alerts_generated": len(stale_hospitals) + len(critical_hospitals), "summary": message}

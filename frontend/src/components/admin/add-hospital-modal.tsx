@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { hospitalsApi } from '@/lib/api-client';
 import { Loader2, Plus, Copy, Check } from 'lucide-react';
+import { useToast } from '@/components/ui/toast-provider';
 
 interface AddHospitalModalProps {
     open: boolean;
@@ -18,6 +19,7 @@ interface AddHospitalModalProps {
 export function AddHospitalModal({ open, onClose, onAdded }: AddHospitalModalProps) {
     const [loading, setLoading] = useState(false);
     const [successData, setSuccessData] = useState<{ invite_token?: string } | null>(null);
+    const toast = useToast();
     const [copied, setCopied] = useState(false);
     
     // Form state
@@ -75,7 +77,7 @@ export function AddHospitalModal({ open, onClose, onAdded }: AddHospitalModalPro
                 onAdded?.();
             }
         } catch (err: any) {
-            alert(err.message || 'Failed to create hospital');
+            toast.error(err.message || 'Failed to create hospital');
         } finally {
             setLoading(false);
         }

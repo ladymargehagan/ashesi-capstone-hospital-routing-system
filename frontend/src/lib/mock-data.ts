@@ -83,7 +83,7 @@ export const mockHospitals: Hospital[] = [
         license_number: 'HLC-001',
         address: '123 Main Street, Accra',
         gps_coordinates: { lat: 5.6037, lng: -0.1870 },
-        tier: 'tier_3',
+        level: 'teaching',
         type: 'teaching',
         ownership: 'public',
         operating_hours: '24/7',
@@ -97,7 +97,7 @@ export const mockHospitals: Hospital[] = [
         license_number: 'HLC-002',
         address: '456 Central Ave, Accra',
         gps_coordinates: { lat: 5.5913, lng: -0.1786 },
-        tier: 'tier_1',
+        level: 'district',
         type: 'polyclinic',
         ownership: 'private',
         operating_hours: 'Mon-Sat 7am-8pm',
@@ -111,7 +111,7 @@ export const mockHospitals: Hospital[] = [
         license_number: 'HLC-003',
         address: '456 Oak Ave, Kumasi',
         gps_coordinates: { lat: 6.6884, lng: -1.6244 },
-        tier: 'tier_2',
+        level: 'regional',
         type: 'regional',
         ownership: 'faith_based',
         operating_hours: '24/7',
@@ -125,7 +125,7 @@ export const mockHospitals: Hospital[] = [
         license_number: 'HLC-004',
         address: '789 River Road, Accra',
         gps_coordinates: { lat: 5.6100, lng: -0.1950 },
-        tier: 'tier_2',
+        level: 'regional',
         type: 'specialist',
         ownership: 'private',
         operating_hours: '24/7',
@@ -139,7 +139,7 @@ export const mockHospitals: Hospital[] = [
         license_number: 'HLC-005',
         address: '1 Guggisberg Ave, Accra',
         gps_coordinates: { lat: 5.5348, lng: -0.2271 },
-        tier: 'tier_3',
+        level: 'teaching',
         type: 'teaching',
         ownership: 'public',
         operating_hours: '24/7',
@@ -153,7 +153,7 @@ export const mockHospitals: Hospital[] = [
         license_number: 'HLC-006',
         address: 'Castle Road, Ridge, Accra',
         gps_coordinates: { lat: 5.5589, lng: -0.1969 },
-        tier: 'tier_2',
+        level: 'regional',
         type: 'regional',
         ownership: 'public',
         operating_hours: '24/7',
@@ -167,7 +167,7 @@ export const mockHospitals: Hospital[] = [
         license_number: 'HLC-007',
         address: '23 North Airport Rd, Accra',
         gps_coordinates: { lat: 5.6050, lng: -0.1720 },
-        tier: 'tier_2',
+        level: 'regional',
         type: 'specialist',
         ownership: 'private',
         operating_hours: '24/7',
@@ -421,7 +421,7 @@ export const mockHospitalStats: HospitalStats = {
 };
 
 export const mockAdminStats: AdminStats = {
-    pending_hospitals: 2,
+    pending_physicians: 2,
     total_physicians: 3,
     active_hospitals: 5,
     total_hospitals: 7
@@ -521,7 +521,7 @@ export const registerHospital = (data: {
     hospital_name: string;
     license_number: string;
     address: string;
-    tier: Hospital['tier'];
+    level: Hospital['level'];
     type: Hospital['type'];
     ownership: Hospital['ownership'];
     operating_hours: string;
@@ -541,7 +541,7 @@ export const registerHospital = (data: {
         name: data.hospital_name,
         license_number: data.license_number,
         address: data.address,
-        tier: data.tier,
+        level: data.level,
         type: data.type,
         ownership: data.ownership,
         operating_hours: data.operating_hours || undefined,

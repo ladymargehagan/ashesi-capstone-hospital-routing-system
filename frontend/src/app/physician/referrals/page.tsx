@@ -11,8 +11,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ReferralsTable } from '@/components/physician/referrals-table';
 import { referralsApi } from '@/lib/api-client';
 import { Referral } from '@/types';
-import { Search, Plus, Loader2, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
+import { Search, Plus, Loader2, ArrowUpRight, ArrowDownLeft, Clock, CheckCircle, XCircle, Truck } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
+import { ReferralOutcomesChart } from '@/components/physician/referral-outcomes-chart';
+import { StatsCard } from '@/components/stats-card';
 
 export default function ReferralsPage() {
     const { user } = useAuth();
@@ -101,6 +103,43 @@ export default function ReferralsPage() {
                         <SelectItem value="cancelled">Cancelled</SelectItem>
                     </SelectContent>
                 </Select>
+            </div>
+
+            {/* Stats */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <StatsCard
+                    title="Pending"
+                    value={outgoing.filter(r => r.status === 'pending').length}
+                    description="Awaiting response"
+                    icon={Clock}
+                    iconColor="text-amber-600"
+                />
+                <StatsCard
+                    title="In Transit"
+                    value={outgoing.filter(r => r.status === 'in_transit').length}
+                    description="Patients en route"
+                    icon={Truck}
+                    iconColor="text-blue-600"
+                />
+                <StatsCard
+                    title="Completed"
+                    value={outgoing.filter(r => r.status === 'completed').length}
+                    description="Successfully completed"
+                    icon={CheckCircle}
+                    iconColor="text-green-600"
+                />
+                <StatsCard
+                    title="Rejected / Cancelled"
+                    value={outgoing.filter(r => ['rejected', 'cancelled'].includes(r.status)).length}
+                    description="Not fulfilled"
+                    icon={XCircle}
+                    iconColor="text-red-600"
+                />
+            </div>
+
+            {/* Outcomes Chart */}
+            <div className="mb-6 lg:w-1/2">
+                <ReferralOutcomesChart referrals={outgoing} />
             </div>
 
             {/* Tabs */}

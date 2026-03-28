@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { hospitalsApi } from '@/lib/api-client';
 import { useState } from 'react';
 import { Loader2, Power, PowerOff } from 'lucide-react';
+import { useToast } from '@/components/ui/toast-provider';
 
 interface HospitalsTableProps {
     hospitals: Hospital[];
@@ -22,6 +23,7 @@ interface HospitalsTableProps {
 
 export function HospitalsTable({ hospitals, onStatusChanged }: HospitalsTableProps) {
     const [actionLoading, setActionLoading] = useState<string | null>(null);
+    const toast = useToast();
 
     const toggleStatus = async (hospitalId: string, currentStatus: string) => {
         setActionLoading(hospitalId);
@@ -30,7 +32,7 @@ export function HospitalsTable({ hospitals, onStatusChanged }: HospitalsTablePro
             await hospitalsApi.updateStatus(hospitalId, newStatus);
             onStatusChanged?.();
         } catch (err: any) {
-            alert(err.message || 'Failed to update hospital status');
+            toast.error(err.message || 'Failed to update hospital status');
         } finally {
             setActionLoading(null);
         }
