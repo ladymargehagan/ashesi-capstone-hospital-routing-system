@@ -154,7 +154,11 @@ def execute_system_audit(triggered_by_user_id: int):
         """, (triggered_by_user_id, '{"result": "' + message + '"}'))
         
         # Notify all super_admins
-        cur.execute("SELECT user_id FROM users WHERE role = 'super_admin'")
+        cur.execute("""
+            SELECT u.user_id FROM users u
+            JOIN role r ON u.role_id = r.role_id
+            WHERE r.role_name = 'super_admin'
+        """)
         super_admins = cur.fetchall()
         
         for sa in super_admins:
