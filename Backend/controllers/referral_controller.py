@@ -56,13 +56,30 @@ def _get_backup_suggestions(referral_row: dict) -> list:
 
 def _notify_no_capacity(physician_user_id: int, referral_id: int, patient_name: str, backup_msg: str):
     """Tell the physician that all 5 routing options were rejected, with backup alternatives."""
+    from services.email_service import _base_email
+    msg = (
+        f"Referral #{referral_id} for {patient_name}: all recommended hospitals are at capacity."
+        f"{backup_msg} Please review and re-submit or contact a hospital directly."
+    )
     notify_user(
         user_id=physician_user_id,
-        message=(
-            f"Referral #{referral_id} for {patient_name}: all recommended hospitals are at capacity."
-            f"{backup_msg} Please review and re-submit or contact a hospital directly."
-        ),
+        message=msg,
         notification_type="referral_no_capacity",
+        email_subject=f"[HRS] Urgent — No Capacity for {patient_name}",
+        email_body=_base_email(
+            "All Hospitals At Capacity",
+            f"""
+            <p style="color: #dc2626; font-weight: 600;">All recommended hospitals have declined this referral.</p>
+            <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
+                <tr><td style="padding: 8px; color: #64748b;">Referral ID</td>
+                    <td style="padding: 8px; font-weight: 600;">#{referral_id}</td></tr>
+                <tr><td style="padding: 8px; color: #64748b;">Patient</td>
+                    <td style="padding: 8px; font-weight: 600;">{patient_name}</td></tr>
+            </table>
+            <p>{backup_msg or 'No alternative hospitals could be found.'}</p>
+            <p>Please log in to review the referral and take manual action.</p>
+            """,
+        ),
     )
 
 

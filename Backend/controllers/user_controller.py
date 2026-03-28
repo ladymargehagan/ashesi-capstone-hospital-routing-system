@@ -1,5 +1,5 @@
 from typing import Optional
-from services.email_service import notify_account_approved
+from services.email_service import notify_account_approved, notify_account_rejected
 from utils.audit import log_action
 
 from models.user import (
@@ -69,14 +69,17 @@ def change_user_status(user_id: int, status: str) -> dict:
     # If this user is a physician, also update the PHYSICIANS table
     update_physician_status_in_db(user_id, status)
 
-    # Send approval email if status is active
-    if status == "active":
+    # Send notification email for status changes
+    if status in ("active", "rejected"):
         full_name = fetch_user_name_by_id(user_id)
         if full_name:
             try:
-                notify_account_approved(user_id, full_name)
+                if status == "active":
+                    notify_account_approved(user_id, full_name)
+                else:
+                    notify_account_rejected(user_id, full_name)
             except Exception as e:
-                print(f"[WARN] Account approval notification failed: {e}")
+                print(f"[WARN] Account status notification failed: {e}")
 
     log_action(user_id, "user_status_changed", entity_type="user", entity_id=user_id, details={"status": status})
     return {"success": True, "user_id": str(user_id), "status": status}

@@ -172,6 +172,7 @@ def notify_referral_status_changed(
     status_labels = {
         "approved": "✅ Accepted",
         "rejected": "❌ Rejected",
+        "arrived": "🏥 Patient Arrived",
         "completed": "🏁 Completed",
         "cancelled": "🚫 Cancelled",
         "in_transit": "🚑 Patient Dispatched (In Transit)",
@@ -264,12 +265,15 @@ def notify_patient_dispatched_and_updates(
         message = f"New transit update for {patient_name} (Referral #{referral_id}): {update_text[:50]}..."
         body_content = f"<p>A new condition update was posted during transit:</p><blockquote style='border-left: 4px solid #3b82f6; padding-left: 10px; color: #475569;'>{update_text}</blockquote>"
 
+    # Only email for patient_dispatched (actionable); transit updates stay in-app only
+    should_email = event_type == "patient_dispatched"
+
     for uid in target_user_ids:
         notify_user(
             user_id=uid,
             message=message,
             notification_type=event_type,
-            email_subject=subject,
+            email_subject=subject if should_email else None,
             email_body=_base_email(
                 title,
                 f"""
@@ -279,7 +283,7 @@ def notify_patient_dispatched_and_updates(
                     <tr><td style="padding: 8px; color: #64748b;">Patient</td><td style="padding: 8px; font-weight: 600;">{patient_name}</td></tr>
                 </table>
                 """
-            ),
+            ) if should_email else None,
         )
 
 
@@ -294,15 +298,33 @@ def notify_account_approved(user_id: int, full_name: str):
             "Account Approved",
             f"""
             <p>Dear {full_name},</p>
-            <p>Your HRS account has been <strong style="color: #16a34a;">approved</strong>. 
+            <p>Your HRS account has been <strong style="color: #16a34a;">approved</strong>.
             You can now log in and start creating patient referrals.</p>
             <p style="margin-top: 20px;">
-                <a href="http://localhost:3000" 
-                   style="background: #1e40af; color: white; padding: 12px 24px; 
+                <a href="http://localhost:3000"
+                   style="background: #1e40af; color: white; padding: 12px 24px;
                           border-radius: 8px; text-decoration: none; display: inline-block;">
                     Log In to HRS
                 </a>
             </p>
+            """,
+        ),
+    )
+
+
+def notify_account_rejected(user_id: int, full_name: str):
+    """Notify a doctor that their account has been rejected."""
+    notify_user(
+        user_id=user_id,
+        message="Your account registration has been rejected. Please contact an administrator for details.",
+        notification_type="account_rejected",
+        email_subject="[HRS] Account Registration Update",
+        email_body=_base_email(
+            "Account Registration Update",
+            f"""
+            <p>Dear {full_name},</p>
+            <p>We regret to inform you that your HRS account registration has not been approved at this time.</p>
+            <p>If you believe this is in error, please contact your hospital administrator for more information.</p>
             """,
         ),
     )
