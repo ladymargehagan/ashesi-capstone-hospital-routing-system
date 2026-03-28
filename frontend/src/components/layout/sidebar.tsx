@@ -26,6 +26,7 @@ const physicianNavItems: NavItem[] = [
     { title: 'Patients', href: '/physician/patients', icon: Users },
     { title: 'Referrals', href: '/physician/referrals', icon: FileText },
     { title: 'New Referral', href: '/physician/referral', icon: ClipboardList },
+    { title: 'My Hospital', href: '/physician/my-hospital', icon: Bed },
     { title: 'Hospitals', href: '/physician/hospitals', icon: Building2 },
 ];
 

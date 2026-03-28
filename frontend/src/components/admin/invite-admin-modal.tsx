@@ -22,6 +22,7 @@ export function InviteAdminModal({ open, onClose, hospitals }: InviteAdminModalP
     const [hospitalId, setHospitalId] = useState('');
     const [loading, setLoading] = useState(false);
     const [inviteLink, setInviteLink] = useState('');
+    const [emailSent, setEmailSent] = useState(false);
     const [copied, setCopied] = useState(false);
     const toast = useToast();
 
@@ -41,7 +42,12 @@ export function InviteAdminModal({ open, onClose, hospitals }: InviteAdminModalP
         try {
             const res = await superAdminApi.generateInvite(email, hospitalId);
             setInviteLink(res.invite_link);
-            toast.success('Invite generated successfully!');
+            setEmailSent(res.email_sent);
+            if (res.email_sent) {
+                toast.success(`Invite emailed to ${email}!`);
+            } else {
+                toast.success('Invite generated — email not configured, share the link manually.');
+            }
         } catch (err: unknown) {
             const message = err instanceof Error ? err.message : 'Failed to generate invite';
             toast.error(message);
@@ -120,7 +126,12 @@ export function InviteAdminModal({ open, onClose, hospitals }: InviteAdminModalP
                             <CheckCircle2 className="h-5 w-5 mt-0.5" />
                             <div>
                                 <h4 className="font-medium">Invite Generated</h4>
-                                <p className="text-sm mt-1">Copy the link below and send it to {email} to complete their registration.</p>
+                                <p className="text-sm mt-1">
+                                    {emailSent
+                                        ? `An invitation email has been sent to ${email}. They can also use the link below.`
+                                        : `Copy the link below and send it to ${email} to complete their registration.`
+                                    }
+                                </p>
                             </div>
                         </div>
 

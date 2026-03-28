@@ -221,6 +221,12 @@ export const resourcesApi = {
             `/api/resources/${hospitalId}`,
             { method: 'POST', body: JSON.stringify(data) },
         ),
+
+    reportInaccuracy: (hospitalId: string, resourceType: string, notes: string) =>
+        apiFetch<{ success: boolean; message: string }>(
+            `/api/resources/${hospitalId}/report-inaccuracy`,
+            { method: 'POST', body: JSON.stringify({ resource_type: resourceType, notes }) },
+        ),
 };
 
 // ---------------------------------------------------------------------------
@@ -333,7 +339,7 @@ export const specialistsApi = {
 
 export const superAdminApi = {
     generateInvite: (email: string, hospitalId: string) =>
-        apiFetch<{ success: boolean; message: string; token: string; invite_link: string }>(
+        apiFetch<{ success: boolean; message: string; token: string; invite_link: string; email_sent: boolean }>(
             '/api/super-admin/invites',
             { method: 'POST', body: JSON.stringify({ email, hospital_id: parseInt(hospitalId) }) }
         ),
