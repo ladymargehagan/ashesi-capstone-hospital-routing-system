@@ -66,12 +66,15 @@ def fetch_referral_metadata(referral_id: int):
             SELECT r.*,
                    rh.name AS referring_hospital_name,
                    recvh.name AS receiving_hospital_name,
-                   u.full_name AS physician_name
+                   u.full_name AS physician_name,
+                   au.full_name AS assigned_physician_name
             FROM referrals r
             JOIN hospitals rh ON r.referring_hospital_id = rh.hospital_id
             JOIN hospitals recvh ON r.receiving_hospital_id = recvh.hospital_id
             JOIN physicians ph ON r.referring_physician_id = ph.physician_id
             JOIN users u ON ph.user_id = u.user_id
+            LEFT JOIN physicians aph ON r.assigned_physician_id = aph.physician_id
+            LEFT JOIN users au ON aph.user_id = au.user_id
             WHERE r.referral_id = %s
             """,
             (referral_id,),

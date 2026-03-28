@@ -98,11 +98,22 @@ def flag_hospital_data(
 ):
     """Flag a hospital's data as inconsistent. Requires physician role."""
     from models.hospital import insert_hospital_flag
-    
+    from core.db import db_cursor
+
+    # Look up the physician record from the logged-in user_id
+    with db_cursor() as cur:
+        cur.execute(
+            "SELECT physician_id FROM physicians WHERE user_id = %s",
+            (current_user["id"],)
+        )
+        row = cur.fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail="Physician record not found for this user")
+
     flag_id = insert_hospital_flag(
         hospital_id=hospital_id,
         referral_id=req.referral_id,
-        flagging_physician_id=current_user.get("physician_id") or current_user["id"],
+        flagging_physician_id=row["physician_id"],
         category=req.category,
         notes=req.notes
     )

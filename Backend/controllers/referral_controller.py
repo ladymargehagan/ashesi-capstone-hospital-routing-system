@@ -87,6 +87,12 @@ def _row_to_referral(row, details=None, patient=None, attachments=None) -> dict:
         "cancellation_reason": row.get("cancellation_reason"),
         "estimated_arrival_minutes": row.get("estimated_arrival_minutes"),
         "assigned_physician_id": str(row["assigned_physician_id"]) if row.get("assigned_physician_id") else None,
+        # Timestamps
+        "arrived_at": row["arrived_at"].isoformat() if row.get("arrived_at") else None,
+        "outcome_recorded_at": row["outcome_recorded_at"].isoformat() if row.get("outcome_recorded_at") else None,
+        # Completion outcome
+        "outcome": row.get("outcome"),
+        "outcome_notes": row.get("outcome_notes"),
         # Hospital names (joined)
         "referring_hospital_name": row.get("referring_hospital_name"),
         "receiving_hospital_name": row.get("receiving_hospital_name"),
@@ -322,7 +328,7 @@ def process_create_referral(req_data: dict) -> dict:
     return {"success": True, "referral_id": str(referral_id)}
 
 
-def modify_referral_status(referral_id: int, status: str, reason: str = None) -> dict:
+def modify_referral_status(referral_id: int, status: str, reason: str = None, outcome: str = None, outcome_notes: str = None) -> dict:
     # 'arrived' and 'no_capacity' were missing — both are real states in the lifecycle
     valid_statuses = {"pending", "approved", "rejected", "in_transit", "arrived", "completed", "cancelled", "no_capacity"}
     if status not in valid_statuses:
@@ -405,7 +411,8 @@ def modify_referral_status(referral_id: int, status: str, reason: str = None) ->
         "cancelled": "cancelled_at",
     }.get(status)
 
-    reason_col = {"rejected": "rejection_reason", "cancelled": "cancellation_reason", "completed": "final_outcome"}.get(status)
+    # Handle rejection / cancellation reason column
+    reason_col = {"rejected": "rejection_reason", "cancelled": "cancellation_reason"}.get(status)
 
     updates = ["status = %s"]
     params = [status]
@@ -415,6 +422,15 @@ def modify_referral_status(referral_id: int, status: str, reason: str = None) ->
     if reason_col and reason:
         updates.append(f"{reason_col} = %s")
         params.append(reason)
+    # For completion: store enum outcome + free-text outcome_notes separately
+    if status == "completed":
+        if outcome:
+            updates.append("outcome = %s")
+            params.append(outcome)
+        if outcome_notes:
+            updates.append("outcome_notes = %s")
+            params.append(outcome_notes)
+        updates.append("outcome_recorded_at = CURRENT_TIMESTAMP")
 
     params.append(referral_id)
     success = update_referral_status_in_db(referral_id, updates, params)

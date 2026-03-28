@@ -117,7 +117,11 @@ export interface Referral {
     rejection_reason?: string;
     cancellation_reason?: string;
     referral_reason?: string;
-    final_outcome?: string;
+    // Outcome fields (set when completed)
+    outcome?: 'discharged' | 'transferred_again' | 'deceased' | 'ongoing';
+    outcome_notes?: string;
+    outcome_recorded_at?: string;
+    arrived_at?: string;
     estimated_arrival_minutes?: number;
     // Derived fields for display
     patient_name?: string;

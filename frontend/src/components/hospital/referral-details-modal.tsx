@@ -78,8 +78,10 @@ export function ReferralDetailsModal({ referral, open, onClose, onStatusChanged 
 
     if (!referral) return null;
 
-    const details = (fullReferral?.details || referral.details || {}) as Partial<ReferralDetails>;
-    const attachments = (fullReferral?.attachments || referral.attachments || []) as Array<{ id: string; file_name: string; file_type: string; file_size_bytes: number }>;
+    // Merge full fetch data (more complete) over the list entry for display
+    const merged = fullReferral ? { ...referral, ...fullReferral } : referral;
+    const details = (merged.details || {}) as Partial<ReferralDetails>;
+    const attachments = (merged.attachments || []) as Array<{ id: string; file_name: string; file_type: string; file_size_bytes: number }>;
 
     const getSeverityBadge = (severity: string) => {
         const styles: Record<string, string> = {
@@ -97,9 +99,21 @@ export function ReferralDetailsModal({ referral, open, onClose, onStatusChanged 
             approved: 'bg-green-100 text-green-700',
             rejected: 'bg-red-100 text-red-700',
             in_transit: 'bg-blue-100 text-blue-700',
+            arrived: 'bg-purple-100 text-purple-700',
             completed: 'bg-gray-100 text-gray-700',
+            cancelled: 'bg-gray-100 text-gray-500',
+            no_capacity: 'bg-orange-100 text-orange-700',
         };
         return styles[status] || styles.pending;
+    };
+
+    const formatStatus = (s: string) => s.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+
+    const outcomeLabels: Record<string, string> = {
+        discharged: 'Discharged',
+        ongoing: 'Admitted / Ongoing Care',
+        transferred_again: 'Transferred to Another Facility',
+        deceased: 'Deceased',
     };
 
     const handleAction = async (action: 'accept' | 'reject' | 'depart' | 'arrive' | 'complete') => {
@@ -113,12 +127,7 @@ export function ReferralDetailsModal({ referral, open, onClose, onStatusChanged 
             else if (action === 'arrive') status = 'arrived';
             else if (action === 'complete') status = 'completed';
 
-            const payload: any = { status };
-            if (action === 'reject' && responseNotes) {
-                payload.reason = responseNotes;
-            }
-
-            await referralsApi.updateStatus(referral.id, payload.status, payload.reason);
+            await referralsApi.updateStatus(referral.id, status, action === 'reject' && responseNotes ? { reason: responseNotes } : undefined);
             setResponseNotes('');
             const patientName = referral.patient_name
                 || (referral as unknown as Record<string, { full_name?: string }>).patient?.full_name
@@ -145,8 +154,9 @@ export function ReferralDetailsModal({ referral, open, onClose, onStatusChanged 
         }
         setFlagLoading(true);
         try {
+            // Flag the RECEIVING hospital's data inconsistency
             await hospitalsApi.flagData(
-                String(referral.referring_hospital_id),
+                String(referral.receiving_hospital_id),
                 flagCategory,
                 flagNotes,
                 referral.id
@@ -173,8 +183,10 @@ export function ReferralDetailsModal({ referral, open, onClose, onStatusChanged 
         }
         setLoading(true);
         try {
-            const combinedOutcome = `[${finalOutcomeStatus}] ${finalOutcome.trim()}`;
-            await referralsApi.updateStatus(referral.id, 'completed', combinedOutcome);
+            await referralsApi.updateStatus(referral.id, 'completed', {
+                outcome: finalOutcomeStatus,          // DB enum value
+                outcome_notes: finalOutcome.trim(),   // Free-text summary
+            });
             toast.success('Treatment marked completed and outcome recorded.', 'Completed');
             setShowOutcomeForm(false);
             onStatusChanged?.();
@@ -245,16 +257,18 @@ export function ReferralDetailsModal({ referral, open, onClose, onStatusChanged 
     // --- Action guards ---
     // Only receiving hospital admin can approve/reject
     const isPending = referral.status === 'pending' && isReceivingAdmin;
-    // Referring physician marks Patient Dispatched
+    // Referring physician marks Patient Dispatched (approved → in_transit)
     const canDispatch = referral.status === 'approved' && isReferringPhysician;
-    // Referring physician can post transit condition updates
+    // Referring physician posts live condition updates while patient is in transit
     const canPostUpdate = referral.status === 'in_transit' && isReferringPhysician;
-    // Receiving admin (and assigned doctor) can see transit updates + mark arrived
-    const canSeeTransitFeed = referral.status === 'in_transit' && (isAtReceivingHospital || isAtReferringHospital || isAssignedPhysician);
+    // Everyone involved sees the live transit feed
+    const canSeeTransitFeed = referral.status === 'in_transit' &&
+        (isReferringPhysician || isReceivingAdmin || isAssignedPhysician);
+    // Receiving admin OR assigned physician marks patient as Arrived
     const canMarkArrived = referral.status === 'in_transit' && (isReceivingAdmin || isAssignedPhysician);
-    // Receiving doctor OR admin can mark patient as complete
+    // ONLY assigned physician OR receiving admin can complete with outcome
     const canComplete = referral.status === 'arrived' && (isReceivingAdmin || isAssignedPhysician);
-    // Referring physician can flag data inconsistency on an active/arrived referral
+    // Referring physician can flag data inconsistency about the receiving hospital
     const canFlag = isReferringPhysician && ['approved', 'in_transit', 'arrived'].includes(referral.status);
 
     return (
@@ -305,7 +319,7 @@ export function ReferralDetailsModal({ referral, open, onClose, onStatusChanged 
                             <div>
                                 <p className="text-xs text-gray-500 mb-1">Status</p>
                                 <Badge className={getStatusBadge(referral.status)}>
-                                    {referral.status}
+                                    {formatStatus(referral.status)}
                                 </Badge>
                             </div>
                         </div>
@@ -324,6 +338,59 @@ export function ReferralDetailsModal({ referral, open, onClose, onStatusChanged 
                                 </div>
                             </div>
                         </div>
+
+                        {/* Assigned Doctor Info */}
+                        {merged.assigned_physician_name && (
+                            <div className="grid grid-cols-2 gap-3 bg-gray-50 p-3 rounded-lg">
+                                <div>
+                                    <p className="text-xs text-gray-500">Assigned Doctor (Receiving)</p>
+                                    <p className="font-medium text-sm text-purple-700">{merged.assigned_physician_name}</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs text-gray-500">Receiving Hospital</p>
+                                    <p className="font-medium text-sm">{merged.receiving_hospital_name}</p>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Final Outcome — visible to ALL parties when completed */}
+                        {merged.status === 'completed' && (merged.outcome || merged.outcome_notes) && (
+                            <div className="bg-green-50 border border-green-200 rounded-xl p-4">
+                                <div className="flex items-center gap-2 mb-3">
+                                    <CheckCircle className="h-4 w-4 text-green-600" />
+                                    <h3 className="text-sm font-semibold text-green-900">Final Referral Outcome</h3>
+                                    {merged.outcome_recorded_at && (
+                                        <span className="ml-auto text-[10px] text-green-600">
+                                            Recorded {new Date(String(merged.outcome_recorded_at)).toLocaleString()}
+                                        </span>
+                                    )}
+                                </div>
+                                {merged.outcome && (
+                                    <div className="mb-2">
+                                        <p className="text-xs font-medium text-green-700 mb-1">Patient Status</p>
+                                        <Badge className="bg-green-100 text-green-800 border-green-300">
+                                            {outcomeLabels[String(merged.outcome)] || String(merged.outcome)}
+                                        </Badge>
+                                    </div>
+                                )}
+                                {merged.outcome_notes && (
+                                    <div>
+                                        <p className="text-xs font-medium text-green-700 mb-1">Clinical Summary</p>
+                                        <p className="text-sm text-gray-800 bg-white p-3 rounded-lg border border-green-100 leading-relaxed">
+                                            {String(merged.outcome_notes)}
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Rejection / Cancellation reason */}
+                        {merged.status === 'rejected' && merged.rejection_reason && (
+                            <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                                <p className="text-xs font-medium text-red-700 mb-1">Rejection Reason</p>
+                                <p className="text-sm text-gray-800">{String(merged.rejection_reason)}</p>
+                            </div>
+                        )}
 
                         {/* Clinical Details */}
                         {details && Object.values(details).some(v => v) && (
@@ -651,13 +718,10 @@ export function ReferralDetailsModal({ referral, open, onClose, onStatusChanged 
                                                     <SelectValue placeholder="Select final status..." />
                                                 </SelectTrigger>
                                                 <SelectContent>
-                                                    <SelectItem value="Discharged">Discharged</SelectItem>
-                                                    <SelectItem value="Admitted to Ward">Admitted to Ward</SelectItem>
-                                                    <SelectItem value="Transferred to ICU">Transferred to ICU</SelectItem>
-                                                    <SelectItem value="Referred to Another Facility">Referred to Another Facility</SelectItem>
-                                                    <SelectItem value="Absconded">Absconded</SelectItem>
-                                                    <SelectItem value="Deceased">Deceased</SelectItem>
-                                                    <SelectItem value="Other">Other</SelectItem>
+                                                    <SelectItem value="discharged">Discharged</SelectItem>
+                                                    <SelectItem value="ongoing">Admitted / Ongoing Care</SelectItem>
+                                                    <SelectItem value="transferred_again">Transferred to Another Facility</SelectItem>
+                                                    <SelectItem value="deceased">Deceased</SelectItem>
                                                 </SelectContent>
                                             </Select>
                                         </div>

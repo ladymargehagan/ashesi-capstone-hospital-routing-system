@@ -116,10 +116,10 @@ export const referralsApi = {
             { method: 'POST', body: JSON.stringify(data) },
         ),
 
-    updateStatus: (id: string, status: string, reason?: string) =>
+    updateStatus: (id: string, status: string, opts?: { reason?: string; outcome?: string; outcome_notes?: string }) =>
         apiFetch<{ success: boolean }>(
             `/api/referrals/${id}/status`,
-            { method: 'PUT', body: JSON.stringify({ status, reason }) },
+            { method: 'PUT', body: JSON.stringify({ status, ...opts }) },
         ),
 
     assign: (id: string, physicianId: string) =>

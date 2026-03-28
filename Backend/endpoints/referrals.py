@@ -79,6 +79,8 @@ class CreateReferral(BaseModel):
 class ReferralStatusUpdate(BaseModel):
     status: str
     reason: Optional[str] = None
+    outcome: Optional[str] = None       # DB enum: discharged | transferred_again | deceased | ongoing
+    outcome_notes: Optional[str] = None # Free-text summary
 
 
 class ReferralAssign(BaseModel):
@@ -137,7 +139,13 @@ def update_referral_status(
     if req.status in ["approved", "rejected"] and current_user.get("role") == "physician":
         raise HTTPException(status_code=403, detail="Physicians cannot approve or reject referrals.")
 
-    result = modify_referral_status(referral_id, req.status, req.reason)
+    result = modify_referral_status(
+        referral_id,
+        req.status,
+        reason=req.reason,
+        outcome=req.outcome,
+        outcome_notes=req.outcome_notes,
+    )
     if result.get("error"):
         raise HTTPException(status_code=result.get("code", 400), detail=result["message"])
     return result
@@ -211,7 +219,7 @@ def create_transit_update(
     current_user: dict = Depends(get_current_user),
 ):
     """Submit a live condition update for an in-transit patient."""
-    result = add_transit_update(referral_id, payload.update_text, current_user["user_id"])
+    result = add_transit_update(referral_id, payload.update_text, current_user["id"])
     if result.get("error"):
         raise HTTPException(status_code=result.get("code", 400), detail=result["message"])
     return result
