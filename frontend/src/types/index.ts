@@ -93,7 +93,7 @@ export interface Patient {
 // Referral severity and status (maps to REFERRALS table)
 export type ReferralSeverity = 'critical' | 'high' | 'medium' | 'low';
 export type ReferralStability = 'stable' | 'unstable';
-export type ReferralStatus = 'pending' | 'approved' | 'rejected' | 'en_route' | 'arrived' | 'completed' | 'cancelled';
+export type ReferralStatus = 'pending' | 'approved' | 'rejected' | 'in_transit' | 'arrived' | 'completed' | 'cancelled' | 'no_capacity';
 
 // Emergency types supported by the referral engine (referral_engine.py REQUIRED_RESOURCES keys)
 export type ReferralReason = 'cardiac' | 'trauma' | 'respiratory' | 'stroke' | 'obstetric' | 'seizure' | 'general';

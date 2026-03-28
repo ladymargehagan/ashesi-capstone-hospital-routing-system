@@ -173,6 +173,8 @@ def notify_referral_status_changed(
         "rejected": "❌ Rejected",
         "completed": "🏁 Completed",
         "cancelled": "🚫 Cancelled",
+        "in_transit": "🚑 Patient Dispatched (In Transit)",
+        "no_capacity": "⚠️ Hospital Full (No Capacity)",
     }
     status_label = status_labels.get(new_status, new_status.title())
 
@@ -193,6 +195,84 @@ def notify_referral_status_changed(
             """,
         ),
     )
+
+
+def notify_patient_dispatched_and_updates(
+    referral_id: int,
+    patient_name: str,
+    event_type: str,
+    update_text: str = ""
+):
+    """
+    Notify all involved parties (referring doc, receiving doc, both admins)
+    about a patient dispatch or a live transit update.
+    event_type can be 'patient_dispatched' or 'transit_update'
+    """
+    with db_cursor() as cur:
+        # Get users associated with the referral
+        cur.execute(
+            """
+            SELECT p1.user_id as ref_doc_user_id,
+                   p2.user_id as rec_doc_user_id,
+                   r.referring_hospital_id,
+                   r.receiving_hospital_id
+            FROM REFERRALS r
+            JOIN PHYSICIANS p1 ON r.referring_physician_id = p1.physician_id
+            LEFT JOIN PHYSICIANS p2 ON r.assigned_physician_id = p2.physician_id
+            WHERE r.referral_id = %s
+            """,
+            (referral_id,),
+        )
+        ref_data = cur.fetchone()
+        if not ref_data:
+            return
+            
+        cur.execute(
+            """
+            SELECT user_id 
+            FROM USERS u JOIN ROLE rl ON u.role_id = rl.role_id
+            WHERE rl.role_name = 'hospital_admin' 
+              AND u.hospital_id IN (%s, %s)
+            """,
+            (ref_data["referring_hospital_id"], ref_data["receiving_hospital_id"])
+        )
+        admin_users = cur.fetchall()
+
+    target_user_ids = set()
+    target_user_ids.add(ref_data["ref_doc_user_id"])
+    if ref_data["rec_doc_user_id"]:
+        target_user_ids.add(ref_data["rec_doc_user_id"])
+    for a in admin_users:
+        target_user_ids.add(a["user_id"])
+
+    if event_type == "patient_dispatched":
+        subject = f"[HRS] Patient Dispatched — {patient_name}"
+        title = "Patient Dispatched (In Transit)"
+        message = f"Patient {patient_name} (Referral #{referral_id}) has been dispatched and is en route."
+        body_content = f"<p>The referring facility has dispatched {patient_name}. They are currently in transit.</p>"
+    else:
+        subject = f"[HRS] Live Transit Update — {patient_name}"
+        title = "Live Condition Update"
+        message = f"New transit update for {patient_name} (Referral #{referral_id}): {update_text[:50]}..."
+        body_content = f"<p>A new condition update was posted during transit:</p><blockquote style='border-left: 4px solid #3b82f6; padding-left: 10px; color: #475569;'>{update_text}</blockquote>"
+
+    for uid in target_user_ids:
+        notify_user(
+            user_id=uid,
+            message=message,
+            notification_type=event_type,
+            email_subject=subject,
+            email_body=_base_email(
+                title,
+                f"""
+                {body_content}
+                <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
+                    <tr><td style="padding: 8px; color: #64748b;">Referral ID</td><td style="padding: 8px; font-weight: 600;">#{referral_id}</td></tr>
+                    <tr><td style="padding: 8px; color: #64748b;">Patient</td><td style="padding: 8px; font-weight: 600;">{patient_name}</td></tr>
+                </table>
+                """
+            ),
+        )
 
 
 def notify_account_approved(user_id: int, full_name: str):

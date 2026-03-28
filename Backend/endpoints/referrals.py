@@ -24,6 +24,8 @@ from controllers.referral_controller import (
     handle_attachment_upload,
     get_referral_attachments_list,
     get_attachment_file_data,
+    add_transit_update,
+    get_transit_updates,
 )
 from core.auth import get_current_user, require_role
 
@@ -36,6 +38,9 @@ MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
 
 
 # ---- models ----
+
+class TransitUpdateIn(BaseModel):
+    update_text: str
 
 class CreateReferral(BaseModel):
     # If patient_id is -1, dynamic patient_details must be provided
@@ -213,3 +218,28 @@ def download_attachment(
         filename=result["filename"],
         media_type=result["media_type"],
     )
+
+
+@router.post("/{referral_id}/transit-updates")
+def create_transit_update(
+    referral_id: int,
+    payload: TransitUpdateIn,
+    current_user: dict = Depends(get_current_user),
+):
+    """Submit a live condition update for an in-transit patient."""
+    result = add_transit_update(referral_id, payload.update_text, current_user["user_id"])
+    if result.get("error"):
+        raise HTTPException(status_code=result.get("code", 400), detail=result["message"])
+    return result
+
+
+@router.get("/{referral_id}/transit-updates")
+def list_transit_updates(
+    referral_id: int,
+    current_user: dict = Depends(get_current_user),
+):
+    """List all live condition updates for a referral."""
+    result = get_transit_updates(referral_id)
+    if result.get("error"):
+        raise HTTPException(status_code=result.get("code", 400), detail=result["message"])
+    return result

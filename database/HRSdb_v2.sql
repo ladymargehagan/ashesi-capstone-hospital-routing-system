@@ -11,10 +11,15 @@
 --   - NOTIFICATIONS adds email_sent tracking
 -- ==========================================================================
 
+--   - REPLACES 'en_route' with 'in_transit' for referrals
+--   - NEW: TRANSIT_UPDATES table for live condition tracking
+-- ==========================================================================
+
 -- 0. Drop existing tables (in dependency order)
 DROP TABLE IF EXISTS AUDIT_LOGS CASCADE;
 DROP TABLE IF EXISTS PASSWORD_RESETS CASCADE;
 DROP TABLE IF EXISTS NOTIFICATIONS CASCADE;
+DROP TABLE IF EXISTS TRANSIT_UPDATES CASCADE;
 DROP TABLE IF EXISTS REFERRAL_ATTACHMENTS CASCADE;
 DROP TABLE IF EXISTS REFERRAL_DETAILS CASCADE;
 DROP TABLE IF EXISTS REFERRALS CASCADE;
@@ -199,7 +204,7 @@ CREATE TABLE REFERRALS (
     referring_hospital_id INTEGER NOT NULL REFERENCES HOSPITALS(hospital_id),
     receiving_hospital_id INTEGER NOT NULL REFERENCES HOSPITALS(hospital_id),
     status VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (status IN (
-        'pending', 'approved', 'rejected', 'en_route', 'completed', 'cancelled'
+        'pending', 'approved', 'rejected', 'in_transit', 'arrived', 'completed', 'cancelled', 'no_capacity'
     )),
     severity VARCHAR(10) NOT NULL CHECK (severity IN ('critical', 'high', 'medium', 'low')),
     stability VARCHAR(10) NOT NULL CHECK (stability IN ('stable', 'unstable')),
@@ -256,8 +261,19 @@ CREATE TABLE REFERRAL_ATTACHMENTS (
 );
 
 
+-- 11. TRANSIT_UPDATES (NEW)
 -- ==========================================================================
--- 11. NOTIFICATIONS (adds email_sent tracking)
+CREATE TABLE TRANSIT_UPDATES (
+    update_id SERIAL PRIMARY KEY,
+    referral_id INTEGER NOT NULL REFERENCES REFERRALS(referral_id) ON DELETE CASCADE,
+    update_text TEXT NOT NULL,
+    logged_by INTEGER NOT NULL REFERENCES USERS(user_id),
+    logged_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+
+-- ==========================================================================
+-- 12. NOTIFICATIONS (adds email_sent tracking and transit updates)
 -- ==========================================================================
 CREATE TABLE NOTIFICATIONS (
     notification_id SERIAL PRIMARY KEY,
@@ -269,7 +285,8 @@ CREATE TABLE NOTIFICATIONS (
         'referral_created', 'referral_approved', 'referral_rejected',
         'referral_completed', 'referral_cancelled',
         'patient_arrived', 'data_flagged',
-        'account_approved', 'account_rejected'
+        'account_approved', 'account_rejected',
+        'patient_dispatched', 'transit_update'
     )),
     is_read BOOLEAN NOT NULL DEFAULT FALSE,
     email_sent BOOLEAN NOT NULL DEFAULT FALSE,
@@ -280,7 +297,7 @@ CREATE TABLE NOTIFICATIONS (
 
 
 -- ==========================================================================
--- 12. PASSWORD_RESETS
+-- 13. PASSWORD_RESETS
 -- ==========================================================================
 CREATE TABLE PASSWORD_RESETS (
     reset_id SERIAL PRIMARY KEY,
@@ -292,7 +309,7 @@ CREATE TABLE PASSWORD_RESETS (
 
 
 -- ==========================================================================
--- 13. AUDIT_LOGS
+-- 14. AUDIT_LOGS
 -- ==========================================================================
 CREATE TABLE AUDIT_LOGS (
     log_id SERIAL PRIMARY KEY,

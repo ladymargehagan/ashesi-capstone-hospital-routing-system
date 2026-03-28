@@ -150,6 +150,15 @@ export const referralsApi = {
         }
         return res.json() as Promise<{ success: boolean; attachment_id: string; file_name: string }>;
     },
+
+    getTransitUpdates: (id: string | number) =>
+        apiFetch<any>(`/api/referrals/${id}/transit-updates`),
+    
+    addTransitUpdate: (id: string | number, text: string) =>
+        apiFetch<{ success: boolean; update_id: number }>(`/api/referrals/${id}/transit-updates`, {
+            method: 'POST',
+            body: JSON.stringify({ update_text: text }),
+        }),
 };
 
 // ---------------------------------------------------------------------------

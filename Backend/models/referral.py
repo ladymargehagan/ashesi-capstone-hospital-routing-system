@@ -223,3 +223,32 @@ def fetch_attachment_by_id(attachment_id: int):
             (attachment_id,),
         )
         return cur.fetchone()
+
+
+def insert_transit_update(referral_id: int, update_text: str, logged_by: int) -> int:
+    with db_cursor() as cur:
+        cur.execute(
+            """
+            INSERT INTO TRANSIT_UPDATES
+                (referral_id, update_text, logged_by)
+            VALUES (%s, %s, %s)
+            RETURNING update_id
+            """,
+            (referral_id, update_text, logged_by),
+        )
+        return cur.fetchone()["update_id"]
+
+
+def fetch_transit_updates(referral_id: int):
+    with db_cursor() as cur:
+        cur.execute(
+            """
+            SELECT tu.*, u.full_name as logger_name, u.role_id 
+            FROM TRANSIT_UPDATES tu
+            JOIN USERS u ON tu.logged_by = u.user_id
+            WHERE tu.referral_id = %s 
+            ORDER BY tu.logged_at ASC
+            """,
+            (referral_id,),
+        )
+        return cur.fetchall()

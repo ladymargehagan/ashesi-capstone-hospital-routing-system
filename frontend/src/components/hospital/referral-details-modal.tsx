@@ -4,13 +4,14 @@ import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Referral, ReferralDetails, Physician, Hospital } from '@/types';
 import { referralsApi, usersApi, hospitalsApi } from '@/lib/api-client';
 import { useAuth } from '@/hooks/use-auth';
-import { Loader2, FileText, CheckCircle, XCircle, AlertCircle, Clock, CheckCircle2, UserPlus, Paperclip, Navigation, MapPin } from 'lucide-react';
+import { Loader2, FileText, CheckCircle, XCircle, AlertCircle, Clock, CheckCircle2, UserPlus, Paperclip, Navigation, MapPin, Send, Activity } from 'lucide-react';
 import { TripMap } from './trip-map';
 import { useToast } from '@/components/ui/toast-provider';
 
@@ -40,6 +41,10 @@ export function ReferralDetailsModal({ referral, open, onClose, onStatusChanged 
     const [showOutcomeForm, setShowOutcomeForm] = useState(false);
     const [finalOutcome, setFinalOutcome] = useState('');
 
+    const [transitUpdates, setTransitUpdates] = useState<any[]>([]);
+    const [newTransitUpdate, setNewTransitUpdate] = useState('');
+    const [updateLoading, setUpdateLoading] = useState(false);
+
     // Fetch full details when modal opens
     useEffect(() => {
         if (open && referral?.id) {
@@ -48,6 +53,10 @@ export function ReferralDetailsModal({ referral, open, onClose, onStatusChanged 
                 .then((data) => setFullReferral(data))
                 .catch(() => setFullReferral(null))
                 .finally(() => setDetailsLoading(false));
+
+            referralsApi.getTransitUpdates(referral.id)
+                .then((data: any) => setTransitUpdates(data.updates || []))
+                .catch(() => setTransitUpdates([]));
 
             // Load physicians at this hospital for assignment
             if (user?.hospital_id) {
@@ -78,7 +87,7 @@ export function ReferralDetailsModal({ referral, open, onClose, onStatusChanged 
             pending: 'bg-amber-100 text-amber-700',
             approved: 'bg-green-100 text-green-700',
             rejected: 'bg-red-100 text-red-700',
-            en_route: 'bg-blue-100 text-blue-700',
+            in_transit: 'bg-blue-100 text-blue-700',
             completed: 'bg-gray-100 text-gray-700',
         };
         return styles[status] || styles.pending;
@@ -91,7 +100,7 @@ export function ReferralDetailsModal({ referral, open, onClose, onStatusChanged 
             let status = '';
             if (action === 'accept') status = 'approved';
             else if (action === 'reject') status = 'rejected';
-            else if (action === 'depart') status = 'en_route';
+            else if (action === 'depart') status = 'in_transit';
             else if (action === 'arrive') status = 'arrived';
             else if (action === 'complete') status = 'completed';
 
@@ -182,6 +191,23 @@ export function ReferralDetailsModal({ referral, open, onClose, onStatusChanged 
         if (bytes < 1024) return `${bytes} B`;
         if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
         return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+    };
+
+    const handleTransitUpdateSubmit = async () => {
+        if (!newTransitUpdate.trim()) return;
+        setUpdateLoading(true);
+        try {
+            await referralsApi.addTransitUpdate(referral.id, newTransitUpdate);
+            // Reload updates
+            const data: any = await referralsApi.getTransitUpdates(referral.id);
+            setTransitUpdates(data.updates || []);
+            setNewTransitUpdate('');
+            toast.success('Condition update posted successfully.');
+        } catch (err) {
+            toast.error(err instanceof Error ? err.message : 'Failed to post update', 'Error');
+        } finally {
+            setUpdateLoading(false);
+        }
     };
 
     const isPending = referral.status === 'pending';
@@ -345,7 +371,7 @@ export function ReferralDetailsModal({ referral, open, onClose, onStatusChanged 
                         )}
 
                         {/* Assign Doctor (hospital admin only) */}
-                        {user?.role === 'hospital_admin' && user?.hospital_id === referral.receiving_hospital_id && ['approved', 'en_route', 'arrived'].includes(referral.status) && (
+                        {user?.role === 'hospital_admin' && user?.hospital_id === referral.receiving_hospital_id && ['approved', 'in_transit', 'arrived'].includes(referral.status) && (
                             <div>
                                 <h3 className="text-sm font-semibold text-gray-900 mb-2 flex items-center gap-2">
                                     <UserPlus className="h-4 w-4" />
@@ -424,13 +450,62 @@ export function ReferralDetailsModal({ referral, open, onClose, onStatusChanged 
                                     disabled={loading}
                                 >
                                     <Navigation className="h-4 w-4 mr-2" />
-                                    Mark as Departed (En Route)
+                                    Patient Dispatched
                                 </Button>
                             </div>
                         )}
 
-                        {referral.status === 'en_route' && (
+                        {referral.status === 'in_transit' && (
                             <div className="pt-2 border-t mt-4 space-y-4">
+                                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 shadow-inner">
+                                    <h3 className="text-sm font-semibold text-slate-800 mb-3 flex items-center gap-2">
+                                        <Activity className="h-4 w-4 text-blue-500" />
+                                        Live Condition Updates
+                                    </h3>
+                                    
+                                    <div className="space-y-3 mb-4 max-h-[250px] overflow-y-auto pr-2">
+                                        {transitUpdates.length === 0 ? (
+                                            <p className="text-xs text-slate-500 italic">No condition updates logged yet.</p>
+                                        ) : (
+                                            transitUpdates.map(u => (
+                                                <div key={u.update_id} className="bg-white p-3 rounded-lg shadow-sm border border-slate-100">
+                                                    <div className="flex justify-between items-start mb-1">
+                                                        <span className="text-xs font-semibold text-slate-700">{u.logger_name || 'Doctor'}</span>
+                                                        <span className="text-[10px] text-slate-400">
+                                                            {new Date(u.logged_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                        </span>
+                                                    </div>
+                                                    <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap">{u.update_text}</p>
+                                                </div>
+                                            ))
+                                        )}
+                                    </div>
+
+                                    {user?.hospital_id === referral.referring_hospital_id && (
+                                        <div className="flex gap-2">
+                                            <Input 
+                                                placeholder="Add a condition update..." 
+                                                value={newTransitUpdate}
+                                                onChange={(e) => setNewTransitUpdate(e.target.value)}
+                                                className="bg-white text-sm"
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter') {
+                                                        e.preventDefault();
+                                                        handleTransitUpdateSubmit();
+                                                    }
+                                                }}
+                                            />
+                                            <Button 
+                                                size="icon" 
+                                                className="bg-blue-600 hover:bg-blue-700 shrink-0"
+                                                onClick={handleTransitUpdateSubmit}
+                                                disabled={updateLoading || !newTransitUpdate.trim()}
+                                            >
+                                                {updateLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                                            </Button>
+                                        </div>
+                                    )}
+                                </div>
                                 <TripMap
                                     originLat={5.56} // Default lat for now, would be dynamically sourced
                                     originLng={-0.20} // Default lng

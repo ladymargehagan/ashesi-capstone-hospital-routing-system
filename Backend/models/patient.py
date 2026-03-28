@@ -26,7 +26,7 @@ def fetch_patients(physician_id: Optional[int] = None, hospital_id: Optional[int
                 SELECT DISTINCT p.* FROM patients p
                 JOIN referrals r ON p.patient_id = r.patient_id
                 WHERE r.receiving_hospital_id = %s
-                  AND r.status IN ('pending', 'approved', 'en_route', 'completed')
+                  AND r.status IN ('pending', 'approved', 'in_transit', 'completed')
                 ORDER BY full_name
                 """,
                 (hospital_id, hospital_id),

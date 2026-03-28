@@ -16,12 +16,13 @@ from models.referral import (
     fetch_referral_status_info,
     assign_referral_to_physician,
     check_physician_exists_and_active,
-    insert_attachment,
     fetch_attachments,
-    fetch_attachment_by_id
+    fetch_attachment_by_id,
+    insert_transit_update,
+    fetch_transit_updates
 )
 from models.patient import fetch_patient_by_id
-from services.email_service import notify_referral_created, notify_referral_status_changed, notify_user
+from services.email_service import notify_referral_created, notify_referral_status_changed, notify_user, notify_patient_dispatched_and_updates
 from utils.audit import log_action
 
 
@@ -323,7 +324,7 @@ def process_create_referral(req_data: dict) -> dict:
 
 def modify_referral_status(referral_id: int, status: str, reason: str = None) -> dict:
     # 'arrived' and 'no_capacity' were missing — both are real states in the lifecycle
-    valid_statuses = {"pending", "approved", "rejected", "en_route", "arrived", "completed", "cancelled", "no_capacity"}
+    valid_statuses = {"pending", "approved", "rejected", "in_transit", "arrived", "completed", "cancelled", "no_capacity"}
     if status not in valid_statuses:
         return {"error": True, "code": 400, "message": f"Status must be one of: {valid_statuses}"}
 
@@ -395,7 +396,7 @@ def modify_referral_status(referral_id: int, status: str, reason: str = None) ->
             except (json.JSONDecodeError, TypeError):
                 pass
 
-    # --- Standard status update (approved, en_route, arrived, completed, cancelled) ---
+    # --- Standard status update (approved, in_transit, arrived, completed, cancelled) ---
     ts_col = {
         "approved": "approved_at",
         "rejected": "rejected_at",
@@ -423,7 +424,11 @@ def modify_referral_status(referral_id: int, status: str, reason: str = None) ->
 
     try:
         if info:
-            notify_referral_status_changed(referral_id, patient_name, status, physician_user_id)
+            if status == "in_transit":
+                notify_patient_dispatched_and_updates(referral_id, patient_name, "patient_dispatched")
+            else:
+                notify_referral_status_changed(referral_id, patient_name, status, physician_user_id)
+                
             log_action(physician_user_id, "referral_status_changed", entity_type="referral",
                        entity_id=referral_id, details={"new_status": status, "reason": reason})
     except Exception as e:
@@ -497,6 +502,72 @@ def get_referral_attachments_list(referral_id: int) -> list[dict]:
         }
         for r in rows
     ]
+
+
+def fetch_referral_attachment(referral_id: int, attachment_id: int) -> dict:
+    if not check_referral_exists(referral_id):
+        return {"error": True, "code": 404, "message": "Referral not found"}
+        
+    attachment = fetch_attachment_by_id(attachment_id)
+    if not attachment:
+        return {"error": True, "code": 404, "message": "Attachment not found"}
+        
+    # Check if the file still exists on disk
+    if not os.path.exists(attachment["file_path"]):
+        return {"error": True, "code": 404, "message": "File is missing on server"}
+        
+    return {
+        "success": True, 
+        "file_path": attachment["file_path"],
+        "file_name": attachment["file_name"],
+        "file_type": attachment["file_type"]
+    }
+
+
+def add_transit_update(referral_id: int, update_text: str, logged_by: int) -> dict:
+    if not update_text or not update_text.strip():
+        return {"error": True, "code": 400, "message": "Update text is required"}
+
+    if not check_referral_exists(referral_id):
+        return {"error": True, "code": 404, "message": "Referral not found"}
+
+    try:
+        update_id = insert_transit_update(referral_id, update_text.strip(), logged_by)
+        
+        info = fetch_referral_status_info(referral_id)
+        if info:
+            patient_name = info[1]
+            try:
+                notify_patient_dispatched_and_updates(
+                    referral_id, patient_name, "transit_update", update_text=update_text.strip()
+                )
+            except Exception as e:
+                print(f"[WARN] Failed to notify transit update: {e}")
+                
+        return {"success": True, "update_id": update_id}
+    except Exception as e:
+        print(f"[ERROR] add_transit_update failed: {e}")
+        return {"error": True, "code": 500, "message": "Failed to add transit update"}
+
+
+def get_transit_updates(referral_id: int) -> dict:
+    if not check_referral_exists(referral_id):
+        return {"error": True, "code": 404, "message": "Referral not found"}
+        
+    try:
+        updates = fetch_transit_updates(referral_id)
+        
+        # Serialize datetime fields to ISO strings
+        def serialize_update(u):
+            if isinstance(u.get("logged_at"), datetime):
+                u["logged_at"] = u["logged_at"].isoformat()
+            return u
+            
+        serialized = [serialize_update(dict(u)) for u in updates]
+        return {"success": True, "updates": serialized}
+    except Exception as e:
+        print(f"[ERROR] get_transit_updates failed: {e}")
+        return {"error": True, "code": 500, "message": "Failed to fetch transit updates"}
 
 
 def get_attachment_file_data(attachment_id: int) -> dict:
