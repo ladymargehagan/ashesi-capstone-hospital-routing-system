@@ -46,11 +46,17 @@ export function HospitalReferralsTable({ referrals, onStatusChanged }: HospitalR
             pending: 'bg-amber-100 text-amber-700',
             approved: 'bg-green-100 text-green-700',
             rejected: 'bg-red-100 text-red-700',
-            en_route: 'bg-blue-100 text-blue-700',
+            in_transit: 'bg-blue-100 text-blue-700',
+            arrived: 'bg-purple-100 text-purple-700',
             completed: 'bg-gray-100 text-gray-700',
+            cancelled: 'bg-gray-100 text-gray-500',
+            no_capacity: 'bg-orange-100 text-orange-700',
         };
         return styles[status] || styles.pending;
     };
+
+    const formatStatus = (status: string) =>
+        status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
 
     return (
         <>
@@ -104,7 +110,7 @@ export function HospitalReferralsTable({ referrals, onStatusChanged }: HospitalR
                                 <TableCell>{formatDate(referral.submitted_at)}</TableCell>
                                 <TableCell>
                                     <Badge className={getStatusBadge(referral.status)}>
-                                        {referral.status}
+                                        {formatStatus(referral.status)}
                                     </Badge>
                                 </TableCell>
                                 <TableCell>

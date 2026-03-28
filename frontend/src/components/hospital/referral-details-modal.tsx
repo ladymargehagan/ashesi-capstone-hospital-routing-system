@@ -59,11 +59,19 @@ export function ReferralDetailsModal({ referral, open, onClose, onStatusChanged 
                 .then((data: any) => setTransitUpdates(data.updates || []))
                 .catch(() => setTransitUpdates([]));
 
-            // Load physicians at this hospital for assignment
-            if (user?.hospital_id) {
+            // Only load physicians for assignment if:
+            // - User is a hospital_admin at the RECEIVING hospital for this referral
+            // This prevents cross-hospital assignment
+            const isReceivingAdmin =
+                user?.role === 'hospital_admin' &&
+                String(user?.hospital_id) === String(referral.receiving_hospital_id);
+
+            if (isReceivingAdmin) {
                 usersApi.listPhysicians({ hospital_id: user.hospital_id, status: 'active' })
                     .then((data) => setPhysicians(data as unknown as Physician[]))
                     .catch(() => setPhysicians([]));
+            } else {
+                setPhysicians([]);
             }
         }
     }, [open, referral?.id, user?.hospital_id]);

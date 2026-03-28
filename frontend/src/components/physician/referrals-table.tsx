@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { Referral } from '@/types';
 import {
     Table,
@@ -10,12 +11,18 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Eye } from 'lucide-react';
+import { ReferralDetailsModal } from '@/components/hospital/referral-details-modal';
 
 interface ReferralsTableProps {
     referrals: Referral[];
+    onStatusChanged?: () => void;
 }
 
-export function ReferralsTable({ referrals }: ReferralsTableProps) {
+export function ReferralsTable({ referrals, onStatusChanged }: ReferralsTableProps) {
+    const [selectedReferral, setSelectedReferral] = useState<Referral | null>(null);
+
     const formatDate = (dateStr: string) => {
         return new Date(dateStr).toLocaleDateString('en-US', {
             day: '2-digit',
@@ -39,9 +46,11 @@ export function ReferralsTable({ referrals }: ReferralsTableProps) {
             pending: 'bg-amber-100 text-amber-700',
             approved: 'bg-green-100 text-green-700',
             rejected: 'bg-red-100 text-red-700',
-            en_route: 'bg-blue-100 text-blue-700',
+            in_transit: 'bg-blue-100 text-blue-700',
+            arrived: 'bg-purple-100 text-purple-700',
             completed: 'bg-gray-100 text-gray-700',
             cancelled: 'bg-gray-100 text-gray-500',
+            no_capacity: 'bg-orange-100 text-orange-700',
         };
         return styles[status] || styles.pending;
     };
@@ -52,50 +61,72 @@ export function ReferralsTable({ referrals }: ReferralsTableProps) {
             : 'bg-red-50 text-red-600 border-red-200';
     };
 
+    const formatStatus = (status: string) =>
+        status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+
     return (
-        <Table>
-            <TableHeader>
-                <TableRow>
-                    <TableHead>Patient</TableHead>
-                    <TableHead>Receiving Hospital</TableHead>
-                    <TableHead>Severity</TableHead>
-                    <TableHead>Stability</TableHead>
-                    <TableHead>Submitted</TableHead>
-                    <TableHead>Status</TableHead>
-                </TableRow>
-            </TableHeader>
-            <TableBody>
-                {referrals.length === 0 ? (
+        <>
+            <Table>
+                <TableHeader>
                     <TableRow>
-                        <TableCell colSpan={6} className="text-center text-gray-500 py-8">
-                            No referrals found
-                        </TableCell>
+                        <TableHead>Patient</TableHead>
+                        <TableHead>Receiving Hospital</TableHead>
+                        <TableHead>Severity</TableHead>
+                        <TableHead>Stability</TableHead>
+                        <TableHead>Submitted</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Actions</TableHead>
                     </TableRow>
-                ) : (
-                    referrals.map((referral) => (
-                        <TableRow key={referral.id}>
-                            <TableCell className="font-medium">{referral.patient_name}</TableCell>
-                            <TableCell>{referral.receiving_hospital_name}</TableCell>
-                            <TableCell>
-                                <Badge className={getSeverityBadge(referral.severity)} variant="outline">
-                                    {referral.severity}
-                                </Badge>
-                            </TableCell>
-                            <TableCell>
-                                <Badge className={getStabilityBadge(referral.stability)} variant="outline">
-                                    {referral.stability}
-                                </Badge>
-                            </TableCell>
-                            <TableCell>{formatDate(referral.submitted_at)}</TableCell>
-                            <TableCell>
-                                <Badge className={getStatusBadge(referral.status)}>
-                                    {referral.status}
-                                </Badge>
+                </TableHeader>
+                <TableBody>
+                    {referrals.length === 0 ? (
+                        <TableRow>
+                            <TableCell colSpan={7} className="text-center text-gray-500 py-8">
+                                No referrals found
                             </TableCell>
                         </TableRow>
-                    ))
-                )}
-            </TableBody>
-        </Table>
+                    ) : (
+                        referrals.map((referral) => (
+                            <TableRow key={referral.id} className="cursor-pointer hover:bg-gray-50" onClick={() => setSelectedReferral(referral)}>
+                                <TableCell className="font-medium">{referral.patient_name}</TableCell>
+                                <TableCell>{referral.receiving_hospital_name}</TableCell>
+                                <TableCell>
+                                    <Badge className={getSeverityBadge(referral.severity)} variant="outline">
+                                        {referral.severity}
+                                    </Badge>
+                                </TableCell>
+                                <TableCell>
+                                    <Badge className={getStabilityBadge(referral.stability)} variant="outline">
+                                        {referral.stability}
+                                    </Badge>
+                                </TableCell>
+                                <TableCell>{formatDate(referral.submitted_at)}</TableCell>
+                                <TableCell>
+                                    <Badge className={getStatusBadge(referral.status)}>
+                                        {formatStatus(referral.status)}
+                                    </Badge>
+                                </TableCell>
+                                <TableCell onClick={(e) => e.stopPropagation()}>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => setSelectedReferral(referral)}
+                                    >
+                                        <Eye className="h-4 w-4" />
+                                    </Button>
+                                </TableCell>
+                            </TableRow>
+                        ))
+                    )}
+                </TableBody>
+            </Table>
+
+            <ReferralDetailsModal
+                referral={selectedReferral}
+                open={!!selectedReferral}
+                onClose={() => setSelectedReferral(null)}
+                onStatusChanged={onStatusChanged}
+            />
+        </>
     );
 }
