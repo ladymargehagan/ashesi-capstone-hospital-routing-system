@@ -6,14 +6,17 @@ import { StatsCard } from '@/components/stats-card';
 import { HospitalsTable } from '@/components/admin/hospitals-table';
 import { hospitalsApi } from '@/lib/api-client';
 import { Hospital } from '@/types';
-import { Building2, CheckCircle, Clock, Search, Loader2 } from 'lucide-react';
+import { Building2, CheckCircle, Clock, Search, Loader2, UserPlus } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { InviteAdminModal } from '@/components/admin/invite-admin-modal';
 
 export default function HospitalsPage() {
     const [searchQuery, setSearchQuery] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
     const [hospitals, setHospitals] = useState<Hospital[]>([]);
     const [loading, setLoading] = useState(true);
+    const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
 
     const fetchHospitals = useCallback(() => {
         hospitalsApi.list()
@@ -55,9 +58,18 @@ export default function HospitalsPage() {
     return (
         <div>
             {/* Header */}
-            <div className="mb-6">
-                <h1 className="text-2xl font-bold text-gray-900">Hospitals</h1>
-                <p className="text-gray-500">Manage and review hospital applications</p>
+            <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
+                <div>
+                    <h1 className="text-2xl font-bold text-gray-900">Hospitals</h1>
+                    <p className="text-gray-500">Manage and review hospital applications</p>
+                </div>
+                <Button 
+                    className="bg-blue-600 hover:bg-blue-700 text-white shrink-0" 
+                    onClick={() => setIsInviteModalOpen(true)}
+                >
+                    <UserPlus className="h-4 w-4 mr-2" />
+                    Invite Hospital Admin
+                </Button>
             </div>
 
             {/* Stats */}
@@ -123,6 +135,12 @@ export default function HospitalsPage() {
                     </TabsContent>
                 </Tabs>
             </div>
+
+            <InviteAdminModal
+                open={isInviteModalOpen}
+                onClose={() => setIsInviteModalOpen(false)}
+                hospitals={hospitals}
+            />
         </div>
     );
 }

@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 
 interface HospitalsTableProps {
     hospitals: Hospital[];
+    onStatusChanged?: () => void;
 }
 
 export function HospitalsTable({ hospitals }: HospitalsTableProps) {

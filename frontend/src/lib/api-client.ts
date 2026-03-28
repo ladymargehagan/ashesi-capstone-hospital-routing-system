@@ -261,6 +261,18 @@ export const specialistsApi = {
 };
 
 // ---------------------------------------------------------------------------
+// Super Admin
+// ---------------------------------------------------------------------------
+
+export const superAdminApi = {
+    generateInvite: (email: string, hospitalId: string) =>
+        apiFetch<{ success: boolean; message: string; token: string; invite_link: string }>(
+            '/api/super-admin/invites',
+            { method: 'POST', body: JSON.stringify({ email, hospital_id: parseInt(hospitalId) }) }
+        ),
+};
+
+// ---------------------------------------------------------------------------
 // Stats (dashboard)
 // ---------------------------------------------------------------------------
 
