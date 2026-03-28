@@ -224,17 +224,11 @@ export default function LandingPage() {
             Ga West, Dangme East, and Dangme West.
           </p>
 
-          <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
+          <div className="mt-10 flex items-center justify-center">
             <Link href="/register">
               <Button size="lg" className="text-base px-8 py-6 rounded-2xl bg-white text-blue-700 hover:bg-blue-50 shadow-xl shadow-blue-900/30 font-semibold">
                 <Stethoscope className="h-5 w-5 mr-2" />
                 Join as a Doctor
-              </Button>
-            </Link>
-            <Link href="/login">
-              <Button size="lg" variant="outline" className="text-base px-8 py-6 rounded-2xl border-white/30 text-white hover:bg-white/10 font-semibold">
-                Sign In to Dashboard
-                <ArrowRight className="h-4 w-4 ml-2" />
               </Button>
             </Link>
           </div>
