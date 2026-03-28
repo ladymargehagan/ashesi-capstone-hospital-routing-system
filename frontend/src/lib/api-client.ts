@@ -3,7 +3,11 @@
  *
  * All frontend components should import from here instead of mock-data.ts.
  * The API_BASE URL points to the FastAPI backend.
+ *
+ * Auth: Supabase JWT is sent as Authorization: Bearer <token>.
  */
+
+import { supabase } from '@/lib/supabase';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -16,10 +20,22 @@ async function apiFetch<T = unknown>(
     options: RequestInit = {},
 ): Promise<T> {
     const url = `${API_BASE}${path}`;
+
+    // Get the current Supabase session token
+    const authHeaders: Record<string, string> = {};
+    try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.access_token) {
+            authHeaders['Authorization'] = `Bearer ${session.access_token}`;
+        }
+    } catch {
+        // No session — unauthenticated request
+    }
+
     const res = await fetch(url, {
-        credentials: 'include', // send cookies for auth
         headers: {
             'Content-Type': 'application/json',
+            ...authHeaders,
             ...((options.headers as Record<string, string>) || {}),
         },
         ...options,
@@ -153,9 +169,19 @@ export const referralsApi = {
         const formData = new FormData();
         formData.append('file', file);
         const url = `${API_BASE}/api/referrals/${id}/attachments`;
+
+        // Get auth token for the upload
+        const headers: Record<string, string> = {};
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session?.access_token) {
+                headers['Authorization'] = `Bearer ${session.access_token}`;
+            }
+        } catch { /* no session */ }
+
         const res = await fetch(url, {
             method: 'POST',
-            credentials: 'include',
+            headers,
             body: formData,
             // Do NOT set Content-Type — browser will set it with boundary for multipart
         });

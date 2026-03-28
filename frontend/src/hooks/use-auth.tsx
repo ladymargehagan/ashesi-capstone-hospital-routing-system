@@ -2,6 +2,7 @@
 
 import { useState, useEffect, createContext, useContext } from 'react';
 import { User } from '@/types';
+import { supabase } from '@/lib/supabase';
 import { authApi } from '@/lib/api-client';
 
 interface LoginResult {
@@ -23,46 +24,111 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
 
+    // On mount: check for existing Supabase session and load profile
     useEffect(() => {
-        // Check for existing session via the backend /api/auth/me endpoint
-        authApi.me()
-            .then((data) => {
-                if (data.user) {
-                    setUser(data.user as unknown as User);
-                    // Also store in localStorage as a cache
-                    localStorage.setItem('currentUser', JSON.stringify(data.user));
+        const initAuth = async () => {
+            try {
+                const { data: { session } } = await supabase.auth.getSession();
+                if (session) {
+                    // Session exists — fetch profile from backend
+                    const profileData = await authApi.me();
+                    if (profileData.user) {
+                        const appUser = profileData.user as unknown as User;
+                        setUser(appUser);
+                        localStorage.setItem('currentUser', JSON.stringify(appUser));
+                    }
                 } else {
-                    // Try localStorage fallback for SSR
+                    // No Supabase session — try localStorage fallback
                     const cached = localStorage.getItem('currentUser');
                     if (cached) {
-                        setUser(JSON.parse(cached));
+                        // Don't trust the cache — clear it since there's no valid session
+                        localStorage.removeItem('currentUser');
                     }
                 }
-            })
-            .catch(() => {
-                // Backend unreachable — try localStorage cache
+            } catch {
+                // Backend unreachable
                 const cached = localStorage.getItem('currentUser');
                 if (cached) {
                     setUser(JSON.parse(cached));
                 }
-            })
-            .finally(() => setLoading(false));
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        initAuth();
+
+        // Listen for auth state changes (token refresh, sign out, etc.)
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(
+            async (event, session) => {
+                if (event === 'SIGNED_OUT') {
+                    setUser(null);
+                    localStorage.removeItem('currentUser');
+                } else if (event === 'TOKEN_REFRESHED' && session) {
+                    // Token refreshed — profile is still valid, no action needed
+                }
+            }
+        );
+
+        return () => subscription.unsubscribe();
     }, []);
 
     const login = async (email: string, password: string): Promise<LoginResult> => {
         try {
-            const data = await authApi.login(email, password);
+            // Try Supabase sign-in first
+            const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
-            if (!data.success) {
-                return {
-                    success: false,
-                    status: data.status as 'pending' | 'rejected' | undefined,
-                };
+            if (error) {
+                // Supabase login failed — try legacy migration endpoint
+                try {
+                    const legacyResult = await fetch(
+                        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/auth/login`,
+                        {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ email, password }),
+                        }
+                    ).then(r => r.json());
+
+                    if (legacyResult.success && legacyResult.migrated && legacyResult.auth_uid) {
+                        // User was migrated — now sign in via Supabase
+                        const { error: retryError } = await supabase.auth.signInWithPassword({ email, password });
+                        if (retryError) {
+                            return { success: false };
+                        }
+                    } else if (legacyResult.success === false) {
+                        return { success: false, status: legacyResult.status };
+                    } else {
+                        return { success: false };
+                    }
+                } catch {
+                    return { success: false };
+                }
             }
 
-            const loggedInUser = data.user as unknown as User;
-            setUser(loggedInUser);
-            localStorage.setItem('currentUser', JSON.stringify(loggedInUser));
+            // Supabase login succeeded — fetch app profile from backend
+            const profileData = await authApi.me();
+
+            if (!profileData.user) {
+                // No public.users record — user exists in Supabase but not in app
+                await supabase.auth.signOut();
+                return { success: false };
+            }
+
+            const appUser = profileData.user as unknown as User;
+
+            if (appUser.status === 'pending') {
+                await supabase.auth.signOut();
+                return { success: false, status: 'pending' };
+            }
+
+            if (appUser.status === 'rejected') {
+                await supabase.auth.signOut();
+                return { success: false, status: 'rejected' };
+            }
+
+            setUser(appUser);
+            localStorage.setItem('currentUser', JSON.stringify(appUser));
             return { success: true, status: 'active' };
         } catch {
             return { success: false };
@@ -71,9 +137,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const logout = async () => {
         try {
-            await authApi.logout();
+            await supabase.auth.signOut();
         } catch {
-            // ignore logout errors
+            // ignore
         }
         setUser(null);
         localStorage.removeItem('currentUser');
@@ -81,10 +147,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const refreshUser = async () => {
         try {
-            const data = await authApi.me();
-            if (data.user) {
-                setUser(data.user as unknown as User);
-                localStorage.setItem('currentUser', JSON.stringify(data.user));
+            const profileData = await authApi.me();
+            if (profileData.user) {
+                const appUser = profileData.user as unknown as User;
+                setUser(appUser);
+                localStorage.setItem('currentUser', JSON.stringify(appUser));
             }
         } catch {
             // ignore

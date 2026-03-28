@@ -35,5 +35,14 @@ Thumbs.db
 
 Backend/hrs_venv
 
+# DB dumps
+*.sql
+HRSdb_*.sql
+
 # Custom Reports
 system_architecture_report.md
+
+# Testing
+backend/tests/
+.pytest_cache/
+how-to-run-server.md

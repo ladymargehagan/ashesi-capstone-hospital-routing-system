@@ -1,23 +1,36 @@
 """
-Authentication routes: login, register (doctor), Google OAuth, me, logout.
+Authentication routes — Supabase Auth edition.
 
-Uses JWT tokens stored in HTTP-only cookies for session management.
-Passwords are hashed with bcrypt.
+Supabase handles signup/login/session on the frontend.
+These endpoints handle:
+  - /register: Create public.users + physicians records after Supabase signup
+  - /register-admin: Same for admin invite flow
+  - /me: Return app profile for the current JWT bearer
+  - /login: Legacy fallback for migrating existing local-password users to Supabase Auth
 """
 
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException, Response, Request
-from pydantic import BaseModel, Field
+import os
+import re
+
+from fastapi import APIRouter, Depends, HTTPException, Response, Request
+from pydantic import BaseModel, Field, field_validator
 from typing import Optional
 
+from core.auth import get_current_user_any_status
 from controllers.auth_controller import (
     process_login,
     process_doctor_registration,
-    process_google_auth,
     get_current_user_data,
-    create_dev_admin,
-    process_dev_register
+    _build_user_dict,
+)
+from models.auth import (
+    fetch_user_for_login,
+    fetch_user_by_auth_uid,
+    fetch_user_by_id_complete,
+    fetch_physician_id_by_user,
+    link_auth_uid,
 )
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
@@ -25,207 +38,140 @@ router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 # ---- request models ----
 
-import re
-from pydantic import BaseModel, Field, field_validator
-
-class LoginRequest(BaseModel):
-    email: str
-    password: str
-
-
 class DoctorRegisterRequest(BaseModel):
-    """Doctor self-registration: creates a user + physician record (both pending)."""
-    # Account
+    """Doctor self-registration after Supabase signup."""
+    auth_uid: str  # UUID from supabase.auth.signUp()
     full_name: str
     email: str
-    password: str
     phone_number: Optional[str] = None
-    
+    hospital_id: int
+    license_number: str
+    title: Optional[str] = None
+    specialization: Optional[str] = None
+    department: Optional[str] = None
+    grade: Optional[str] = None
+
     @field_validator("email")
     @classmethod
     def validate_email(cls, v):
         if not re.match(r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)", v):
             raise ValueError("Invalid email format")
         return v
-        
-    @field_validator("password")
-    @classmethod
-    def validate_password(cls, v):
-        if len(v) < 8:
-            raise ValueError("Password must be at least 8 characters long")
-        if not re.search(r"[A-Z]", v):
-            raise ValueError("Password must contain at least one uppercase letter")
-        if not re.search(r"[a-z]", v):
-            raise ValueError("Password must contain at least one lowercase letter")
-        if not re.search(r"[0-9]", v):
-            raise ValueError("Password must contain at least one number")
-        if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", v):
-            raise ValueError("Password must contain at least one special character")
-        return v
-    # Professional
-    hospital_id: int
-    license_number: str
-    title: Optional[str] = None          # Mr, Mrs, Dr, Prof
-    specialization: Optional[str] = None
-    department: Optional[str] = None
-    grade: Optional[str] = None
+
 
 class AdminRegisterRequest(BaseModel):
-    """Hospital admin registration via invite link."""
+    """Hospital admin registration via invite link, after Supabase signup."""
+    auth_uid: str
     token: str
     full_name: str
-    password: str
-    phone_number: Optional[str] = None
-    
-    @field_validator("password")
-    @classmethod
-    def validate_password(cls, v):
-        if len(v) < 8:
-            raise ValueError("Password must be at least 8 characters long")
-        if not re.search(r"[A-Z]", v):
-            raise ValueError("Password must contain at least one uppercase letter")
-        if not re.search(r"[a-z]", v):
-            raise ValueError("Password must contain at least one lowercase letter")
-        if not re.search(r"[0-9]", v):
-            raise ValueError("Password must contain at least one number")
-        if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", v):
-            raise ValueError("Password must contain at least one special character")
-        return v
-
-
-class GoogleAuthRequest(BaseModel):
-    """Google OAuth: token from frontend Google Sign-In."""
-    token: str
-    # If first-time Google user, these are needed to complete profile:
-    hospital_id: Optional[int] = None
-    license_number: Optional[str] = None
-    title: Optional[str] = None
-    specialization: Optional[str] = None
-    department: Optional[str] = None
-    grade: Optional[str] = None
     phone_number: Optional[str] = None
 
 
-class DevRegisterRequest(BaseModel):
-    """Simple registration payload for developer use (curl / Postman)."""
+class LegacyLoginRequest(BaseModel):
+    """Legacy login for migrating existing users to Supabase Auth."""
     email: str
     password: str
-    name: str
-    role: str = "physician"  # super_admin | hospital_admin | physician
-    hospital_id: Optional[int] = None
 
 
 # ---- routes ----
 
 @router.post("/login")
-def login(req: LoginRequest, response: Response):
+def legacy_login(req: LegacyLoginRequest):
+    """
+    Legacy login endpoint for migrating existing users.
+
+    1. Validates bcrypt password against public.users
+    2. Creates a Supabase Auth user via the Admin API
+    3. Links auth_uid to the public.users row
+    4. Returns the user profile so the frontend can complete Supabase sign-in
+    """
     result = process_login(req.email, req.password)
-    
+
     if result.get("error"):
         raise HTTPException(status_code=result.get("code", 401), detail=result["message"])
 
     if result.get("success") is False:
         return {"success": False, "status": result["status"]}
 
-    response.set_cookie(
-        key="hrs_user_id", value=result["user_id_cookie"],
-        httponly=True, samesite="lax",
-    )
-    return {"success": True, "status": result["status"], "user": result["user"]}
+    user_id = int(result["user_id_cookie"])
+    row = fetch_user_by_id_complete(user_id)
+
+    # Check if already migrated
+    if row and row.get("auth_uid"):
+        return {"success": True, "status": result["status"], "user": result["user"], "already_migrated": True}
+
+    # Create Supabase Auth user via Admin API
+    try:
+        from supabase import create_client
+        supabase_url = os.getenv("SUPABASE_URL", "")
+        service_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
+
+        if supabase_url and service_key:
+            sb = create_client(supabase_url, service_key)
+            auth_result = sb.auth.admin.create_user({
+                "email": req.email,
+                "password": req.password,
+                "email_confirm": True,
+            })
+            if auth_result and auth_result.user:
+                link_auth_uid(user_id, str(auth_result.user.id))
+                return {
+                    "success": True,
+                    "status": result["status"],
+                    "user": result["user"],
+                    "migrated": True,
+                    "auth_uid": str(auth_result.user.id),
+                }
+    except Exception as e:
+        # Migration failed but login itself succeeded — return the user anyway
+        print(f"Supabase migration failed for {req.email}: {e}")
+
+    return {"success": True, "status": result["status"], "user": result["user"], "migrated": False}
 
 
 @router.post("/register")
 def register_doctor(req: DoctorRegisterRequest):
-    """Doctor self-registration. Creates user + physician record, both pending."""
-    result = process_doctor_registration(req.model_dump())
-    
+    """
+    Doctor self-registration. Supabase signup already happened on frontend.
+    Creates public.users (pending) + physicians (pending) with auth_uid link.
+    """
+    data = req.model_dump()
+    # Pass auth_uid through to the controller
+    result = process_doctor_registration(data)
+
     if result.get("error"):
         raise HTTPException(status_code=result.get("code", 400), detail=result["message"])
 
     return result
+
 
 @router.post("/register-admin")
 def register_admin(req: AdminRegisterRequest):
     """Hospital Admin registration consuming a secure invite token."""
     from controllers.auth_controller import process_admin_registration
-    result = process_admin_registration(req.model_dump())
-    
+    data = req.model_dump()
+    result = process_admin_registration(data)
+
     if result.get("error"):
         raise HTTPException(status_code=result.get("code", 400), detail=result["message"])
-        
+
     return result
 
 
-@router.post("/google")
-def google_auth(req: GoogleAuthRequest, response: Response):
-    """
-    Google OAuth login/register.
-    - If user with this Google ID exists → log in.
-    - If email exists but no Google ID → link Google and log in.
-    - If new user → create (pending), optionally with professional details.
-    """
-    result = process_google_auth(req.token, req.model_dump(exclude={'token'}))
-    
-    if result.get("error"):
-        raise HTTPException(status_code=result.get("code", 400), detail=result["message"])
-
-    if result.get("success") is False:
-        return {"success": False, "status": result["status"]}
-
-    if result.get("user"):
-        response.set_cookie(
-            key="hrs_user_id", value=result["user_id_cookie"],
-            httponly=True, samesite="lax",
-        )
-        return {"success": True, "status": result["status"], "user": result["user"]}
-
-    return {
-        "success": True,
-        "status": result["status"],
-        "user_id": result["user_id"],
-        "physician_id": result["physician_id"],
-        "needs_profile": result["needs_profile"],
-        "message": result["message"],
-    }
-
-
 @router.get("/me")
-def me(request: Request):
-    user_id_str = request.cookies.get("hrs_user_id")
-    if not user_id_str:
+def me(current_user: dict = Depends(get_current_user_any_status)):
+    """
+    Return the current user's profile from public.users.
+    Works for any status (active, pending, rejected) so users can check their status.
+    """
+    if current_user.get("not_registered"):
         return {"user": None}
 
-    try:
-        user_id = int(user_id_str)
-    except ValueError:
-        return {"user": None}
-
+    user_id = current_user["id"]
     return get_current_user_data(user_id)
 
 
 @router.post("/logout")
-def logout(response: Response):
-    response.delete_cookie("hrs_user_id")
+def logout():
+    """No-op — logout is handled client-side by supabase.auth.signOut()."""
     return {"success": True}
-
-
-@router.get("/dev-create-admin")
-def dev_create_admin_route():
-    """DEV ONLY: Create/reset an admin account. Remove in production."""
-    result = create_dev_admin()
-    if result.get("error"):
-        raise HTTPException(status_code=result.get("code", 500), detail=result["message"])
-    return result
-
-
-@router.post("/dev-register")
-def dev_register(req: DevRegisterRequest):
-    """
-    DEV ONLY – Create a user of any role from the terminal.
-    """
-    result = process_dev_register(req.model_dump())
-    
-    if result.get("error"):
-        raise HTTPException(status_code=result.get("code", 400), detail=result["message"])
-        
-    return result

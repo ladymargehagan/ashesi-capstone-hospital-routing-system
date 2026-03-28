@@ -1,9 +1,9 @@
 """
-Authentication dependencies for FastAPI.
+Authentication dependencies for FastAPI — Supabase JWT edition.
 
 Usage
 -----
-# Require any logged-in user
+# Require any logged-in user (active only)
 @router.get("/me")
 def my_route(current_user: dict = Depends(get_current_user)):
     ...
@@ -13,42 +13,68 @@ def my_route(current_user: dict = Depends(get_current_user)):
 def create(current_user: dict = Depends(require_role("physician"))):
     ...
 
-@router.put("/resources/{id}")
-def update(current_user: dict = Depends(require_role("hospital_admin", "super_admin"))):
+# Allow any status (for /me endpoint where pending users check their status)
+@router.get("/me")
+def my_profile(current_user: dict = Depends(get_current_user_any_status)):
     ...
 """
 
 from __future__ import annotations
 
+import os
+
+import jwt
 from fastapi import Depends, HTTPException, Request
 
-from models.auth import fetch_user_by_id_complete
+from models.auth import fetch_user_by_auth_uid, fetch_user_by_id_complete
+
+SUPABASE_JWT_SECRET = os.getenv("SUPABASE_JWT_SECRET", "")
 
 
 # ---------------------------------------------------------------------------
-# Core dependency
+# JWT helpers
+# ---------------------------------------------------------------------------
+
+def _extract_auth_uid(request: Request) -> str:
+    """Extract and verify the Supabase auth UID from the Authorization header."""
+    auth_header = request.headers.get("Authorization", "")
+    if not auth_header.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Not authenticated. Please log in.")
+
+    token = auth_header[7:]  # strip "Bearer "
+    try:
+        payload = jwt.decode(
+            token,
+            SUPABASE_JWT_SECRET,
+            algorithms=["HS256"],
+            audience="authenticated",
+        )
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Session expired. Please log in again.")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Invalid token. Please log in again.")
+
+    auth_uid = payload.get("sub")
+    if not auth_uid:
+        raise HTTPException(status_code=401, detail="Invalid token payload.")
+
+    return auth_uid
+
+
+# ---------------------------------------------------------------------------
+# Core dependencies
 # ---------------------------------------------------------------------------
 
 def get_current_user(request: Request) -> dict:
     """
-    Read the hrs_user_id cookie, validate it against the DB, and return the
-    user dict (id, email, role, hospital_id, status).
-
-    Raises 401 if the cookie is missing, invalid, or the user doesn't exist /
-    is not active.
+    Validate the Supabase JWT, look up the user in public.users by auth_uid,
+    and return the user dict. Requires status == 'active'.
     """
-    user_id_str = request.cookies.get("hrs_user_id")
-    if not user_id_str:
-        raise HTTPException(status_code=401, detail="Not authenticated. Please log in.")
+    auth_uid = _extract_auth_uid(request)
 
-    try:
-        user_id = int(user_id_str)
-    except ValueError:
-        raise HTTPException(status_code=401, detail="Invalid session cookie.")
-
-    row = fetch_user_by_id_complete(user_id)
+    row = fetch_user_by_auth_uid(auth_uid)
     if not row:
-        raise HTTPException(status_code=401, detail="User not found. Please log in again.")
+        raise HTTPException(status_code=401, detail="User not found. Please complete registration.")
 
     if row["status"] != "active":
         raise HTTPException(
@@ -57,7 +83,28 @@ def get_current_user(request: Request) -> dict:
         )
 
     return {
-        "id": user_id,
+        "id": row["user_id"],
+        "email": row["email"],
+        "full_name": row["full_name"],
+        "role": row.get("role_name", ""),
+        "hospital_id": row.get("hospital_id"),
+        "status": row["status"],
+    }
+
+
+def get_current_user_any_status(request: Request) -> dict:
+    """
+    Same as get_current_user but does NOT enforce active status.
+    Used for /me endpoint so pending doctors can check their status.
+    """
+    auth_uid = _extract_auth_uid(request)
+
+    row = fetch_user_by_auth_uid(auth_uid)
+    if not row:
+        return {"auth_uid": auth_uid, "not_registered": True}
+
+    return {
+        "id": row["user_id"],
         "email": row["email"],
         "full_name": row["full_name"],
         "role": row.get("role_name", ""),

@@ -42,16 +42,16 @@ def fetch_role_id_by_name(role_name: str) -> Optional[int]:
         return row["role_id"] if row else None
 
 
-def insert_pending_user(email: str, password_hash: str, role_id: int, full_name: str, phone_number: Optional[str], hospital_id: int) -> int:
+def insert_pending_user(email: str, password_hash: Optional[str], role_id: int, full_name: str, phone_number: Optional[str], hospital_id: int, auth_uid: Optional[str] = None) -> int:
     with db_cursor() as cur:
         cur.execute(
             """
             INSERT INTO users (email, password_hash, role_id, full_name,
-                               phone_number, hospital_id, auth_provider, status)
-            VALUES (%s, %s, %s, %s, %s, %s, 'local', 'pending')
+                               phone_number, hospital_id, auth_provider, status, auth_uid)
+            VALUES (%s, %s, %s, %s, %s, %s, 'local', 'pending', %s)
             RETURNING user_id
             """,
-            (email, password_hash, role_id, full_name, phone_number, hospital_id),
+            (email, password_hash, role_id, full_name, phone_number, hospital_id, auth_uid),
         )
         return cur.fetchone()["user_id"]
 
@@ -122,6 +122,37 @@ def insert_google_user(email: str, role_id: int, full_name: str, phone_number: O
             (email, role_id, full_name, phone_number, hospital_id, google_id, profile_picture_url),
         )
         return cur.fetchone()["user_id"]
+
+
+def fetch_user_by_auth_uid(auth_uid: str):
+    """Look up a user by their Supabase auth UUID."""
+    with db_cursor() as cur:
+        cur.execute(
+            """
+            SELECT u.user_id, u.email, u.full_name, u.phone_number,
+                   u.hospital_id, u.status, u.auth_provider,
+                   u.profile_picture_url, r.role_name, u.created_at,
+                   h.name AS hospital_name, h.address AS hospital_address,
+                   h.contact_phone,
+                   p.title, p.license_number, p.specialization, p.department, p.grade
+            FROM users u
+            JOIN role r ON u.role_id = r.role_id
+            LEFT JOIN hospitals h ON u.hospital_id = h.hospital_id
+            LEFT JOIN physicians p ON u.user_id = p.user_id
+            WHERE u.auth_uid = %s
+            """,
+            (auth_uid,),
+        )
+        return cur.fetchone()
+
+
+def link_auth_uid(user_id: int, auth_uid: str):
+    """Link a Supabase auth UUID to an existing public.users row."""
+    with db_cursor() as cur:
+        cur.execute(
+            "UPDATE users SET auth_uid = %s, updated_at = CURRENT_TIMESTAMP WHERE user_id = %s",
+            (auth_uid, user_id),
+        )
 
 
 def fetch_user_by_id_complete(user_id: int):

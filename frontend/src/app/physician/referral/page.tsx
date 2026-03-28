@@ -372,6 +372,24 @@ function ReferralFormContent() {
         };
     };
 
+    const URGENCY_TRIGGER_STYLE: Record<string, string> = {
+        routine: 'border-l-4 border-l-green-500',
+        urgent: 'border-l-4 border-l-amber-500',
+        emergency: 'border-l-4 border-l-red-600',
+    };
+
+    const SEVERITY_TRIGGER_STYLE: Record<string, string> = {
+        critical: 'border-l-4 border-l-red-600',
+        high: 'border-l-4 border-l-orange-500',
+        medium: 'border-l-4 border-l-yellow-500',
+        low: 'border-l-4 border-l-green-500',
+    };
+
+    const STABILITY_TRIGGER_STYLE: Record<string, string> = {
+        stable: 'border-l-4 border-l-green-500',
+        unstable: 'border-l-4 border-l-red-600',
+    };
+
     const getLevelBadgeStyle = (level: string) => {
         const styles: Record<string, string> = {
             teaching: 'bg-purple-100 text-purple-700 border-purple-200',
@@ -433,7 +451,7 @@ function ReferralFormContent() {
 
                         <fieldset disabled={formData.patient_id !== '-1'} className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label htmlFor="fullName">Full Name *</Label>
+                                <Label htmlFor="fullName">Full Name <span className="text-red-500">*</span></Label>
                                 <Input
                                     id="fullName"
                                     value={formData.full_name}
@@ -442,7 +460,7 @@ function ReferralFormContent() {
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="dob">Date of Birth *</Label>
+                                <Label htmlFor="dob">Date of Birth <span className="text-red-500">*</span></Label>
                                 <Input
                                     id="dob"
                                     type="date"
@@ -452,7 +470,7 @@ function ReferralFormContent() {
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="sex">Sex *</Label>
+                                <Label htmlFor="sex">Sex <span className="text-red-500">*</span></Label>
                                 <Select
                                     value={formData.sex}
                                     onValueChange={(v) => handleInputChange('sex', v)}
@@ -476,7 +494,7 @@ function ReferralFormContent() {
                                 />
                             </div>
                             <div className="md:col-span-2 space-y-2">
-                                <Label htmlFor="address">Address *</Label>
+                                <Label htmlFor="address">Address <span className="text-red-500">*</span></Label>
                                 <Input
                                     id="address"
                                     value={formData.address}
@@ -494,7 +512,7 @@ function ReferralFormContent() {
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="nhis_status">NHIS Insurance Status *</Label>
+                                <Label htmlFor="nhis_status">NHIS Insurance Status <span className="text-red-500">*</span></Label>
                                 <Select
                                     value={formData.nhis_status}
                                     onValueChange={(v) => handleInputChange('nhis_status', v)}
@@ -521,7 +539,7 @@ function ReferralFormContent() {
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div className="space-y-2">
-                            <Label htmlFor="complaint">Presenting Complaint *</Label>
+                            <Label htmlFor="complaint">Presenting Complaint <span className="text-red-500">*</span></Label>
                             <Textarea
                                 id="complaint"
                                 value={formData.presenting_complaint}
@@ -564,7 +582,7 @@ function ReferralFormContent() {
                             </div>
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="diagnosis">Working Diagnosis *</Label>
+                            <Label htmlFor="diagnosis">Working Diagnosis <span className="text-red-500">*</span></Label>
                             <Input
                                 id="diagnosis"
                                 value={formData.working_diagnosis}
@@ -701,7 +719,7 @@ function ReferralFormContent() {
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div className="space-y-2">
-                            <Label htmlFor="reason">Reason for Referral *</Label>
+                            <Label htmlFor="reason">Reason for Referral <span className="text-red-500">*</span></Label>
                             <Textarea
                                 id="reason"
                                 value={formData.reason_for_referral}
@@ -714,7 +732,7 @@ function ReferralFormContent() {
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                             {/* Referral Reason — feeds directly into the algorithm */}
                             <div className="space-y-2">
-                                <Label htmlFor="referral_reason">Referral Reason *</Label>
+                                <Label htmlFor="referral_reason">Referral Reason <span className="text-red-500">*</span></Label>
                                 <Select
                                     value={formData.referral_reason}
                                     onValueChange={(v) => handleInputChange('referral_reason', v)}
@@ -734,55 +752,55 @@ function ReferralFormContent() {
                                 </Select>
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="urgency_level">Urgency Level *</Label>
+                                <Label htmlFor="urgency_level">Urgency Level <span className="text-red-500">*</span></Label>
                                 <Select
                                     value={formData.urgency_level}
                                     onValueChange={(v) => handleInputChange('urgency_level', v)}
                                 >
-                                    <SelectTrigger>
+                                    <SelectTrigger className={URGENCY_TRIGGER_STYLE[formData.urgency_level || 'routine']}>
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="routine">Routine</SelectItem>
-                                        <SelectItem value="urgent">Urgent</SelectItem>
-                                        <SelectItem value="emergency">Emergency</SelectItem>
+                                        <SelectItem value="routine"><span className="flex items-center gap-2"><span className="inline-block w-2 h-2 rounded-full bg-green-500"></span>Routine</span></SelectItem>
+                                        <SelectItem value="urgent"><span className="flex items-center gap-2"><span className="inline-block w-2 h-2 rounded-full bg-amber-500"></span>Urgent</span></SelectItem>
+                                        <SelectItem value="emergency"><span className="flex items-center gap-2"><span className="inline-block w-2 h-2 rounded-full bg-red-600"></span>Emergency</span></SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="severity">Severity *</Label>
+                                <Label htmlFor="severity">Severity <span className="text-red-500">*</span></Label>
                                 <Select
                                     value={formData.severity}
                                     onValueChange={(v) => handleInputChange('severity', v)}
                                 >
-                                    <SelectTrigger>
+                                    <SelectTrigger className={SEVERITY_TRIGGER_STYLE[formData.severity || 'medium']}>
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="critical">Critical</SelectItem>
-                                        <SelectItem value="high">High</SelectItem>
-                                        <SelectItem value="medium">Medium</SelectItem>
-                                        <SelectItem value="low">Low</SelectItem>
+                                        <SelectItem value="critical"><span className="flex items-center gap-2"><span className="inline-block w-2 h-2 rounded-full bg-red-600"></span>Critical</span></SelectItem>
+                                        <SelectItem value="high"><span className="flex items-center gap-2"><span className="inline-block w-2 h-2 rounded-full bg-orange-500"></span>High</span></SelectItem>
+                                        <SelectItem value="medium"><span className="flex items-center gap-2"><span className="inline-block w-2 h-2 rounded-full bg-yellow-500"></span>Medium</span></SelectItem>
+                                        <SelectItem value="low"><span className="flex items-center gap-2"><span className="inline-block w-2 h-2 rounded-full bg-green-500"></span>Low</span></SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="stability">Patient Stability *</Label>
+                                <Label htmlFor="stability">Patient Stability <span className="text-red-500">*</span></Label>
                                 <Select
                                     value={formData.stability}
                                     onValueChange={(v) => handleInputChange('stability', v)}
                                 >
-                                    <SelectTrigger>
+                                    <SelectTrigger className={STABILITY_TRIGGER_STYLE[formData.stability || 'stable']}>
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="stable">Stable</SelectItem>
-                                        <SelectItem value="unstable">Unstable</SelectItem>
+                                        <SelectItem value="stable"><span className="flex items-center gap-2"><span className="inline-block w-2 h-2 rounded-full bg-green-500"></span>Stable</span></SelectItem>
+                                        <SelectItem value="unstable"><span className="flex items-center gap-2"><span className="inline-block w-2 h-2 rounded-full bg-red-600"></span>Unstable</span></SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="datetime">Date and Time *</Label>
+                                <Label htmlFor="datetime">Date and Time <span className="text-red-500">*</span></Label>
                                 <Input
                                     id="datetime"
                                     type="datetime-local"

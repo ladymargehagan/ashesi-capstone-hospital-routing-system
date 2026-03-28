@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
-from core.security import require_role
+from core.auth import require_role
 from models.health import get_system_health_summary, get_hospital_health_summary, execute_system_audit
 from core.db import db_cursor
 

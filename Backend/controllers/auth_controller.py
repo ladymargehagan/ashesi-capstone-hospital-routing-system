@@ -108,9 +108,12 @@ def process_doctor_registration(data: dict) -> dict:
     if not role_id:
         return {"error": True, "code": 500, "message": "Physician role not found"}
 
-    pw_hash = hash_password(data["password"])
+    # Password is handled by Supabase Auth — no need to hash here
+    # If password is provided (legacy flow), hash it; otherwise store NULL
+    pw_hash = hash_password(data["password"]) if data.get("password") else None
     user_id = insert_pending_user(
-        data["email"], pw_hash, role_id, data["full_name"], data.get("phone_number"), data["hospital_id"]
+        data["email"], pw_hash, role_id, data["full_name"], data.get("phone_number"), data["hospital_id"],
+        auth_uid=data.get("auth_uid"),
     )
 
     physician_id = insert_pending_physician(
@@ -144,17 +147,17 @@ def process_admin_registration(data: dict) -> dict:
     if not role_id:
         return {"error": True, "code": 500, "message": "Hospital Admin role not found"}
 
-    pw_hash = hash_password(data["password"])
-    
+    pw_hash = hash_password(data["password"]) if data.get("password") else None
+
     try:
         with db_cursor() as cur:
             cur.execute(
                 """
-                INSERT INTO users (email, password_hash, role_id, full_name, phone_number, hospital_id, status)
-                VALUES (%s, %s, %s, %s, %s, %s, 'active')
+                INSERT INTO users (email, password_hash, role_id, full_name, phone_number, hospital_id, status, auth_uid)
+                VALUES (%s, %s, %s, %s, %s, %s, 'active', %s)
                 RETURNING user_id
                 """,
-                (email, pw_hash, role_id, data["full_name"], data.get("phone_number"), hospital_id)
+                (email, pw_hash, role_id, data["full_name"], data.get("phone_number"), hospital_id, data.get("auth_uid"))
             )
             user_id = cur.fetchone()["user_id"]
             

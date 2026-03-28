@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Activity, Loader2, ArrowLeft, Stethoscope, CheckCircle2 } from 'lucide-react';
 import { hospitalsApi } from '@/lib/api-client';
+import { supabase } from '@/lib/supabase';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -119,7 +120,7 @@ function RegisterForm() {
         e.preventDefault();
         setError('');
 
-        if (!hospitalId) {
+        if (!isAdminInvite && !hospitalId) {
             setError('Please select your hospital');
             return;
         }
@@ -127,18 +128,38 @@ function RegisterForm() {
         setLoading(true);
 
         try {
+            // Step 1: Create user in Supabase Auth
+            const { data: authData, error: authError } = await supabase.auth.signUp({
+                email,
+                password,
+            });
+
+            if (authError) {
+                setError(authError.message);
+                setLoading(false);
+                return;
+            }
+
+            const authUid = authData.user?.id;
+            if (!authUid) {
+                setError('Failed to create account. Please try again.');
+                setLoading(false);
+                return;
+            }
+
+            // Step 2: Create the public.users + physicians record via backend
             const url = isAdminInvite ? `${API_BASE}/api/auth/register-admin` : `${API_BASE}/api/auth/register`;
-            const payload = isAdminInvite 
+            const payload = isAdminInvite
                 ? {
+                    auth_uid: authUid,
                     token: inviteToken,
                     full_name: fullName,
-                    password,
                     phone_number: phoneNumber,
                 }
                 : {
+                    auth_uid: authUid,
                     full_name: fullName,
                     email,
-                    password,
                     phone_number: phoneNumber,
                     hospital_id: parseInt(hospitalId),
                     license_number: licenseNumber,
@@ -157,6 +178,8 @@ function RegisterForm() {
             const data = await res.json();
 
             if (data.success) {
+                // Sign out of Supabase — pending doctors shouldn't have a session
+                await supabase.auth.signOut();
                 setSuccess(true);
             } else {
                 setError(data.detail || 'Registration failed. Please try again.');
