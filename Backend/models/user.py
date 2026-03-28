@@ -96,13 +96,6 @@ def fetch_user_role(user_id: int) -> Optional[str]:
         return row["role_name"] if row else None
 
 
-def fetch_role_id_by_name(role_name: str) -> Optional[int]:
-    with db_cursor() as cur:
-        cur.execute("SELECT role_id FROM role WHERE role_name = %s", (role_name,))
-        row = cur.fetchone()
-        return row["role_id"] if row else None
-
-
 def update_user_role_in_db(user_id: int, role_id: int, hospital_id: Optional[int]):
     with db_cursor() as cur:
         cur.execute(

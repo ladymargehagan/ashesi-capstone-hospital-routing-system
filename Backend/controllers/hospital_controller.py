@@ -1,4 +1,8 @@
+import os
 from typing import Optional
+
+import requests
+
 from models.hospital import (
     fetch_all_hospitals,
     fetch_hospital_by_id,
@@ -9,14 +13,9 @@ from models.hospital import (
     count_active_hospitals,
     fetch_active_hospital_flags,
 )
-from utils.audit import log_action
-import os
-import requests
-from pydantic import BaseModel
-from typing import List, Optional
-
 from controllers.resource_controller import create_hospital_resource
 from models.admin_invite import create_admin_invite
+from utils.audit import log_action
 
 
 def _row_to_hospital(row) -> dict:

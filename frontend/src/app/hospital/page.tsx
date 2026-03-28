@@ -8,7 +8,7 @@ import { ResourcesTab } from '@/components/hospital/resources-tab';
 import { SpecialistsTab } from '@/components/hospital/specialists-tab';
 import { FlagsTab } from '@/components/hospital/flags-tab';
 import { useAuth } from '@/hooks/use-auth';
-import { referralsApi, resourcesApi, specialistsApi, hospitalsApi, statsApi, healthApi } from '@/lib/api-client';
+import { referralsApi, resourcesApi, specialistsApi, hospitalsApi, healthApi } from '@/lib/api-client';
 import { Referral, Resource, Specialist } from '@/types';
 import { Bed, Heart, Users, Clock, Loader2, AlertTriangle, ShieldAlert } from 'lucide-react';
 

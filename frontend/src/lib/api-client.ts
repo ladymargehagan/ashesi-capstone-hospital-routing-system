@@ -1,13 +1,14 @@
 /**
  * Centralized API client for the HRS backend.
  *
- * All frontend components should import from here instead of mock-data.ts.
+ * All frontend components should import from here.
  * The API_BASE URL points to the FastAPI backend.
  *
  * Auth: Supabase JWT is sent as Authorization: Bearer <token>.
  */
 
 import { supabase } from '@/lib/supabase';
+import { EngineResponse, ReferralReason, ReferralSeverity, ReferralStability } from '@/types';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -364,9 +365,18 @@ export const statsApi = {
 // Recommend (referral engine)
 // ---------------------------------------------------------------------------
 
+export interface RecommendRequest {
+    lat: number;
+    lon: number;
+    referral_reason: ReferralReason;
+    severity: ReferralSeverity | string;
+    stability: ReferralStability | string;
+    referring_hospital_id?: number;
+}
+
 export const recommendApi = {
-    rank: (data: { lat: number; lon: number; referral_reason: string; severity: string; stability: string }) =>
-        apiFetch<Record<string, unknown>>(
+    rank: (data: RecommendRequest) =>
+        apiFetch<EngineResponse>(
             '/api/recommend',
             { method: 'POST', body: JSON.stringify(data) },
         ),

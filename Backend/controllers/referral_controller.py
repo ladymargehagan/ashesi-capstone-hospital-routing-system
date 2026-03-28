@@ -554,26 +554,6 @@ def get_referral_attachments_list(referral_id: int) -> list[dict]:
     ]
 
 
-def fetch_referral_attachment(referral_id: int, attachment_id: int) -> dict:
-    if not check_referral_exists(referral_id):
-        return {"error": True, "code": 404, "message": "Referral not found"}
-        
-    attachment = fetch_attachment_by_id(attachment_id)
-    if not attachment:
-        return {"error": True, "code": 404, "message": "Attachment not found"}
-        
-    # Check if the file still exists on disk
-    if not os.path.exists(attachment["file_path"]):
-        return {"error": True, "code": 404, "message": "File is missing on server"}
-        
-    return {
-        "success": True, 
-        "file_path": attachment["file_path"],
-        "file_name": attachment["file_name"],
-        "file_type": attachment["file_type"]
-    }
-
-
 def add_transit_update(referral_id: int, update_text: str, logged_by: int) -> dict:
     if not update_text or not update_text.strip():
         return {"error": True, "code": 400, "message": "Update text is required"}

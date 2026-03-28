@@ -14,9 +14,6 @@ from models.auth import (
     link_google_account,
     insert_google_user,
     fetch_user_by_id_complete,
-    check_admin_exists_dev,
-    update_admin_password_dev,
-    insert_active_dev_user,
     fetch_physician_id_by_user
 )
 from models.hospital import fetch_hospital_by_id
@@ -247,54 +244,3 @@ def get_current_user_data(user_id: int) -> dict:
 
     physician_id = fetch_physician_id_by_user(user_id) if row["role_name"] == "physician" else None
     return {"user": _build_user_dict(row, physician_id)}
-
-
-def create_dev_admin() -> dict:
-    pw_hash = hash_password("admin123")
-    existing = check_admin_exists_dev("newadmin@hrs.gov.gh")
-    
-    if existing:
-        update_admin_password_dev("newadmin@hrs.gov.gh", pw_hash)
-        return {"message": "Password reset to admin123", "email": "newadmin@hrs.gov.gh"}
-    else:
-        role_id = fetch_role_id_by_name("super_admin")
-        if not role_id:
-            return {"error": True, "code": 500, "message": "super_admin role not found"}
-            
-        insert_active_dev_user("newadmin@hrs.gov.gh", pw_hash, role_id, "Dev Admin")
-        return {"message": "Admin created", "email": "newadmin@hrs.gov.gh", "password": "admin123"}
-
-
-def process_dev_register(data: dict) -> dict:
-    role_name = data["role"].lower().strip()
-    ROLE_ALIASES = {
-        "admin": "super_admin",
-        "superadmin": "super_admin",
-        "super_admin": "super_admin",
-        "hospital_admin": "hospital_admin",
-        "hospital": "hospital_admin",
-        "physician": "physician",
-        "doctor": "physician",
-    }
-    role_name = ROLE_ALIASES.get(role_name, role_name)
-
-    if check_email_exists(data["email"]):
-        return {"error": True, "code": 400, "message": "Email already registered"}
-
-    role_id = fetch_role_id_by_name(role_name)
-    if not role_id:
-        return {
-            "error": True, 
-            "code": 400, 
-            "message": f"Unknown role '{data['role']}'. Use: super_admin, hospital_admin, physician (or shortcuts admin, doctor, hospital)"
-        }
-
-    pw_hash = hash_password(data["password"])
-    user_id = insert_active_dev_user(data["email"], pw_hash, role_id, data["name"], data.get("hospital_id"))
-
-    return {
-        "id": user_id,
-        "email": data["email"],
-        "name": data["name"],
-        "role": role_name,
-    }

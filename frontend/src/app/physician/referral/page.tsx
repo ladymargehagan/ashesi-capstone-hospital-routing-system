@@ -11,8 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { RecommendationsModal } from '@/components/physician/recommendations-modal';
-import { patientsApi, hospitalsApi, referralsApi, resourcesApi } from '@/lib/api-client';
-import { getRecommendations } from '@/lib/referral-api';
+import { patientsApi, hospitalsApi, referralsApi, resourcesApi, recommendApi } from '@/lib/api-client';
 import { useToast } from '@/components/ui/toast-provider';
 import { useAuth } from '@/hooks/use-auth';
 import { ReferralFormData, Patient, Hospital, EngineRecommendation, EngineResponse, ReferralReason } from '@/types';
@@ -226,7 +225,7 @@ function ReferralFormContent() {
             // For now, use a known Accra location (Downtown Medical Clinic).
             const referringHospitalGps = { lat: 5.5913, lng: -0.1786 };
 
-            const response = await getRecommendations({
+            const response = await recommendApi.rank({
                 lat: referringHospitalGps.lat,
                 lon: referringHospitalGps.lng,
                 referral_reason: (formData.referral_reason || 'general') as ReferralReason,

@@ -5,7 +5,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Badge } from '@/components/ui/badge';
 import { MapPin, AlertCircle, Building2, Tag, Phone, Search, Users, ShieldAlert, Loader2 } from 'lucide-react';
 import { hospitalsApi } from '@/lib/api-client';
-import { TripMap } from '@/components/hospital/trip-map'; // Generic map from earlier features // wait I will not use tripmap if they just want single location
 
 interface Flag {
     flag_id: number;
@@ -43,7 +42,7 @@ interface FullHospital {
 }
 
 interface HospitalDetailsModalProps {
-    hospitalId: number | null;
+    hospitalId: number | string | null;
     open: boolean;
     onClose: () => void;
 }

@@ -11,9 +11,9 @@ from models.user import (
     update_user_profile_in_db,
     update_physician_profile_in_db,
     fetch_user_role,
-    fetch_role_id_by_name,
     update_user_role_in_db
 )
+from models.auth import fetch_role_id_by_name
 from models.hospital import fetch_hospital_by_id
 
 

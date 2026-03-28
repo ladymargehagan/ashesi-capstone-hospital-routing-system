@@ -3,19 +3,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Building2, Search, MapPin, Tag, Loader2, AlertCircle } from 'lucide-react';
 import { HospitalDetailsModal } from '@/components/physician/hospital-details-modal';
-
-// Shape of a hospital record from GET /api/hospitals
-interface Hospital {
-    id: number;
-    name: string;
-    level: string;
-    type: string;
-    ownership: string;
-    address: string;
-    status: string;
-    contact_phone?: string;
-    gps_coordinates?: string;
-}
+import { hospitalsApi } from '@/lib/api-client';
+import { Hospital } from '@/types';
 
 const LEVEL_COLORS: Record<string, string> = {
     teaching:      'bg-purple-100 text-purple-800',
@@ -27,7 +16,7 @@ const LEVEL_COLORS: Record<string, string> = {
 };
 
 export default function HospitalsDirectoryPage() {
-    const [selectedHospitalId, setSelectedHospitalId] = useState<number | null>(null);
+    const [selectedHospitalId, setSelectedHospitalId] = useState<string | null>(null);
     const [hospitals, setHospitals] = useState<Hospital[]>([]);
     const [filtered, setFiltered] = useState<Hospital[]>([]);
     const [loading, setLoading] = useState(true);
@@ -36,18 +25,13 @@ export default function HospitalsDirectoryPage() {
     const [levelFilter, setLevelFilter] = useState('');
 
     useEffect(() => {
-        fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/hospitals`, {
-            credentials: 'include',
-        })
-            .then(res => {
-                if (!res.ok) throw new Error('Failed to load hospitals');
-                return res.json();
+        hospitalsApi.list()
+            .then((data) => {
+                const list = data as unknown as Hospital[];
+                setHospitals(list);
+                setFiltered(list);
             })
-            .then((data: Hospital[]) => {
-                setHospitals(data);
-                setFiltered(data);
-            })
-            .catch(err => setError(err.message))
+            .catch(err => setError(err instanceof Error ? err.message : 'Failed to load hospitals'))
             .finally(() => setLoading(false));
     }, []);
 

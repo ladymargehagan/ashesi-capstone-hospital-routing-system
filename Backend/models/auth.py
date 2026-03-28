@@ -176,34 +176,6 @@ def fetch_user_by_id_complete(user_id: int):
         return cur.fetchone()
 
 
-def check_admin_exists_dev(email: str):
-    with db_cursor() as cur:
-        cur.execute("SELECT user_id FROM users WHERE email = %s", (email,))
-        return cur.fetchone()
-
-
-def update_admin_password_dev(email: str, password_hash: str):
-    with db_cursor() as cur:
-        cur.execute(
-            "UPDATE users SET password_hash = %s WHERE email = %s",
-            (password_hash, email),
-        )
-
-
-def insert_active_dev_user(email: str, password_hash: str, role_id: int, name: str, hospital_id: Optional[int] = None) -> int:
-    with db_cursor() as cur:
-        cur.execute(
-            """
-            INSERT INTO users (email, password_hash, role_id, full_name,
-                               hospital_id, auth_provider, status)
-            VALUES (%s, %s, %s, %s, %s, 'local', 'active')
-            RETURNING user_id
-            """,
-            (email, password_hash, role_id, name, hospital_id),
-        )
-        return cur.fetchone()["user_id"]
-
-
 def fetch_physician_id_by_user(user_id: int) -> Optional[str]:
     with db_cursor() as cur:
         cur.execute(
