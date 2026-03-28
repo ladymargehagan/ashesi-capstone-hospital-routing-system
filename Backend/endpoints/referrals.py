@@ -85,10 +85,6 @@ class ReferralAssign(BaseModel):
     physician_id: int
 
 
-class ReferralOutcomeUpdate(BaseModel):
-    final_outcome: str
-
-
 # ---- referral routes ----
 
 @router.get("")
@@ -135,28 +131,16 @@ def create_referral(
 def update_referral_status(
     referral_id: int,
     req: ReferralStatusUpdate,
-    current_user: dict = Depends(require_role("hospital_admin", "super_admin")),
+    current_user: dict = Depends(require_role("hospital_admin", "super_admin", "physician")),
 ):
-    """Update referral status (approve, reject, complete, cancel). Hospital admin action."""
+    """Update referral status (approve, reject, complete, cancel, in_transit)"""
+    if req.status in ["approved", "rejected"] and current_user.get("role") == "physician":
+        raise HTTPException(status_code=403, detail="Physicians cannot approve or reject referrals.")
+
     result = modify_referral_status(referral_id, req.status, req.reason)
     if result.get("error"):
         raise HTTPException(status_code=result.get("code", 400), detail=result["message"])
     return result
-
-
-@router.put("/{referral_id}/outcome")
-def update_referral_outcome(
-    referral_id: int,
-    req: ReferralOutcomeUpdate,
-    current_user: dict = Depends(require_role("physician")),
-):
-    """Add a final outcome to a completed referral. Receiving physician only."""
-    from models.referral import update_referral_status_in_db
-    
-    success = update_referral_status_in_db(referral_id, ["final_outcome = %s"], [req.final_outcome, referral_id])
-    if not success:
-        raise HTTPException(status_code=400, detail="Failed to update final outcome")
-    return {"message": "Final outcome recorded successfully"}
 
 
 # ---- attachment routes ----

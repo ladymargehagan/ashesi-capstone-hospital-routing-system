@@ -39,6 +39,7 @@ export function ReferralDetailsModal({ referral, open, onClose, onStatusChanged 
     const [flagLoading, setFlagLoading] = useState(false);
 
     const [showOutcomeForm, setShowOutcomeForm] = useState(false);
+    const [finalOutcomeStatus, setFinalOutcomeStatus] = useState('');
     const [finalOutcome, setFinalOutcome] = useState('');
 
     const [transitUpdates, setTransitUpdates] = useState<any[]>([]);
@@ -154,14 +155,18 @@ export function ReferralDetailsModal({ referral, open, onClose, onStatusChanged 
     };
 
     const handleOutcomeSubmit = async () => {
+        if (!finalOutcomeStatus) {
+            toast.error('Please select a final status.', 'Missing Data');
+            return;
+        }
         if (!finalOutcome.trim()) {
             toast.error('Please provide a final outcome summary.', 'Missing Data');
             return;
         }
         setLoading(true);
         try {
-            await referralsApi.updateOutcome(referral.id, finalOutcome);
-            await referralsApi.updateStatus(referral.id, 'completed');
+            const combinedOutcome = `[${finalOutcomeStatus}] ${finalOutcome.trim()}`;
+            await referralsApi.updateStatus(referral.id, 'completed', combinedOutcome);
             toast.success('Treatment marked completed and outcome recorded.', 'Completed');
             setShowOutcomeForm(false);
             onStatusChanged?.();
@@ -210,7 +215,39 @@ export function ReferralDetailsModal({ referral, open, onClose, onStatusChanged 
         }
     };
 
-    const isPending = referral.status === 'pending';
+    // -------------------------------------------------------------------------
+    // Role-based permission booleans
+    // All IDs from the API are strings. Cast to string for safe comparison.
+    // -------------------------------------------------------------------------
+    const myHospitalId = String(user?.hospital_id ?? '');
+    const myPhysicianId = String(user?.physician_id ?? '');
+    const myRole = user?.role ?? '';
+
+    // Hospital A = referring side
+    const isAtReferringHospital = myHospitalId === referral.referring_hospital_id;
+    // Hospital B = receiving side  
+    const isAtReceivingHospital = myHospitalId === referral.receiving_hospital_id;
+    // The doctor who sent the referral
+    const isReferringPhysician = myPhysicianId === referral.referring_physician_id;
+    // The doctor assigned to this case at Hospital B
+    const isAssignedPhysician = myPhysicianId === referral.assigned_physician_id;
+    // Any admin at the receiving hospital
+    const isReceivingAdmin = myRole === 'hospital_admin' && isAtReceivingHospital;
+
+    // --- Action guards ---
+    // Only receiving hospital admin can approve/reject
+    const isPending = referral.status === 'pending' && isReceivingAdmin;
+    // Referring physician marks Patient Dispatched
+    const canDispatch = referral.status === 'approved' && isReferringPhysician;
+    // Referring physician can post transit condition updates
+    const canPostUpdate = referral.status === 'in_transit' && isReferringPhysician;
+    // Receiving admin (and assigned doctor) can see transit updates + mark arrived
+    const canSeeTransitFeed = referral.status === 'in_transit' && (isAtReceivingHospital || isAtReferringHospital || isAssignedPhysician);
+    const canMarkArrived = referral.status === 'in_transit' && (isReceivingAdmin || isAssignedPhysician);
+    // Receiving doctor OR admin can mark patient as complete
+    const canComplete = referral.status === 'arrived' && (isReceivingAdmin || isAssignedPhysician);
+    // Referring physician can flag data inconsistency on an active/arrived referral
+    const canFlag = isReferringPhysician && ['approved', 'in_transit', 'arrived'].includes(referral.status);
 
     return (
         <Dialog open={open} onOpenChange={onClose}>
@@ -441,8 +478,8 @@ export function ReferralDetailsModal({ referral, open, onClose, onStatusChanged 
                             </div>
                         )}
 
-                        {/* Trip Tracking Buttons */}
-                        {referral.status === 'approved' && user?.hospital_id === referral.referring_hospital_id && (
+                        {/* Patient Dispatched — Referring Physician Only, status=approved */}
+                        {canDispatch && (
                             <div className="flex justify-end pt-2 border-t mt-4">
                                 <Button
                                     className="bg-blue-600 hover:bg-blue-700 text-white"
@@ -455,7 +492,8 @@ export function ReferralDetailsModal({ referral, open, onClose, onStatusChanged 
                             </div>
                         )}
 
-                        {referral.status === 'in_transit' && (
+                        {/* In Transit Panel — Live Feed + Map + Arrived Button */}
+                        {canSeeTransitFeed && (
                             <div className="pt-2 border-t mt-4 space-y-4">
                                 <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 shadow-inner">
                                     <h3 className="text-sm font-semibold text-slate-800 mb-3 flex items-center gap-2">
@@ -481,7 +519,8 @@ export function ReferralDetailsModal({ referral, open, onClose, onStatusChanged 
                                         )}
                                     </div>
 
-                                    {user?.hospital_id === referral.referring_hospital_id && (
+                                    {/* Only referring physician can type updates */}
+                                    {canPostUpdate && (
                                         <div className="flex gap-2">
                                             <Input 
                                                 placeholder="Add a condition update..." 
@@ -507,14 +546,15 @@ export function ReferralDetailsModal({ referral, open, onClose, onStatusChanged 
                                     )}
                                 </div>
                                 <TripMap
-                                    originLat={5.56} // Default lat for now, would be dynamically sourced
-                                    originLng={-0.20} // Default lng
+                                    originLat={5.56}
+                                    originLng={-0.20}
                                     destinationLat={5.58} 
                                     destinationLng={-0.18}
                                     originName={referral.referring_hospital_name || ''}
                                     destinationName={referral.receiving_hospital_name || ''}
                                 />
-                                {user?.hospital_id === referral.receiving_hospital_id && (
+                                {/* Receiving admin OR assigned doctor can mark arrived */}
+                                {canMarkArrived && (
                                     <div className="flex justify-end pt-2">
                                         <Button
                                             className="bg-purple-600 hover:bg-purple-700 text-white"
@@ -529,7 +569,8 @@ export function ReferralDetailsModal({ referral, open, onClose, onStatusChanged 
                             </div>
                         )}
 
-                        {referral.status === 'arrived' && user?.hospital_id === referral.receiving_hospital_id && (
+                        {/* Treatment Conclusion — shown to receiving admin OR assigned doctor when status=arrived */}
+                        {canComplete && (
                             <div className="pt-4 border-t mt-4 space-y-4">
                                 <div className="flex justify-between items-center">
                                     <h4 className="font-semibold text-gray-900">Treatment Conclusion</h4>
@@ -594,18 +635,88 @@ export function ReferralDetailsModal({ referral, open, onClose, onStatusChanged 
                                 ) : (
                                     <div className="bg-green-50 p-4 rounded-lg space-y-3 border border-green-200 pt-2 border-t mt-4">
                                         <h5 className="font-medium text-green-900 text-sm">Final Referral Outcome</h5>
-                                        <p className="text-xs text-green-700">Provide a summary for the referring doctor before closing.</p>
-                                        <Textarea
-                                            value={finalOutcome}
-                                            onChange={(e) => setFinalOutcome(e.target.value)}
-                                            placeholder="Patient discharged safely after successful observation... etc."
-                                            rows={3}
-                                            className="bg-white"
-                                        />
+                                        <p className="text-xs text-green-700">Select a status and provide a typed summary for the referring doctor before closing.</p>
+                                        <div className="space-y-2">
+                                            <Label className="text-xs text-green-800">Final Patient Status</Label>
+                                            <Select value={finalOutcomeStatus} onValueChange={setFinalOutcomeStatus}>
+                                                <SelectTrigger className="bg-white">
+                                                    <SelectValue placeholder="Select final status..." />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="Discharged">Discharged</SelectItem>
+                                                    <SelectItem value="Admitted to Ward">Admitted to Ward</SelectItem>
+                                                    <SelectItem value="Transferred to ICU">Transferred to ICU</SelectItem>
+                                                    <SelectItem value="Referred to Another Facility">Referred to Another Facility</SelectItem>
+                                                    <SelectItem value="Absconded">Absconded</SelectItem>
+                                                    <SelectItem value="Deceased">Deceased</SelectItem>
+                                                    <SelectItem value="Other">Other</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label className="text-xs text-green-800">Typed Summary</Label>
+                                            <Textarea
+                                                value={finalOutcome}
+                                                onChange={(e) => setFinalOutcome(e.target.value)}
+                                                placeholder="Patient safely stabilized, observation completed... etc."
+                                                rows={3}
+                                                className="bg-white"
+                                            />
+                                        </div>
                                         <div className="flex justify-end gap-2 pt-2">
                                             <Button variant="ghost" onClick={() => setShowOutcomeForm(false)}>Cancel</Button>
                                             <Button className="bg-green-600 hover:bg-green-700 text-white" onClick={handleOutcomeSubmit} disabled={loading}>
                                                 Submit & Complete
+                                            </Button>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Referring physician data flag — for approved/in_transit/arrived referrals */}
+                        {canFlag && !canComplete && (
+                            <div className="pt-4 border-t mt-4">
+                                <div className="flex justify-end">
+                                    <Button
+                                        variant="outline"
+                                        className="text-amber-600 border-amber-200 hover:bg-amber-50"
+                                        onClick={() => setShowFlagForm(!showFlagForm)}
+                                    >
+                                        <AlertCircle className="h-4 w-4 mr-2" />
+                                        Flag Inconsistent Data
+                                    </Button>
+                                </div>
+                                {showFlagForm && (
+                                    <div className="bg-amber-50 p-4 rounded-lg space-y-3 border border-amber-200 mt-3">
+                                        <h5 className="font-medium text-amber-900 text-sm">Report Inconsistent Hospital Data</h5>
+                                        <div className="space-y-2">
+                                            <Label>Category</Label>
+                                            <Select value={flagCategory} onValueChange={setFlagCategory}>
+                                                <SelectTrigger className="bg-white">
+                                                    <SelectValue placeholder="Select issue category" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="Bed count mismatch">Bed count mismatch</SelectItem>
+                                                    <SelectItem value="Equipment listed as unavailable on arrival">Equipment listed as unavailable on arrival</SelectItem>
+                                                    <SelectItem value="Incorrect department information">Incorrect department information</SelectItem>
+                                                    <SelectItem value="Other">Other</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label>Notes (Optional)</Label>
+                                            <Textarea
+                                                value={flagNotes}
+                                                onChange={(e) => setFlagNotes(e.target.value)}
+                                                placeholder="Provide more details..."
+                                                className="bg-white"
+                                            />
+                                        </div>
+                                        <div className="flex justify-end gap-2">
+                                            <Button variant="ghost" onClick={() => setShowFlagForm(false)}>Cancel</Button>
+                                            <Button className="bg-amber-600 hover:bg-amber-700 text-white" onClick={handleFlagSubmit} disabled={flagLoading}>
+                                                Submit Flag
                                             </Button>
                                         </div>
                                     </div>

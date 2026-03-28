@@ -405,7 +405,7 @@ def modify_referral_status(referral_id: int, status: str, reason: str = None) ->
         "cancelled": "cancelled_at",
     }.get(status)
 
-    reason_col = {"rejected": "rejection_reason", "cancelled": "cancellation_reason"}.get(status)
+    reason_col = {"rejected": "rejection_reason", "cancelled": "cancellation_reason", "completed": "final_outcome"}.get(status)
 
     updates = ["status = %s"]
     params = [status]
@@ -427,7 +427,7 @@ def modify_referral_status(referral_id: int, status: str, reason: str = None) ->
             if status == "in_transit":
                 notify_patient_dispatched_and_updates(referral_id, patient_name, "patient_dispatched")
             else:
-                notify_referral_status_changed(referral_id, patient_name, status, physician_user_id)
+                notify_referral_status_changed(referral_id, patient_name, status, physician_user_id, reason=reason)
                 
             log_action(physician_user_id, "referral_status_changed", entity_type="referral",
                        entity_id=referral_id, details={"new_status": status, "reason": reason})
@@ -455,6 +455,23 @@ def handle_referral_assignment(referral_id: int, physician_id: int, actor_user_i
                 user_id=p_user["user_id"],
                 message=f"You have been assigned to Referral #{referral_id}. Please review the patient's file.",
                 notification_type="referral_assigned"
+            )
+            
+        cur.execute(
+            """
+            SELECT p.user_id 
+            FROM referrals r 
+            JOIN physicians p ON r.referring_physician_id = p.physician_id 
+            WHERE r.referral_id = %s
+            """, 
+            (referral_id,)
+        )
+        ref_user = cur.fetchone()
+        if ref_user:
+            notify_user(
+                user_id=ref_user["user_id"],
+                message=f"Hospital B has assigned a doctor to Referral #{referral_id}.",
+                notification_type="referral_assigned_update"
             )
             
     if actor_user_id:
@@ -536,7 +553,7 @@ def add_transit_update(referral_id: int, update_text: str, logged_by: int) -> di
         
         info = fetch_referral_status_info(referral_id)
         if info:
-            patient_name = info[1]
+            patient_name = info["patient_name"] if isinstance(info, dict) else info[1]
             try:
                 notify_patient_dispatched_and_updates(
                     referral_id, patient_name, "transit_update", update_text=update_text.strip()

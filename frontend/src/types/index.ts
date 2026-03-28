@@ -303,7 +303,7 @@ export interface Notification {
     id: string;
     user_id: string;
     message: string;
-    type: 'hospital_approval' | 'hospital_rejection' | 'physician_verification' | 'physician_rejection' | 'referral_created' | 'referral_approved' | 'referral_rejected' | 'referral_completed' | 'referral_status_changed' | 'patient_arrived' | 'data_flagged' | 'account_approved';
+    type: 'hospital_approval' | 'hospital_rejection' | 'physician_verification' | 'physician_rejection' | 'referral_created' | 'referral_approved' | 'referral_rejected' | 'referral_completed' | 'referral_cancelled' | 'referral_assigned' | 'referral_assigned_update' | 'referral_no_capacity' | 'referral_status_changed' | 'patient_arrived' | 'data_flagged' | 'account_approved' | 'patient_dispatched' | 'transit_update';
     is_read: boolean;
     email_sent?: boolean;
     created_at: string;

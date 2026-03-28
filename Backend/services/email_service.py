@@ -166,6 +166,7 @@ def notify_referral_status_changed(
     patient_name: str,
     new_status: str,
     referring_physician_user_id: int,
+    reason: str = None,
 ):
     """Notify the referring physician when referral status changes."""
     status_labels = {
@@ -178,9 +179,15 @@ def notify_referral_status_changed(
     }
     status_label = status_labels.get(new_status, new_status.title())
 
+    message_details = ""
+    if reason:
+        # Provide extra context depending on if it was completed or rejected
+        title_suffix = "Outcome" if new_status == "completed" else "Reason"
+        message_details = f"<tr><td style='padding: 8px; color: #64748b; vertical-align: top;'>{title_suffix}</td><td style='padding: 8px; font-weight: 600; white-space: pre-wrap;'>{reason}</td></tr>"
+
     notify_user(
         user_id=referring_physician_user_id,
-        message=f"Referral #{referral_id} for {patient_name} has been {new_status}.",
+        message=f"Referral #{referral_id} for {patient_name} has been {new_status}. {f'Details: {reason[:100]}...' if reason else ''}",
         notification_type=f"referral_{new_status}",
         email_subject=f"[HRS] Referral Update — {patient_name} ({status_label})",
         email_body=_base_email(
@@ -188,9 +195,10 @@ def notify_referral_status_changed(
             f"""
             <p>Your referral has been updated.</p>
             <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
-                <tr><td style="padding: 8px; color: #64748b;">Referral ID</td><td style="padding: 8px; font-weight: 600;">#{referral_id}</td></tr>
+                <tr><td style="padding: 8px; color: #64748b; width: 30%;">Referral ID</td><td style="padding: 8px; font-weight: 600;">#{referral_id}</td></tr>
                 <tr><td style="padding: 8px; color: #64748b;">Patient</td><td style="padding: 8px; font-weight: 600;">{patient_name}</td></tr>
                 <tr><td style="padding: 8px; color: #64748b;">New Status</td><td style="padding: 8px; font-weight: 600;">{status_label}</td></tr>
+                {message_details}
             </table>
             """,
         ),

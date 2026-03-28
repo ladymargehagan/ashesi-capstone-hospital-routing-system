@@ -284,6 +284,8 @@ CREATE TABLE NOTIFICATIONS (
         'physician_verification', 'physician_rejection',
         'referral_created', 'referral_approved', 'referral_rejected',
         'referral_completed', 'referral_cancelled',
+        'referral_assigned', 'referral_assigned_update',
+        'referral_no_capacity', 'referral_status_changed',
         'patient_arrived', 'data_flagged',
         'account_approved', 'account_rejected',
         'patient_dispatched', 'transit_update'
