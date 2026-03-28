@@ -7,9 +7,11 @@ import { StatsCard } from '@/components/stats-card';
 import { HospitalsTable } from '@/components/admin/hospitals-table';
 import { AddHospitalModal } from '@/components/admin/add-hospital-modal';
 import { PhysiciansTable } from '@/components/admin/physicians-table';
-import { hospitalsApi, usersApi } from '@/lib/api-client';
+import { HospitalHealthTable } from '@/components/admin/hospital-health-table';
+import { AuditAlertsBox } from '@/components/admin/audit-alerts-box';
+import { hospitalsApi, usersApi, healthApi } from '@/lib/api-client';
 import { Hospital, Physician } from '@/types';
-import { Building2, Users, CheckCircle, Clock, Search, Loader2, Stethoscope, Activity, Plus } from 'lucide-react';
+import { Building2, Users, CheckCircle, Clock, Search, Loader2, Stethoscope, Activity, Plus, ShieldAlert, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export default function AdminDashboard() {
@@ -18,6 +20,8 @@ export default function AdminDashboard() {
     const [searchQuery, setSearchQuery] = useState('');
     const [hospitals, setHospitals] = useState<Hospital[]>([]);
     const [physicians, setPhysicians] = useState<Physician[]>([]);
+    const [healthData, setHealthData] = useState<any[]>([]);
+    const [auditLoading, setAuditLoading] = useState(false);
     const [loading, setLoading] = useState(true);
 
     const loadData = () => {
@@ -25,10 +29,25 @@ export default function AdminDashboard() {
         Promise.all([
             hospitalsApi.list().catch(() => []),
             usersApi.listPhysicians().catch(() => []),
-        ]).then(([hosps, physs]) => {
+            healthApi.getSummary().catch(() => []),
+        ]).then(([hosps, physs, hdata]) => {
             setHospitals(hosps as unknown as Hospital[]);
             setPhysicians(physs as unknown as Physician[]);
+            setHealthData(hdata);
         }).finally(() => setLoading(false));
+    };
+
+    const handleRunAudit = async () => {
+        setAuditLoading(true);
+        try {
+            const res = await healthApi.runAudit();
+            alert(`Audit Complete:\n${res.summary}`);
+            loadData(); // refresh health data
+        } catch (err: any) {
+            alert(err.message || 'Failed to trigger audit');
+        } finally {
+            setAuditLoading(false);
+        }
     };
 
     useEffect(() => { loadData(); }, []);
@@ -121,9 +140,24 @@ export default function AdminDashboard() {
                                 <Building2 className="h-4 w-4 mr-1.5" />
                                 Hospitals ({hospitals.length})
                             </TabsTrigger>
+                            <TabsTrigger value="health" className="text-amber-600 font-medium">
+                                <ShieldAlert className="h-4 w-4 mr-1.5" />
+                                System Health
+                            </TabsTrigger>
                         </TabsList>
 
                         <div className="flex items-center gap-3">
+                            {activeTab === 'health' && (
+                                <Button 
+                                    onClick={handleRunAudit}
+                                    variant="outline"
+                                    disabled={auditLoading}
+                                    className="border-amber-200 text-amber-700 hover:bg-amber-50"
+                                >
+                                    {auditLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Sparkles className="h-4 w-4 mr-2" />}
+                                    Run System Audit
+                                </Button>
+                            )}
                             {activeTab === 'hospitals' && (
                                 <Button 
                                     onClick={() => setIsAddHospitalOpen(true)}
@@ -151,6 +185,25 @@ export default function AdminDashboard() {
 
                     <TabsContent value="hospitals" className="mt-0">
                         <HospitalsTable hospitals={filteredHospitals} onStatusChanged={loadData} />
+                    </TabsContent>
+
+                    <TabsContent value="health" className="mt-0">
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                            <div className="lg:col-span-2 bg-white rounded-lg border p-6">
+                                <h2 className="text-lg font-semibold mb-2 flex items-center gap-2">
+                                    <Activity className="h-5 w-5 text-indigo-500" />
+                                    Network Health Monitor
+                                </h2>
+                                <p className="text-sm text-gray-500 mb-4">
+                                    This dashboard computes the freshness and accuracy of hospital data. Facilities displaying Warning or Critical states may disrupt routing efficiency. Use the "Run System Audit" button to trigger automated alerts.
+                                </p>
+                                <HospitalHealthTable healthData={healthData} />
+                            </div>
+                            
+                            <div className="lg:col-span-1">
+                                <AuditAlertsBox />
+                            </div>
+                        </div>
                     </TabsContent>
                 </Tabs>
                 

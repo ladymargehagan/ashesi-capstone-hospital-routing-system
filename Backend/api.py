@@ -42,6 +42,7 @@ from endpoints.specialists import router as specialists_router
 from endpoints.notifications import router as notifications_router
 from endpoints.options import router as options_router
 from endpoints.super_admin import router as super_admin_router
+from endpoints.health import router as health_router
 
 # ---------------------------------------------------------------------------
 # App setup
@@ -74,6 +75,7 @@ app.include_router(specialists_router)
 app.include_router(notifications_router)
 app.include_router(options_router)
 app.include_router(super_admin_router)
+app.include_router(health_router, prefix="/api/health", tags=["health"])
 
 # ---------------------------------------------------------------------------
 # Background Tasks

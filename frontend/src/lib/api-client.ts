@@ -221,6 +221,23 @@ export const patientsApi = {
 // Users (admin)
 // ---------------------------------------------------------------------------
 
+export const healthApi = {
+    getSummary: () =>
+        apiFetch<any[]>('/api/health/summary'),
+
+    getHospitalSummary: (id: string) =>
+        apiFetch<any>(`/api/health/summary/${id}`),
+
+    runAudit: () =>
+        apiFetch<{ success: boolean; alerts_generated: number; summary: string }>(
+            '/api/health/run-audit',
+            { method: 'POST' }
+        ),
+
+    getAlerts: () =>
+        apiFetch<any[]>('/api/health/alerts'),
+};
+
 export const usersApi = {
     list: (params?: { role?: string; status?: string }) => {
         const qs = new URLSearchParams();
