@@ -7,9 +7,10 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { StatsCard } from '@/components/stats-card';
 import { PatientsTable } from '@/components/physician/patients-table';
+import { ReferralOutcomesChart } from '@/components/physician/referral-outcomes-chart';
 import { ReferralsTable } from '@/components/physician/referrals-table';
 import { useAuth } from '@/hooks/use-auth';
-import { patientsApi, referralsApi } from '@/lib/api-client';
+import { patientsApi, referralsApi, usersApi } from '@/lib/api-client';
 import { Patient, Referral } from '@/types';
 import { Users, Clock, CheckCircle, FileText, Plus, Loader2, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
 
@@ -114,6 +115,17 @@ export default function PhysicianDashboard() {
                     icon={FileText}
                     iconColor="text-green-600"
                 />
+            </div>
+
+            <div className="mb-6 grid grid-cols-1 md:grid-cols-[1fr_300px] gap-6">
+                <div>
+                     {/* We can place something here later or leave the chart full width. Actually, let's keep the chart full width or centered */}
+                </div>
+            </div>
+
+            {/* Outcomes Chart */}
+            <div className="mb-6 h-72 lg:w-1/2">
+                <ReferralOutcomesChart referrals={outgoingReferrals} />
             </div>
 
             {/* Tabs */}

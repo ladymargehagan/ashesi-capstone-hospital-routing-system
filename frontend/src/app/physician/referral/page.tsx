@@ -33,7 +33,7 @@ function ReferralFormContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const { user } = useAuth();
-    const preselectedPatientId = searchParams.get('patient');
+    const preselectedPatientId = searchParams.get('patientId') || searchParams.get('patient');
 
     const [showRecommendations, setShowRecommendations] = useState(false);
     const [selectedRecommendation, setSelectedRecommendation] = useState<EngineRecommendation | null>(null);
@@ -139,6 +139,13 @@ function ReferralFormContent() {
             gcs: undefined,
         },
     });
+
+    // Auto-select patient when data loads
+    useEffect(() => {
+        if (preselectedPatientId && allPatients.length > 0 && formData.patient_id !== preselectedPatientId) {
+            handlePatientSelect(preselectedPatientId);
+        }
+    }, [allPatients, preselectedPatientId]);
 
     const handlePatientSelect = (patientId: string) => {
         if (patientId === '-1') {

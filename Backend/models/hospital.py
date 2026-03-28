@@ -66,6 +66,25 @@ def set_hospital_status(hospital_id: int, status: str) -> bool:
         return cur.rowcount > 0
 
 
+def insert_hospital(data: dict) -> int:
+    """Insert a new hospital."""
+    with db_cursor() as cur:
+        fields = ["name", "address", "level", "type", "ownership", "contact_phone", "email", "status"]
+        if "gps_coordinates" in data:
+            fields.append("gps_coordinates")
+            
+        cols = ", ".join(fields)
+        vals_placeholder = ", ".join(["%s"] * len(fields))
+        
+        params = [data[f] for f in fields]
+        
+        cur.execute(
+            f"INSERT INTO hospitals ({cols}) VALUES ({vals_placeholder}) RETURNING hospital_id",
+            params
+        )
+        return cur.fetchone()["hospital_id"]
+
+
 def count_active_hospitals() -> int:
     """Return the number of currently active hospitals."""
     with db_cursor() as cur:

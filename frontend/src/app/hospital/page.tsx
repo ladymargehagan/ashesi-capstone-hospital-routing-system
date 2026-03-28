@@ -6,10 +6,11 @@ import { StatsCard } from '@/components/stats-card';
 import { HospitalReferralsTable } from '@/components/hospital/referrals-table';
 import { ResourcesTab } from '@/components/hospital/resources-tab';
 import { SpecialistsTab } from '@/components/hospital/specialists-tab';
+import { FlagsTab } from '@/components/hospital/flags-tab';
 import { useAuth } from '@/hooks/use-auth';
-import { referralsApi, resourcesApi, specialistsApi, statsApi } from '@/lib/api-client';
+import { referralsApi, resourcesApi, specialistsApi, hospitalsApi, statsApi } from '@/lib/api-client';
 import { Referral, Resource, Specialist } from '@/types';
-import { Bed, Heart, Users, Clock, Loader2 } from 'lucide-react';
+import { Bed, Heart, Users, Clock, Loader2, AlertTriangle } from 'lucide-react';
 
 export default function HospitalDashboard() {
     const { user } = useAuth();
@@ -17,6 +18,7 @@ export default function HospitalDashboard() {
     const [referrals, setReferrals] = useState<Referral[]>([]);
     const [resources, setResources] = useState<Resource[]>([]);
     const [specialists, setSpecialists] = useState<Specialist[]>([]);
+    const [flags, setFlags] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState({
         total_beds: 0,
@@ -35,10 +37,12 @@ export default function HospitalDashboard() {
             referralsApi.list({ hospital_id: hospitalId }).catch(() => []),
             resourcesApi.list(hospitalId).catch(() => []),
             specialistsApi.list(hospitalId).catch(() => []),
-        ]).then(([refs, res, specs]) => {
+            hospitalsApi.getFlags(hospitalId.toString()).catch(() => []),
+        ]).then(([refs, res, specs, flgs]) => {
             setReferrals(refs as unknown as Referral[]);
             setResources(res as unknown as Resource[]);
             setSpecialists(specs as unknown as Specialist[]);
+            setFlags(flgs);
 
             // Compute stats from real data
             const resList = res as unknown as Resource[];
@@ -119,6 +123,12 @@ export default function HospitalDashboard() {
                     </TabsTrigger>
                     <TabsTrigger value="resources">Resources</TabsTrigger>
                     <TabsTrigger value="specialists">Specialists</TabsTrigger>
+                    {flags.length > 0 && (
+                        <TabsTrigger value="flags" className="text-amber-600 font-medium">
+                            <AlertTriangle className="h-4 w-4 mr-1.5 inline" />
+                            Data Flags
+                        </TabsTrigger>
+                    )}
                 </TabsList>
 
                 <TabsContent value="referrals" className="mt-4">
@@ -136,6 +146,12 @@ export default function HospitalDashboard() {
                 <TabsContent value="specialists" className="mt-4">
                     <SpecialistsTab specialists={specialists} onSpecialistUpdated={fetchData} />
                 </TabsContent>
+
+                {flags.length > 0 && (
+                    <TabsContent value="flags" className="mt-4">
+                        <FlagsTab flags={flags} onFlagResolved={fetchData} />
+                    </TabsContent>
+                )}
             </Tabs>
         </div>
     );

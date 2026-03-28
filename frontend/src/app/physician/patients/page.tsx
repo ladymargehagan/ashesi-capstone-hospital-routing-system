@@ -158,7 +158,7 @@ export default function PatientsPage() {
                                                 >
                                                     <Eye className="h-4 w-4" />
                                                 </Button>
-                                                <Link href={`/physician/referral?patient=${patient.id}`}>
+                                                <Link href={`/physician/referral?patientId=${patient.id}`}>
                                                     <Button variant="outline" size="sm">
                                                         Refer
                                                     </Button>

@@ -90,6 +90,27 @@ export const hospitalsApi = {
                 })
             }
         ),
+
+    create: (data: Record<string, any>) =>
+        apiFetch<{ success: boolean; hospital_id: string; invite_token?: string }>(
+            '/api/hospitals',
+            { method: 'POST', body: JSON.stringify(data) }
+        ),
+
+    updateStatus: (id: string, status: string, reason?: string) =>
+        apiFetch<{ success: boolean }>(
+            `/api/hospitals/${id}/status`,
+            { method: 'PATCH', body: JSON.stringify({ status, reason }) }
+        ),
+
+    getFlags: (id: string) =>
+        apiFetch<Record<string, unknown>[]>(`/api/hospitals/${id}/flags`),
+
+    resolveFlag: (flagId: string) =>
+        apiFetch<{ success: boolean }>(
+            `/api/hospitals/flags/${flagId}/resolve`,
+            { method: 'PUT' }
+        ),
 };
 
 // ---------------------------------------------------------------------------

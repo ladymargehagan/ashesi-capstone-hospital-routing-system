@@ -10,13 +10,31 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { hospitalsApi } from '@/lib/api-client';
+import { useState } from 'react';
+import { Loader2, Power, PowerOff } from 'lucide-react';
 
 interface HospitalsTableProps {
     hospitals: Hospital[];
     onStatusChanged?: () => void;
 }
 
-export function HospitalsTable({ hospitals }: HospitalsTableProps) {
+export function HospitalsTable({ hospitals, onStatusChanged }: HospitalsTableProps) {
+    const [actionLoading, setActionLoading] = useState<string | null>(null);
+
+    const toggleStatus = async (hospitalId: string, currentStatus: string) => {
+        setActionLoading(hospitalId);
+        try {
+            const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+            await hospitalsApi.updateStatus(hospitalId, newStatus);
+            onStatusChanged?.();
+        } catch (err: any) {
+            alert(err.message || 'Failed to update hospital status');
+        } finally {
+            setActionLoading(null);
+        }
+    };
     const getLevelBadge = (level: string) => {
         const styles: Record<string, string> = {
             teaching: 'bg-purple-100 text-purple-700',
@@ -53,6 +71,7 @@ export function HospitalsTable({ hospitals }: HospitalsTableProps) {
                     <TableHead>Ownership</TableHead>
                     <TableHead>Address</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
             </TableHeader>
             <TableBody>
@@ -79,9 +98,24 @@ export function HospitalsTable({ hospitals }: HospitalsTableProps) {
                             </TableCell>
                             <TableCell className="text-gray-500 text-sm max-w-48 truncate">{hospital.address}</TableCell>
                             <TableCell>
-                                <Badge className="bg-green-100 text-green-700">
-                                    {hospital.status}
+                                <Badge className={hospital.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}>
+                                    {hospital.status.toUpperCase()}
                                 </Badge>
+                            </TableCell>
+                            <TableCell className="text-right">
+                                {actionLoading === hospital.id ? (
+                                    <Loader2 className="h-4 w-4 animate-spin inline text-gray-400" />
+                                ) : (
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className={hospital.status === 'active' ? 'text-red-600 hover:text-red-700 hover:bg-red-50' : 'text-green-600 hover:text-green-700 hover:bg-green-50'}
+                                        onClick={() => toggleStatus(hospital.id, hospital.status)}
+                                    >
+                                        {hospital.status === 'active' ? <PowerOff className="h-4 w-4 mr-1" /> : <Power className="h-4 w-4 mr-1" />}
+                                        {hospital.status === 'active' ? 'Deactivate' : 'Activate'}
+                                    </Button>
+                                )}
                             </TableCell>
                         </TableRow>
                     ))

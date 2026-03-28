@@ -5,13 +5,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { StatsCard } from '@/components/stats-card';
 import { HospitalsTable } from '@/components/admin/hospitals-table';
+import { AddHospitalModal } from '@/components/admin/add-hospital-modal';
 import { PhysiciansTable } from '@/components/admin/physicians-table';
 import { hospitalsApi, usersApi } from '@/lib/api-client';
 import { Hospital, Physician } from '@/types';
-import { Building2, Users, CheckCircle, Clock, Search, Loader2, Stethoscope, Activity } from 'lucide-react';
+import { Building2, Users, CheckCircle, Clock, Search, Loader2, Stethoscope, Activity, Plus } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 export default function AdminDashboard() {
     const [activeTab, setActiveTab] = useState('physicians');
+    const [isAddHospitalOpen, setIsAddHospitalOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [hospitals, setHospitals] = useState<Hospital[]>([]);
     const [physicians, setPhysicians] = useState<Physician[]>([]);
@@ -120,14 +123,25 @@ export default function AdminDashboard() {
                             </TabsTrigger>
                         </TabsList>
 
-                        <div className="relative w-64">
-                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                            <Input
-                                placeholder="Search..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="pl-9"
-                            />
+                        <div className="flex items-center gap-3">
+                            {activeTab === 'hospitals' && (
+                                <Button 
+                                    onClick={() => setIsAddHospitalOpen(true)}
+                                    className="bg-blue-600 hover:bg-blue-700"
+                                >
+                                    <Plus className="h-4 w-4 mr-2" />
+                                    Add Hospital
+                                </Button>
+                            )}
+                            <div className="relative w-64">
+                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                <Input
+                                    placeholder="Search..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="pl-9"
+                                />
+                            </div>
                         </div>
                     </div>
 
@@ -136,9 +150,17 @@ export default function AdminDashboard() {
                     </TabsContent>
 
                     <TabsContent value="hospitals" className="mt-0">
-                        <HospitalsTable hospitals={filteredHospitals} />
+                        <HospitalsTable hospitals={filteredHospitals} onStatusChanged={loadData} />
                     </TabsContent>
                 </Tabs>
+                
+                <AddHospitalModal 
+                    open={isAddHospitalOpen} 
+                    onClose={() => setIsAddHospitalOpen(false)} 
+                    onAdded={() => {
+                        loadData();
+                    }}
+                />
             </div>
         </div>
     );

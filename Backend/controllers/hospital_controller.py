@@ -10,6 +10,13 @@ from models.hospital import (
     fetch_active_hospital_flags,
 )
 from utils.audit import log_action
+import os
+import requests
+from pydantic import BaseModel
+from typing import List, Optional
+
+from controllers.resource_controller import create_hospital_resource
+from models.admin_invite import create_admin_invite
 
 
 def _row_to_hospital(row) -> dict:
@@ -117,6 +124,63 @@ def update_hospital_profile(hospital_id: int, data: dict, actor_user_id: int) ->
     )
 
     return {"success": True, "hospital_id": str(hospital_id)}
+
+
+def create_new_hospital(data: dict, actor_user_id: int) -> dict:
+    """Create a new hospital (inactive by default), geocode its address, set initial resources, and trigger invite."""
+    from models.hospital import insert_hospital
+    
+    admin_email = data.pop("admin_email", None)
+    initial_resources = data.pop("initial_resources", [])
+    
+    # 1. Geocode with Google Maps API
+    address = data.get("address", "")
+    api_key = os.environ.get("GOOGLE_MAPS_API_KEY")
+    lat, lng = None, None
+    if address and api_key:
+        try:
+            res = requests.get(f"https://maps.googleapis.com/maps/api/geocode/json?address={address}&key={api_key}", timeout=5)
+            if res.status_code == 200:
+                geo_data = res.json()
+                if geo_data.get("results"):
+                    loc = geo_data["results"][0]["geometry"]["location"]
+                    lat, lng = loc["lat"], loc["lng"]
+                    data["gps_coordinates"] = f"({lat},{lng})"
+        except Exception as e:
+            print(f"[WARN] Failed to geocode hospital address: {e}")
+            
+    # Default to inactive until checklist clears
+    data["status"] = "inactive"
+    
+    # 2. Track creation
+    try:
+        hospital_id = insert_hospital(data)
+    except Exception as e:
+        return {"error": True, "message": f"Database insertion failed: {str(e)}", "code": 500}
+
+    # 3. Add initial resources
+    for res_obj in initial_resources:
+        create_hospital_resource(hospital_id, res_obj)
+
+    # 4. Generate Admin Invite
+    invite_token = None
+    if admin_email:
+        invite_token = create_admin_invite(admin_email, hospital_id, actor_user_id)
+        
+    log_action(
+        actor_user_id,
+        "hospital_created",
+        entity_type="hospital",
+        entity_id=hospital_id,
+        details={"name": data.get("name"), "admin_email": admin_email},
+    )
+
+    return {
+        "success": True, 
+        "hospital_id": str(hospital_id), 
+        "geocoded": lat is not None,
+        "invite_token": invite_token
+    }
 
 
 def toggle_hospital_status(hospital_id: int, status: str, actor_user_id: int, reason: Optional[str] = None) -> dict:

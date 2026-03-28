@@ -44,6 +44,18 @@ class HospitalFlagCreate(BaseModel):
     referral_id: Optional[int] = None
 
 
+class HospitalCreate(BaseModel):
+    name: str
+    level: str
+    type: str
+    ownership: str
+    address: str
+    contact_phone: Optional[str] = None
+    email: Optional[str] = None
+    admin_email: Optional[str] = None
+    initial_resources: Optional[list] = []
+
+
 # ---- routes ----
 
 @router.get("")
@@ -59,6 +71,19 @@ def get_hospital(hospital_id: int):
     if not hospital:
         raise HTTPException(status_code=404, detail="Hospital not found")
     return hospital
+
+
+@router.post("")
+def create_hospital(
+    req: HospitalCreate,
+    current_user: dict = Depends(require_role("super_admin"))
+):
+    """Create a new hospital instance (Super Admin only)."""
+    from controllers.hospital_controller import create_new_hospital
+    result = create_new_hospital(req.model_dump(exclude_unset=True), current_user["id"])
+    if result.get("error"):
+        raise HTTPException(status_code=result.get("code", 400), detail=result["message"])
+    return result
 
 
 @router.put("/{hospital_id}")
@@ -118,3 +143,62 @@ def flag_hospital_data(
         notes=req.notes
     )
     return {"message": "Data flag created successfully", "flag_id": flag_id}
+
+
+@router.get("/{hospital_id}/flags")
+def list_hospital_flags(
+    hospital_id: int,
+    current_user: dict = Depends(require_role("hospital_admin", "super_admin")),
+):
+    """List all active data consistency flags for a hospital."""
+    from models.hospital import fetch_active_hospital_flags
+    
+    # Ensure hospital admin can only view their own hospital's flags
+    if current_user["role"] == "hospital_admin" and str(current_user.get("hospital_id")) != str(hospital_id):
+        raise HTTPException(status_code=403, detail="Not authorized to view flags for this hospital")
+        
+    try:
+        flags = fetch_active_hospital_flags(hospital_id)
+        # Format dates
+        formatted_flags = [
+            {
+                "flag_id": f["flag_id"],
+                "category": f["category"],
+                "notes": f["notes"],
+                "created_at": f["created_at"].isoformat() if f["created_at"] else None,
+                "flagging_physician_name": f["flagging_physician_name"]
+            }
+            for f in flags
+        ]
+        return formatted_flags
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.put("/flags/{flag_id}/resolve")
+def resolve_hospital_flag(
+    flag_id: int,
+    current_user: dict = Depends(require_role("hospital_admin", "super_admin")),
+):
+    """Mark a data consistency flag as resolved."""
+    from core.db import db_cursor
+    
+    with db_cursor() as cur:
+        # First check if flag exists and belongs to the admin's hospital
+        cur.execute("SELECT hospital_id FROM hospital_data_flags WHERE flag_id = %s", (flag_id,))
+        row = cur.fetchone()
+        
+        if not row:
+            raise HTTPException(status_code=404, detail="Flag not found")
+            
+        if current_user["role"] == "hospital_admin" and str(current_user.get("hospital_id")) != str(row["hospital_id"]):
+            raise HTTPException(status_code=403, detail="Not authorized to resolve flags for this hospital")
+            
+        cur.execute(
+            "UPDATE hospital_data_flags SET resolved = TRUE, resolved_at = CURRENT_TIMESTAMP WHERE flag_id = %s",
+            (flag_id,)
+        )
+        if cur.rowcount == 0:
+            raise HTTPException(status_code=400, detail="Failed to resolve flag")
+            
+    return {"success": True, "message": "Flag marked as resolved"}
