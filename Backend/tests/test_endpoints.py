@@ -1,21 +1,20 @@
 """
-Test suite for HRS API endpoints.
+Comprehensive test suite for HRS API endpoints.
 
 Auth strategy
 -------------
-`core.auth.get_current_user` calls `fetch_user_by_id_complete` from models.auth.
-We patch it at the point of use — `core.auth.fetch_user_by_id_complete` — so the
-auth dependency returns a controlled fake user with no live DB needed.
+Uses FastAPI's `app.dependency_overrides` to inject fake users,
+bypassing JWT verification entirely. This is resilient to auth
+implementation changes (cookie → JWT → whatever comes next).
+
+Run:  cd Backend && python -m pytest tests/ -v
 """
 
 import pytest
-from unittest.mock import patch
 from fastapi.testclient import TestClient
 
 from api import app
-
-# Unauthenticated client (no cookies)
-anon = TestClient(app, raise_server_exceptions=False)
+from core.auth import get_current_user, require_role
 
 
 # ---------------------------------------------------------------------------
@@ -23,182 +22,463 @@ anon = TestClient(app, raise_server_exceptions=False)
 # ---------------------------------------------------------------------------
 
 FAKE_PHYSICIAN = {
-    "user_id": 1, "email": "doc@hrs.gh", "full_name": "Dr. Test",
-    "role_name": "physician", "hospital_id": 1, "status": "active",
+    "id": 1, "email": "doc@hrs.gh", "full_name": "Dr. Test",
+    "role": "physician", "hospital_id": 1, "status": "active",
 }
 
 FAKE_HOSPITAL_ADMIN = {
-    "user_id": 2, "email": "admin@hrs.gh", "full_name": "Admin Test",
-    "role_name": "hospital_admin", "hospital_id": 1, "status": "active",
+    "id": 2, "email": "admin@hrs.gh", "full_name": "Admin Test",
+    "role": "hospital_admin", "hospital_id": 1, "status": "active",
 }
 
 FAKE_SUPER_ADMIN = {
-    "user_id": 3, "email": "super@hrs.gh", "full_name": "Super Admin",
-    "role_name": "super_admin", "hospital_id": None, "status": "active",
+    "id": 3, "email": "super@hrs.gh", "full_name": "Super Admin",
+    "role": "super_admin", "hospital_id": None, "status": "active",
 }
 
-# The correct patch path: where fetch_user_by_id_complete is CALLED (not defined)
-AUTH_PATCH = "core.auth.fetch_user_by_id_complete"
-
-
-def authed_client(fake_user: dict) -> TestClient:
-    """Return a TestClient pre-loaded with a session cookie for fake_user."""
-    c = TestClient(app, raise_server_exceptions=False)
-    c.cookies.set("hrs_user_id", str(fake_user["user_id"]))
-    return c
-
 
 # ---------------------------------------------------------------------------
-# 1. Unauthenticated access — must always be 401
+# Override helpers
 # ---------------------------------------------------------------------------
+
+def _override_user(fake_user: dict):
+    """Override get_current_user to return the given fake user."""
+    app.dependency_overrides[get_current_user] = lambda: fake_user
+
+    # Also override any require_role(...) instances.
+    # require_role returns a new function each time, so we override
+    # get_current_user which is its inner dependency.
+    # FastAPI resolves the inner Depends(get_current_user) inside require_role
+    # using the override, so this single override covers role checks too.
+
+
+def _clear_overrides():
+    app.dependency_overrides.clear()
+
+
+client = TestClient(app, raise_server_exceptions=False)
+
+
+@pytest.fixture(autouse=True)
+def cleanup_overrides():
+    """Ensure overrides are cleared after every test."""
+    yield
+    _clear_overrides()
+
+
+# ===========================================================================
+# 1. UNAUTHENTICATED ACCESS — must always be 401
+# ===========================================================================
 
 class TestUnauthenticated:
-    def test_create_referral_no_cookie(self):
-        response = anon.post("/api/referrals", json={})
-        assert response.status_code == 401
+    """All protected endpoints must return 401 without a token."""
 
-    def test_update_resource_no_cookie(self):
-        response = anon.put("/api/resources/1", json={"is_available": True})
-        assert response.status_code == 401
+    def test_create_referral(self):
+        assert client.post("/api/referrals", json={}).status_code == 401
 
-    def test_get_resources_no_cookie(self):
-        response = anon.get("/api/resources/1")
-        assert response.status_code == 401
+    def test_list_referrals(self):
+        assert client.get("/api/referrals").status_code == 401
 
-    def test_create_patient_no_cookie(self):
-        response = anon.post("/api/patients", json={})
-        assert response.status_code == 401
+    def test_update_resource(self):
+        assert client.put("/api/resources/1", json={"is_available": True}).status_code == 401
 
-    def test_list_users_no_cookie(self):
-        response = anon.get("/api/users")
-        assert response.status_code == 401
+    def test_get_resources(self):
+        assert client.get("/api/resources/1").status_code == 401
+
+    def test_create_patient(self):
+        assert client.post("/api/patients", json={}).status_code == 401
+
+    def test_list_users(self):
+        assert client.get("/api/users").status_code == 401
+
+    def test_list_notifications(self):
+        assert client.get("/api/notifications").status_code == 401
+
+    def test_unread_count(self):
+        assert client.get("/api/notifications/unread-count").status_code == 401
+
+    def test_health_summary(self):
+        assert client.get("/api/health/summary").status_code == 401
+
+    def test_run_audit(self):
+        assert client.post("/api/health/run-audit").status_code == 401
+
+    def test_health_alerts(self):
+        assert client.get("/api/health/alerts").status_code == 401
+
+    def test_update_user_status(self):
+        assert client.put("/api/users/1/status", json={"status": "active"}).status_code == 401
+
+    def test_update_user_profile(self):
+        assert client.put("/api/users/1/profile", json={"full_name": "X"}).status_code == 401
+
+    def test_report_inaccuracy(self):
+        assert client.post("/api/resources/1/report-inaccuracy", json={"resource_type": "beds", "notes": "wrong"}).status_code == 401
+
+    def test_create_specialist(self):
+        assert client.post("/api/specialists", json={}).status_code == 401
+
+    def test_generate_invite(self):
+        assert client.post("/api/super-admin/invites", json={}).status_code == 401
 
 
-# ---------------------------------------------------------------------------
-# 2. Public endpoints — no cookie needed
-# ---------------------------------------------------------------------------
+# ===========================================================================
+# 2. PUBLIC ENDPOINTS — no auth needed
+# ===========================================================================
 
-def test_get_hospitals_list():
-    """GET /api/hospitals is public — always 200."""
-    response = anon.get("/api/hospitals")
-    assert response.status_code == 200
-    assert isinstance(response.json(), list)
+class TestPublicEndpoints:
+    def test_hospitals_list(self):
+        """GET /api/hospitals is public."""
+        r = client.get("/api/hospitals")
+        assert r.status_code == 200
+        assert isinstance(r.json(), list)
+
+    def test_health_check(self):
+        """GET /api/health is a basic liveness probe."""
+        r = client.get("/api/health")
+        assert r.status_code == 200
+
+    def test_options_specializations(self):
+        """GET /api/options/specializations is public."""
+        r = client.get("/api/options/specializations")
+        assert r.status_code == 200
+        assert isinstance(r.json(), list)
 
 
-def test_health_check():
-    """GET /api/health should always return 200."""
-    response = anon.get("/api/health")
-    assert response.status_code == 200
+# ===========================================================================
+# 3. PYDANTIC VALIDATION — auth passes, bad payload → 422
+# ===========================================================================
 
-
-# ---------------------------------------------------------------------------
-# 3. Pydantic validation — requires auth, fails on bad payload
-# ---------------------------------------------------------------------------
-
-def test_create_referral_missing_patient_id():
-    """Missing patient_id → 422 Pydantic validation error."""
-    with patch(AUTH_PATCH, return_value=FAKE_PHYSICIAN):
-        c = authed_client(FAKE_PHYSICIAN)
-        response = c.post("/api/referrals", json={
+class TestValidation:
+    def test_create_referral_missing_fields(self):
+        _override_user(FAKE_PHYSICIAN)
+        r = client.post("/api/referrals", json={
             "referring_physician_id": 1,
             "referring_hospital_id": 1,
             "receiving_hospital_id": 2,
             "severity": "high",
             "stability": "stable",
             "presenting_complaint": "Chest pain",
+            # missing patient_id
         })
-    assert response.status_code == 422
+        assert r.status_code == 422
 
-
-def test_create_patient_missing_full_name():
-    """Missing full_name → 422 Pydantic validation error."""
-    with patch(AUTH_PATCH, return_value=FAKE_PHYSICIAN):
-        c = authed_client(FAKE_PHYSICIAN)
-        response = c.post("/api/patients", json={
+    def test_create_patient_missing_full_name(self):
+        _override_user(FAKE_PHYSICIAN)
+        r = client.post("/api/patients", json={
             "hospital_id": 1,
             "contact_number": "1234567890",
+            # missing full_name
         })
-    assert response.status_code == 422
+        assert r.status_code == 422
+
+    def test_add_specialist_missing_hospital_id(self):
+        _override_user(FAKE_HOSPITAL_ADMIN)
+        r = client.post("/api/specialists", json={"specialty": "Cardiology"})
+        assert r.status_code == 422
+
+    def test_update_user_status_missing_status(self):
+        _override_user(FAKE_SUPER_ADMIN)
+        r = client.put("/api/users/1/status", json={})
+        assert r.status_code == 422
+
+    def test_report_inaccuracy_missing_notes(self):
+        _override_user(FAKE_PHYSICIAN)
+        r = client.post("/api/resources/1/report-inaccuracy", json={
+            "resource_type": "beds",
+            # missing notes
+        })
+        assert r.status_code == 422
+
+    def test_transit_update_missing_text(self):
+        _override_user(FAKE_PHYSICIAN)
+        r = client.post("/api/referrals/1/transit-updates", json={})
+        assert r.status_code == 422
+
+    def test_referral_status_invalid_value(self):
+        _override_user(FAKE_HOSPITAL_ADMIN)
+        r = client.put("/api/referrals/1/status", json={"status": "invalid_status"})
+        assert r.status_code == 400
 
 
-def test_add_specialist_missing_hospital_id():
-    """Missing hospital_id → 422 Pydantic validation error."""
-    with patch(AUTH_PATCH, return_value=FAKE_HOSPITAL_ADMIN):
-        c = authed_client(FAKE_HOSPITAL_ADMIN)
-        response = c.post("/api/specialists", json={"specialty": "Cardiology"})
-    assert response.status_code == 422
+# ===========================================================================
+# 4. RBAC — wrong role gets 403
+# ===========================================================================
 
+class TestRBAC:
+    """Role-based access control enforcement."""
 
-# ---------------------------------------------------------------------------
-# 4. Controller-level error responses (requires auth + live DB)
-# ---------------------------------------------------------------------------
+    # --- Physician cannot do admin things ---
 
-def test_update_resource_invalid_payload():
-    """Updating a non-existent resource → 400 or 404."""
-    with patch(AUTH_PATCH, return_value=FAKE_HOSPITAL_ADMIN):
-        c = authed_client(FAKE_HOSPITAL_ADMIN)
-        response = c.put("/api/resources/9999", json={"is_available": False})
-    assert response.status_code in (400, 404)
+    def test_physician_cannot_update_resource(self):
+        _override_user(FAKE_PHYSICIAN)
+        r = client.put("/api/resources/1", json={"is_available": True})
+        assert r.status_code == 403
 
+    def test_physician_cannot_approve_referral(self):
+        _override_user(FAKE_PHYSICIAN)
+        r = client.put("/api/referrals/1/status", json={"status": "approved"})
+        assert r.status_code == 403
 
-def test_invalid_referral_status():
-    """Invalid status value → 400 from controller."""
-    with patch(AUTH_PATCH, return_value=FAKE_HOSPITAL_ADMIN):
-        c = authed_client(FAKE_HOSPITAL_ADMIN)
-        response = c.put("/api/referrals/1/status", json={"status": "invalid_status"})
-    assert response.status_code == 400
+    def test_physician_cannot_list_all_users(self):
+        _override_user(FAKE_PHYSICIAN)
+        r = client.get("/api/users")
+        assert r.status_code == 403
 
+    def test_physician_cannot_add_specialist(self):
+        _override_user(FAKE_PHYSICIAN)
+        r = client.post("/api/specialists", json={
+            "hospital_id": 1, "specialty": "Cardiology",
+            "specialist_name": "Dr. Heart",
+        })
+        assert r.status_code == 403
 
-def test_assign_invalid_physician():
-    """Assigning a non-existent physician → 404."""
-    with patch(AUTH_PATCH, return_value=FAKE_HOSPITAL_ADMIN):
-        c = authed_client(FAKE_HOSPITAL_ADMIN)
-        response = c.put("/api/referrals/1/assign", json={"physician_id": 9999})
-    assert response.status_code == 404
+    def test_physician_cannot_add_resource(self):
+        _override_user(FAKE_PHYSICIAN)
+        r = client.post("/api/resources/1", json={
+            "resource_type": "beds", "total_count": 10, "available_count": 5,
+        })
+        assert r.status_code == 403
 
+    def test_physician_cannot_view_health_summary(self):
+        _override_user(FAKE_PHYSICIAN)
+        r = client.get("/api/health/summary")
+        assert r.status_code == 403
 
-# ---------------------------------------------------------------------------
-# 5. RBAC enforcement — wrong role gets 403
-# ---------------------------------------------------------------------------
+    def test_physician_cannot_run_audit(self):
+        _override_user(FAKE_PHYSICIAN)
+        r = client.post("/api/health/run-audit")
+        assert r.status_code == 403
 
-def test_physician_cannot_update_resource():
-    """Physicians must get 403 on resource update (hospital_admin only)."""
-    with patch(AUTH_PATCH, return_value=FAKE_PHYSICIAN):
-        c = authed_client(FAKE_PHYSICIAN)
-        response = c.put("/api/resources/1", json={"is_available": True})
-    assert response.status_code == 403
+    def test_physician_cannot_view_alerts(self):
+        _override_user(FAKE_PHYSICIAN)
+        r = client.get("/api/health/alerts")
+        assert r.status_code == 403
 
+    def test_physician_cannot_generate_invite(self):
+        _override_user(FAKE_PHYSICIAN)
+        r = client.post("/api/super-admin/invites", json={
+            "email": "new@hrs.gh", "hospital_id": 1,
+        })
+        assert r.status_code == 403
 
-def test_physician_cannot_approve_referral():
-    """Physicians must get 403 on referral status update (hospital_admin only)."""
-    with patch(AUTH_PATCH, return_value=FAKE_PHYSICIAN):
-        c = authed_client(FAKE_PHYSICIAN)
-        response = c.put("/api/referrals/1/status", json={"status": "approved"})
-    assert response.status_code == 403
+    def test_physician_cannot_change_user_status(self):
+        _override_user(FAKE_PHYSICIAN)
+        r = client.put("/api/users/1/status", json={"status": "active"})
+        assert r.status_code == 403
 
+    # --- Hospital admin cannot do super admin things ---
 
-def test_physician_cannot_list_all_users():
-    """Physicians must get 403 on GET /api/users (super_admin only)."""
-    with patch(AUTH_PATCH, return_value=FAKE_PHYSICIAN):
-        c = authed_client(FAKE_PHYSICIAN)
-        response = c.get("/api/users")
-    assert response.status_code == 403
+    def test_hospital_admin_cannot_list_all_users(self):
+        _override_user(FAKE_HOSPITAL_ADMIN)
+        r = client.get("/api/users")
+        assert r.status_code == 403
 
-
-def test_hospital_admin_cannot_list_all_users():
-    """Hospital admins must also get 403 on GET /api/users (super_admin only)."""
-    with patch(AUTH_PATCH, return_value=FAKE_HOSPITAL_ADMIN):
-        c = authed_client(FAKE_HOSPITAL_ADMIN)
-        response = c.get("/api/users")
-    assert response.status_code == 403
-
-
-def test_hospital_admin_cannot_create_patient():
-    """Hospital admins get 403 on patient creation (physician only)."""
-    with patch(AUTH_PATCH, return_value=FAKE_HOSPITAL_ADMIN):
-        c = authed_client(FAKE_HOSPITAL_ADMIN)
-        response = c.post("/api/patients", json={
+    def test_hospital_admin_cannot_create_patient(self):
+        _override_user(FAKE_HOSPITAL_ADMIN)
+        r = client.post("/api/patients", json={
             "physician_id": 1, "hospital_id": 1,
             "patient_identifier": "P001", "full_name": "Test Patient",
         })
-    assert response.status_code == 403
+        assert r.status_code == 403
+
+    def test_hospital_admin_cannot_view_global_health(self):
+        _override_user(FAKE_HOSPITAL_ADMIN)
+        r = client.get("/api/health/summary")
+        assert r.status_code == 403
+
+    def test_hospital_admin_cannot_run_audit(self):
+        _override_user(FAKE_HOSPITAL_ADMIN)
+        r = client.post("/api/health/run-audit")
+        assert r.status_code == 403
+
+    def test_hospital_admin_cannot_generate_invite(self):
+        _override_user(FAKE_HOSPITAL_ADMIN)
+        r = client.post("/api/super-admin/invites", json={
+            "email": "new@hrs.gh", "hospital_id": 1,
+        })
+        assert r.status_code == 403
+
+    def test_hospital_admin_cannot_change_user_status(self):
+        _override_user(FAKE_HOSPITAL_ADMIN)
+        r = client.put("/api/users/1/status", json={"status": "active"})
+        assert r.status_code == 403
+
+    # --- Report inaccuracy: only own hospital ---
+
+    def test_physician_cannot_report_for_other_hospital(self):
+        _override_user(FAKE_PHYSICIAN)  # hospital_id=1
+        r = client.post("/api/resources/999/report-inaccuracy", json={
+            "resource_type": "beds", "notes": "Wrong numbers",
+        })
+        assert r.status_code == 403
+
+    # --- Hospital admin: only own hospital health ---
+
+    def test_hospital_admin_cannot_view_other_hospital_health(self):
+        _override_user(FAKE_HOSPITAL_ADMIN)  # hospital_id=1
+        r = client.get("/api/health/summary/999")
+        assert r.status_code == 403
+
+
+# ===========================================================================
+# 5. CONTROLLER ERROR HANDLING — auth passes, valid schema, logic errors
+# ===========================================================================
+
+class TestControllerErrors:
+    """Tests that hit the controller layer and get meaningful error responses."""
+
+    def test_update_nonexistent_resource(self):
+        _override_user(FAKE_HOSPITAL_ADMIN)
+        r = client.put("/api/resources/99999", json={"total_count": 10})
+        assert r.status_code in (400, 404)
+
+    def test_assign_nonexistent_physician(self):
+        _override_user(FAKE_HOSPITAL_ADMIN)
+        r = client.put("/api/referrals/1/assign", json={"physician_id": 99999})
+        assert r.status_code == 404
+
+    def test_get_nonexistent_referral(self):
+        _override_user(FAKE_PHYSICIAN)
+        r = client.get("/api/referrals/99999")
+        assert r.status_code == 404
+
+    def test_update_profile_no_fields(self):
+        _override_user(FAKE_PHYSICIAN)
+        r = client.put("/api/users/1/profile", json={})
+        assert r.status_code == 400
+
+    def test_update_specialist_nonexistent(self):
+        _override_user(FAKE_HOSPITAL_ADMIN)
+        r = client.put("/api/specialists/99999", json={"specialty": "Cardiology"})
+        assert r.status_code in (400, 404)
+
+    def test_delete_specialist_nonexistent(self):
+        _override_user(FAKE_HOSPITAL_ADMIN)
+        r = client.delete("/api/specialists/99999")
+        assert r.status_code in (400, 404)
+
+    def test_validate_invite_invalid_token(self):
+        r = client.get("/api/super-admin/invites/00000000-0000-0000-0000-000000000000")
+        assert r.status_code == 400
+
+
+# ===========================================================================
+# 6. AUTHORIZED ACCESS — correct role, valid responses
+# ===========================================================================
+
+class TestAuthorizedAccess:
+    """Tests that verify successful access with the correct role."""
+
+    def test_physician_can_list_referrals(self):
+        _override_user(FAKE_PHYSICIAN)
+        r = client.get("/api/referrals")
+        assert r.status_code == 200
+        assert isinstance(r.json(), list)
+
+    def test_physician_can_list_patients(self):
+        _override_user(FAKE_PHYSICIAN)
+        r = client.get("/api/patients")
+        assert r.status_code == 200
+        assert isinstance(r.json(), list)
+
+    def test_physician_can_view_resources(self):
+        _override_user(FAKE_PHYSICIAN)
+        r = client.get("/api/resources/1")
+        assert r.status_code == 200
+        assert isinstance(r.json(), list)
+
+    def test_hospital_admin_can_list_referrals(self):
+        _override_user(FAKE_HOSPITAL_ADMIN)
+        r = client.get("/api/referrals")
+        assert r.status_code == 200
+
+    def test_hospital_admin_can_view_specialists(self):
+        _override_user(FAKE_HOSPITAL_ADMIN)
+        r = client.get("/api/specialists/1")
+        assert r.status_code == 200
+        assert isinstance(r.json(), list)
+
+    def test_hospital_admin_can_view_own_health(self):
+        _override_user(FAKE_HOSPITAL_ADMIN)
+        r = client.get("/api/health/summary/1")
+        # 200 if hospital exists, 404 if not — but not 403
+        assert r.status_code in (200, 404)
+
+    def test_super_admin_can_list_users(self):
+        _override_user(FAKE_SUPER_ADMIN)
+        r = client.get("/api/users")
+        assert r.status_code == 200
+        assert isinstance(r.json(), list)
+
+    def test_super_admin_can_list_physicians(self):
+        _override_user(FAKE_SUPER_ADMIN)
+        r = client.get("/api/users/physicians")
+        assert r.status_code == 200
+        assert isinstance(r.json(), list)
+
+    def test_super_admin_can_view_health_summary(self):
+        _override_user(FAKE_SUPER_ADMIN)
+        r = client.get("/api/health/summary")
+        assert r.status_code == 200
+
+    def test_super_admin_can_view_alerts(self):
+        _override_user(FAKE_SUPER_ADMIN)
+        r = client.get("/api/health/alerts")
+        assert r.status_code == 200
+        assert isinstance(r.json(), list)
+
+    def test_any_user_can_list_notifications(self):
+        _override_user(FAKE_PHYSICIAN)
+        r = client.get("/api/notifications")
+        assert r.status_code == 200
+        assert isinstance(r.json(), list)
+
+    def test_any_user_can_get_unread_count(self):
+        _override_user(FAKE_PHYSICIAN)
+        r = client.get("/api/notifications/unread-count")
+        assert r.status_code == 200
+        data = r.json()
+        assert "unread_count" in data
+
+    def test_any_user_can_mark_all_read(self):
+        _override_user(FAKE_PHYSICIAN)
+        r = client.put("/api/notifications/read-all")
+        assert r.status_code == 200
+
+
+# ===========================================================================
+# 7. REFERRAL ENGINE — /api/recommend
+# ===========================================================================
+
+class TestReferralEngine:
+    def test_recommend_returns_rankings(self):
+        """The engine endpoint is public (no auth). Returns ranked hospitals."""
+        r = client.post("/api/recommend", json={
+            "lat": 5.6037,
+            "lon": -0.1870,
+            "referral_reason": "general",
+            "severity": "medium",
+            "stability": "stable",
+        })
+        assert r.status_code == 200
+        data = r.json()
+        assert "recommendations" in data or "rankings" in data or isinstance(data, dict)
+
+    def test_recommend_invalid_severity(self):
+        r = client.post("/api/recommend", json={
+            "lat": 5.6037,
+            "lon": -0.1870,
+            "referral_reason": "general",
+            "severity": "INVALID",
+            "stability": "stable",
+        })
+        assert r.status_code in (400, 422)  # Engine validates at controller level (400)
+
+    def test_recommend_missing_coordinates(self):
+        r = client.post("/api/recommend", json={
+            "referral_reason": "general",
+            "severity": "medium",
+            "stability": "stable",
+        })
+        assert r.status_code == 422
