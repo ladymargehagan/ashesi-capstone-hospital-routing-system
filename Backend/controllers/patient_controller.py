@@ -1,14 +1,12 @@
 from typing import Optional
 
 from models.patient import fetch_patients, fetch_patient_by_id, insert_patient
-from models.hospital import fetch_hospital_by_id
 
 
 def _row_to_patient(row) -> dict:
     return {
         "id": str(row["patient_id"]),
         "physician_id": str(row["physician_id"]),
-        "hospital_id": str(row["hospital_id"]),
         "patient_identifier": row["patient_identifier"],
         "full_name": row["full_name"],
         "date_of_birth": str(row["date_of_birth"]) if row.get("date_of_birth") else None,
@@ -39,16 +37,8 @@ def get_patient_details(patient_id: int) -> Optional[dict]:
 
 def create_new_patient(data: dict) -> dict:
     """Validate data and insert a new patient."""
-    hospital_id = data.get("hospital_id")
-    
-    # Validation: Verify hospital exists and is active
-    hospital = fetch_hospital_by_id(hospital_id)
-    if not hospital or hospital.get("status") != "active":
-        return {"error": True, "message": "Invalid hospital"}
-
     patient_id = insert_patient(
         physician_id=data["physician_id"],
-        hospital_id=hospital_id,
         patient_identifier=data["patient_identifier"],
         full_name=data["full_name"],
         date_of_birth=data.get("date_of_birth"),

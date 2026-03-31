@@ -149,10 +149,10 @@ export default function HospitalsDirectoryPage() {
 
                             {/* Type + ownership */}
                             <div className="mt-3 flex flex-wrap gap-1.5">
-                                {hospital.type && (
+                                {hospital.level && (
                                     <div className="flex items-center gap-1 rounded-md bg-gray-50 px-2 py-0.5 text-[11px] text-gray-500">
                                         <Tag className="h-3 w-3" />
-                                        {hospital.type.replace('_', ' ')}
+                                        {hospital.level.replace('_', ' ')}
                                     </div>
                                 )}
                                 {hospital.ownership && (

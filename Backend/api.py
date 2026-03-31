@@ -267,7 +267,7 @@ def _load_hospitals_from_db(now: datetime) -> list[Hospital]:
                     capabilities=capabilities,
                     resources=resources,
                     last_update=last_update,
-                    hospital_type=h.get("type", "general").title(),
+                    hospital_type=h.get("level", "health_centre").replace("_", " ").title(),
                     hospital_level=h.get("level", "health_centre"),
                     phone=h.get("contact_phone", ""),
                 ))

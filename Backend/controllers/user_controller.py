@@ -90,9 +90,12 @@ def modify_user_profile(user_id: int, data: dict) -> dict:
     # 1. Update users table
     user_updates = []
     user_params = []
-    if data.get("full_name") is not None:
-        user_updates.append("full_name = %s")
-        user_params.append(data["full_name"])
+    if data.get("first_name") is not None:
+        user_updates.append("first_name = %s")
+        user_params.append(data["first_name"])
+    if data.get("last_name") is not None:
+        user_updates.append("last_name = %s")
+        user_params.append(data["last_name"])
     if data.get("phone_number") is not None:
         user_updates.append("phone_number = %s")
         user_params.append(data["phone_number"])

@@ -30,8 +30,8 @@ export function HospitalDetailsModal({ hospital, open, onClose }: HospitalDetail
                             <p className="font-semibold">{hospital.name}</p>
                         </div>
                         <div>
-                            <p className="text-sm text-gray-500">Type</p>
-                            <p className="font-semibold">{hospital.type}</p>
+                            <p className="text-sm text-gray-500">Level</p>
+                            <p className="font-semibold capitalize">{hospital.level?.replace('_', ' ')}</p>
                         </div>
                     </div>
 

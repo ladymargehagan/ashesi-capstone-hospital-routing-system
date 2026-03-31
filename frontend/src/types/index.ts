@@ -5,6 +5,8 @@ export type UserRole = 'physician' | 'hospital_admin' | 'super_admin';
 export interface User {
     id: string;
     email: string;
+    first_name: string;
+    last_name: string;
     full_name: string;
     role: UserRole;
     phone_number?: string;
@@ -46,7 +48,6 @@ export interface Physician {
 
 // Hospital types (maps to HOSPITALS table)
 export type HospitalLevel = 'teaching' | 'regional' | 'district' | 'polyclinic' | 'health_centre' | 'chps';
-export type HospitalType = 'polyclinic' | 'district' | 'regional' | 'teaching' | 'specialist' | 'health_centre' | 'chps';
 export type HospitalOwnership = 'public' | 'private' | 'faith_based' | 'military' | 'quasi_government';
 export type HospitalStatus = 'active' | 'pending' | 'rejected';
 
@@ -60,7 +61,6 @@ export interface Hospital {
     lng?: number;
     address: string;
     level: HospitalLevel;
-    type: HospitalType;
     ownership: HospitalOwnership;
     operating_hours?: string;
     contact_phone?: string;
@@ -73,7 +73,6 @@ export interface Hospital {
 export interface Patient {
     id: string;
     physician_id: string;
-    hospital_id?: string;
     patient_identifier: string;
     full_name: string;
     date_of_birth?: string;

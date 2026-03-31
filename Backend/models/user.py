@@ -50,16 +50,16 @@ def fetch_user_name_by_id(user_id: int) -> Optional[str]:
 def fetch_physicians(hospital_id: Optional[int] = None, status: Optional[str] = None):
     with db_cursor() as cur:
         query = """
-            SELECT p.*, u.full_name, u.email, h.name AS hospital_name
+            SELECT p.*, u.full_name, u.email, u.hospital_id, h.name AS hospital_name
             FROM physicians p
             JOIN users u ON p.user_id = u.user_id
             JOIN role r ON u.role_id = r.role_id
-            JOIN hospitals h ON p.hospital_id = h.hospital_id
+            LEFT JOIN hospitals h ON u.hospital_id = h.hospital_id
             WHERE r.role_name = 'physician'
         """
         params = []
         if hospital_id:
-            query += " AND p.hospital_id = %s"
+            query += " AND u.hospital_id = %s"
             params.append(hospital_id)
         if status:
             query += " AND p.status = %s"

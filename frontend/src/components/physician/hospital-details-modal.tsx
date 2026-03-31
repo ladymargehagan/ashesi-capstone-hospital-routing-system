@@ -146,8 +146,8 @@ export function HospitalDetailsModal({ hospitalId, open, onClose }: HospitalDeta
                                         <h4 className="text-sm font-semibold text-gray-900 mb-3">Facility Details</h4>
                                         <div className="space-y-2 text-sm">
                                             <div className="flex justify-between">
-                                                <span className="text-gray-500">Type</span>
-                                                <span className="capitalize font-medium">{hospital.type.replace('_', ' ')}</span>
+                                                <span className="text-gray-500">Level</span>
+                                                <span className="capitalize font-medium">{hospital.level?.replace('_', ' ')}</span>
                                             </div>
                                             <div className="flex justify-between">
                                                 <span className="text-gray-500">Ownership</span>

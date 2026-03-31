@@ -42,30 +42,30 @@ def fetch_role_id_by_name(role_name: str) -> Optional[int]:
         return row["role_id"] if row else None
 
 
-def insert_pending_user(email: str, password_hash: Optional[str], role_id: int, full_name: str, phone_number: Optional[str], hospital_id: int, auth_uid: Optional[str] = None) -> int:
+def insert_pending_user(email: str, password_hash: Optional[str], role_id: int, first_name: str, last_name: str, phone_number: Optional[str], hospital_id: int, auth_uid: Optional[str] = None) -> int:
     with db_cursor() as cur:
         cur.execute(
             """
-            INSERT INTO users (email, password_hash, role_id, full_name,
+            INSERT INTO users (email, password_hash, role_id, first_name, last_name,
                                phone_number, hospital_id, auth_provider, status, auth_uid)
-            VALUES (%s, %s, %s, %s, %s, %s, 'local', 'pending', %s)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, 'local', 'pending', %s)
             RETURNING user_id
             """,
-            (email, password_hash, role_id, full_name, phone_number, hospital_id, auth_uid),
+            (email, password_hash, role_id, first_name, last_name, phone_number, hospital_id, auth_uid),
         )
         return cur.fetchone()["user_id"]
 
 
-def insert_pending_physician(user_id: int, hospital_id: int, license_number: str, title: Optional[str], specialization: Optional[str], department: Optional[str], grade: Optional[str]) -> int:
+def insert_pending_physician(user_id: int, license_number: str, title: Optional[str], specialization: Optional[str], department: Optional[str], grade: Optional[str]) -> int:
     with db_cursor() as cur:
         cur.execute(
             """
-            INSERT INTO physicians (user_id, hospital_id, license_number,
+            INSERT INTO physicians (user_id, license_number,
                                     title, specialization, department, grade, status)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, 'pending')
+            VALUES (%s, %s, %s, %s, %s, %s, 'pending')
             RETURNING physician_id
             """,
-            (user_id, hospital_id, license_number, title, specialization, department, grade),
+            (user_id, license_number, title, specialization, department, grade),
         )
         return cur.fetchone()["physician_id"]
 
@@ -109,17 +109,17 @@ def link_google_account(user_id: int, google_id: str, profile_picture_url: Optio
         )
 
 
-def insert_google_user(email: str, role_id: int, full_name: str, phone_number: Optional[str], hospital_id: Optional[int], google_id: str, profile_picture_url: Optional[str]) -> int:
+def insert_google_user(email: str, role_id: int, first_name: str, last_name: str, phone_number: Optional[str], hospital_id: Optional[int], google_id: str, profile_picture_url: Optional[str]) -> int:
     with db_cursor() as cur:
         cur.execute(
             """
-            INSERT INTO users (email, password_hash, role_id, full_name,
+            INSERT INTO users (email, password_hash, role_id, first_name, last_name,
                                phone_number, hospital_id, google_id,
                                auth_provider, profile_picture_url, status)
-            VALUES (%s, NULL, %s, %s, %s, %s, %s, 'google', %s, 'pending')
+            VALUES (%s, NULL, %s, %s, %s, %s, %s, %s, 'google', %s, 'pending')
             RETURNING user_id
             """,
-            (email, role_id, full_name, phone_number, hospital_id, google_id, profile_picture_url),
+            (email, role_id, first_name, last_name, phone_number, hospital_id, google_id, profile_picture_url),
         )
         return cur.fetchone()["user_id"]
 

@@ -20,7 +20,8 @@ export default function AdminProfilePage() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const [fullName, setFullName] = useState(user?.full_name || '');
+    const [firstName, setFirstName] = useState((user as any)?.first_name || '');
+    const [lastName, setLastName] = useState((user as any)?.last_name || '');
     const [phoneNumber, setPhoneNumber] = useState(user?.phone_number || '');
 
     if (!user) {
@@ -40,7 +41,8 @@ export default function AdminProfilePage() {
         setError(null);
         try {
             await usersApi.updateProfile(user.id, {
-                full_name: fullName,
+                first_name: firstName,
+                last_name: lastName,
                 phone_number: phoneNumber,
             });
             if (refreshUser) await refreshUser();
@@ -81,7 +83,8 @@ export default function AdminProfilePage() {
                             <CardTitle className="text-lg">Personal Information</CardTitle>
                             {!editing && (
                                 <Button variant="outline" size="sm" onClick={() => {
-                                    setFullName(user.full_name);
+                                    setFirstName((user as any).first_name || '');
+                                    setLastName((user as any).last_name || '');
                                     setPhoneNumber(user.phone_number || '');
                                     setEditing(true);
                                 }}>
@@ -111,9 +114,15 @@ export default function AdminProfilePage() {
                         {/* Fields */}
                         {editing ? (
                             <div className="space-y-4">
-                                <div>
-                                    <Label htmlFor="name">Full Name</Label>
-                                    <Input id="name" value={fullName} onChange={e => setFullName(e.target.value)} />
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <Label htmlFor="firstName">First Name</Label>
+                                        <Input id="firstName" value={firstName} onChange={e => setFirstName(e.target.value)} />
+                                    </div>
+                                    <div>
+                                        <Label htmlFor="lastName">Last Name</Label>
+                                        <Input id="lastName" value={lastName} onChange={e => setLastName(e.target.value)} />
+                                    </div>
                                 </div>
                                 <div>
                                     <Label htmlFor="phone">Phone Number</Label>

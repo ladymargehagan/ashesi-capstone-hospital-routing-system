@@ -69,7 +69,6 @@ export function HospitalsTable({ hospitals, onStatusChanged }: HospitalsTablePro
                 <TableRow>
                     <TableHead>Hospital Name</TableHead>
                     <TableHead>Level</TableHead>
-                    <TableHead>Type</TableHead>
                     <TableHead>Ownership</TableHead>
                     <TableHead>Address</TableHead>
                     <TableHead>Status</TableHead>
@@ -79,7 +78,7 @@ export function HospitalsTable({ hospitals, onStatusChanged }: HospitalsTablePro
             <TableBody>
                 {hospitals.length === 0 ? (
                     <TableRow>
-                        <TableCell colSpan={6} className="text-center text-gray-500 py-8">
+                        <TableCell colSpan={5} className="text-center text-gray-500 py-8">
                             No hospitals found
                         </TableCell>
                     </TableRow>
@@ -92,7 +91,6 @@ export function HospitalsTable({ hospitals, onStatusChanged }: HospitalsTablePro
                                     {formatLevel(hospital.level)}
                                 </Badge>
                             </TableCell>
-                            <TableCell className="text-gray-600">{formatLevel(hospital.type)}</TableCell>
                             <TableCell>
                                 <Badge variant="outline" className={getOwnershipBadge(hospital.ownership)}>
                                     {formatLevel(hospital.ownership)}

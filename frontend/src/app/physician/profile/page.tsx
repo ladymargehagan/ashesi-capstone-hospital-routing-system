@@ -20,7 +20,8 @@ export default function PhysicianProfilePage() {
     const [saving, setSaving] = useState(false);
     
     const [formData, setFormData] = useState({
-        full_name: '',
+        first_name: '',
+        last_name: '',
         phone_number: '',
         title: '',
         license_number: '',
@@ -31,7 +32,8 @@ export default function PhysicianProfilePage() {
 
     const handleEdit = () => {
         setFormData({
-            full_name: user?.full_name || '',
+            first_name: (user as any)?.first_name || '',
+            last_name: (user as any)?.last_name || '',
             phone_number: user?.phone_number || '',
             title: (user as any)?.title || '',
             license_number: (user as any)?.license_number || '',
@@ -118,10 +120,17 @@ export default function PhysicianProfilePage() {
                             <div className="space-y-4">
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <Label>Full Name</Label>
+                                        <Label>First Name</Label>
                                         <Input
-                                            value={formData.full_name}
-                                            onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                                            value={formData.first_name}
+                                            onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>Last Name</Label>
+                                        <Input
+                                            value={formData.last_name}
+                                            onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
                                         />
                                     </div>
                                     <div className="space-y-2">

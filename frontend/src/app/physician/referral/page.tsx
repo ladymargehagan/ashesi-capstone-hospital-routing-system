@@ -368,7 +368,6 @@ function ReferralFormContent() {
             generalBeds: generalBeds ? `${generalBeds.available_count}/${generalBeds.total_count}` : 'N/A',
             icuBeds: icuBeds ? `${icuBeds.available_count}/${icuBeds.total_count}` : 'N/A',
             level: (hospital.level || '').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
-            type: hospital.type.charAt(0).toUpperCase() + hospital.type.slice(1),
             ownership: hospital.ownership.replace('_', ' ').charAt(0).toUpperCase() + hospital.ownership.replace('_', ' ').slice(1),
         };
     };
@@ -911,8 +910,8 @@ function ReferralFormContent() {
                                                         </div>
                                                         <div className="bg-white rounded-md p-2 text-center">
                                                             <Building2 className="h-4 w-4 text-purple-500 mx-auto mb-1" />
-                                                            <p className="text-xs text-gray-500">Type</p>
-                                                            <p className="font-semibold text-sm">{preview.type}</p>
+                                                            <p className="text-xs text-gray-500">Level</p>
+                                                            <p className="font-semibold text-sm">{preview.level}</p>
                                                         </div>
                                                         <div className="bg-white rounded-md p-2 text-center">
                                                             <Badge className={`text-xs ${getLevelBadgeStyle(chosenHospital.level)}`} variant="outline">
@@ -1000,7 +999,7 @@ function ReferralFormContent() {
                                                             <div className="flex items-center gap-4 mt-1 text-xs text-gray-500">
                                                                 <span>Beds: {preview.generalBeds}</span>
                                                                 <span>ICU: {preview.icuBeds}</span>
-                                                                <span className="capitalize">{hospital.type}</span>
+                                                                <span className="capitalize">{hospital.level?.replace('_', ' ')}</span>
                                                             </div>
                                                         </button>
                                                     );

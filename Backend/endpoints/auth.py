@@ -41,7 +41,8 @@ router = APIRouter(prefix="/api/auth", tags=["auth"])
 class DoctorRegisterRequest(BaseModel):
     """Doctor self-registration after Supabase signup."""
     auth_uid: str  # UUID from supabase.auth.signUp()
-    full_name: str
+    first_name: str
+    last_name: str
     email: str
     phone_number: Optional[str] = None
     hospital_id: int
@@ -63,7 +64,8 @@ class AdminRegisterRequest(BaseModel):
     """Hospital admin registration via invite link, after Supabase signup."""
     auth_uid: str
     token: str
-    full_name: str
+    first_name: str
+    last_name: str
     phone_number: Optional[str] = None
 
 

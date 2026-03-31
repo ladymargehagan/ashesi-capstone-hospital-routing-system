@@ -35,7 +35,9 @@ def _build_user_dict(row, physician_id: str | None = None) -> dict:
     d = {
         "id": str(row["user_id"]),
         "email": row["email"],
-        "full_name": row["full_name"],
+        "first_name": row.get("first_name", ""),
+        "last_name": row.get("last_name", ""),
+        "full_name": row.get("full_name", ""),
         "role": row.get("role_name", ""),
         "hospital_id": str(row["hospital_id"]) if row.get("hospital_id") else None,
         "phone_number": row.get("phone_number"),
@@ -109,12 +111,13 @@ def process_doctor_registration(data: dict) -> dict:
     # If password is provided (legacy flow), hash it; otherwise store NULL
     pw_hash = hash_password(data["password"]) if data.get("password") else None
     user_id = insert_pending_user(
-        data["email"], pw_hash, role_id, data["full_name"], data.get("phone_number"), data["hospital_id"],
+        data["email"], pw_hash, role_id, data["first_name"], data["last_name"],
+        data.get("phone_number"), data["hospital_id"],
         auth_uid=data.get("auth_uid"),
     )
 
     physician_id = insert_pending_physician(
-        user_id, data["hospital_id"], data["license_number"], data.get("title"),
+        user_id, data["license_number"], data.get("title"),
         data.get("specialization"), data.get("department"), data.get("grade")
     )
 
@@ -150,11 +153,11 @@ def process_admin_registration(data: dict) -> dict:
         with db_cursor() as cur:
             cur.execute(
                 """
-                INSERT INTO users (email, password_hash, role_id, full_name, phone_number, hospital_id, status, auth_uid)
-                VALUES (%s, %s, %s, %s, %s, %s, 'active', %s)
+                INSERT INTO users (email, password_hash, role_id, first_name, last_name, phone_number, hospital_id, status, auth_uid)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, 'active', %s)
                 RETURNING user_id
                 """,
-                (email, pw_hash, role_id, data["full_name"], data.get("phone_number"), hospital_id, data.get("auth_uid"))
+                (email, pw_hash, role_id, data["first_name"], data["last_name"], data.get("phone_number"), hospital_id, data.get("auth_uid"))
             )
             user_id = cur.fetchone()["user_id"]
             
@@ -180,7 +183,11 @@ def process_google_auth(token: str, data: dict) -> dict:
         )
         google_id = idinfo["sub"]
         email = idinfo["email"]
-        full_name = idinfo.get("name", email.split("@")[0])
+        google_name = idinfo.get("name", email.split("@")[0])
+        # Split Google's full name into first/last
+        name_parts = google_name.split(" ", 1)
+        first_name = name_parts[0]
+        last_name = name_parts[1] if len(name_parts) > 1 else ""
         picture = idinfo.get("picture")
     except ImportError:
         return {"error": True, "code": 500, "message": "Google auth library not installed. Run: pip install google-auth"}
@@ -217,12 +224,12 @@ def process_google_auth(token: str, data: dict) -> dict:
 
     # New user
     role_id = fetch_role_id_by_name("physician")
-    user_id = insert_google_user(email, role_id, full_name, data.get("phone_number"), data.get("hospital_id"), google_id, picture)
+    user_id = insert_google_user(email, role_id, first_name, last_name, data.get("phone_number"), data.get("hospital_id"), google_id, picture)
 
     physician_id = None
     if data.get("license_number") and data.get("hospital_id"):
         phys_id_int = insert_pending_physician(
-            user_id, data["hospital_id"], data["license_number"], data.get("title"),
+            user_id, data["license_number"], data.get("title"),
             data.get("specialization"), data.get("department"), data.get("grade")
         )
         physician_id = str(phys_id_int)

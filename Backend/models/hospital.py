@@ -69,7 +69,7 @@ def set_hospital_status(hospital_id: int, status: str) -> bool:
 def insert_hospital(data: dict) -> int:
     """Insert a new hospital."""
     with db_cursor() as cur:
-        fields = ["name", "address", "level", "type", "ownership", "contact_phone", "email", "status"]
+        fields = ["name", "address", "level", "ownership", "contact_phone", "email", "status"]
         if "gps_coordinates" in data:
             fields.append("gps_coordinates")
             

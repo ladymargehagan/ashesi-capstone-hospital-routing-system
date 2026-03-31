@@ -22,13 +22,15 @@ export default function HospitalProfilePage() {
     const [editing, setEditing] = useState(false);
     const [saving, setSaving] = useState(false);
     const [formData, setFormData] = useState({
-        full_name: '',
+        first_name: '',
+        last_name: '',
         phone_number: ''
     });
 
     const handleEdit = () => {
         setFormData({
-            full_name: user?.full_name || '',
+            first_name: (user as any)?.first_name || '',
+            last_name: (user as any)?.last_name || '',
             phone_number: user?.phone_number || ''
         });
         setEditing(true);
@@ -124,10 +126,17 @@ export default function HospitalProfilePage() {
                             <div className="space-y-4">
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <Label>Full Name</Label>
+                                        <Label>First Name</Label>
                                         <Input
-                                            value={formData.full_name}
-                                            onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                                            value={formData.first_name}
+                                            onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>Last Name</Label>
+                                        <Input
+                                            value={formData.last_name}
+                                            onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
                                         />
                                     </div>
                                     <div className="space-y-2">
@@ -205,8 +214,8 @@ export default function HospitalProfilePage() {
                                     </Badge>
                                 </div>
                                 <div className="p-3 bg-gray-50 rounded-lg">
-                                    <p className="text-xs text-gray-500">Type</p>
-                                    <p className="font-medium capitalize">{hospital.type}</p>
+                                    <p className="text-xs text-gray-500">Level</p>
+                                    <p className="font-medium capitalize">{hospital.level?.replace('_', ' ')}</p>
                                 </div>
                                 <div className="p-3 bg-gray-50 rounded-lg">
                                     <p className="text-xs text-gray-500">Ownership</p>

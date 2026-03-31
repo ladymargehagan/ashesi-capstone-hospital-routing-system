@@ -27,7 +27,6 @@ export function AddHospitalModal({ open, onClose, onAdded }: AddHospitalModalPro
         name: '',
         address: '',
         level: 'district',
-        type: 'General',
         ownership: 'public',
         contact_phone: '',
         email: '',
@@ -62,7 +61,6 @@ export function AddHospitalModal({ open, onClose, onAdded }: AddHospitalModalPro
                 name: formData.name,
                 address: formData.address,
                 level: formData.level,
-                type: formData.type.toLowerCase(),
                 ownership: formData.ownership,
                 contact_phone: formData.contact_phone,
                 email: formData.email,
@@ -172,24 +170,6 @@ export function AddHospitalModal({ open, onClose, onAdded }: AddHospitalModalPro
                                     </SelectContent>
                                 </Select>
                             </div>
-                            <div>
-                                <Label>Facility Type</Label>
-                                <Select value={formData.type} onValueChange={v => setFormData({...formData, type: v})}>
-                                    <SelectTrigger>
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="General">General</SelectItem>
-                                        <SelectItem value="Specialist">Specialist</SelectItem>
-                                        <SelectItem value="Psychiatric">Psychiatric</SelectItem>
-                                        <SelectItem value="Maternity">Maternity</SelectItem>
-                                        <SelectItem value="Children">Children</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <Label>Ownership</Label>
                                 <Select value={formData.ownership} onValueChange={v => setFormData({...formData, ownership: v})}>

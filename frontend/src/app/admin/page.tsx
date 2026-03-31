@@ -61,7 +61,6 @@ export default function AdminDashboard() {
     const filteredHospitals = hospitals.filter(h =>
         h.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (h.level || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (h.type || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
         (h.address || '').toLowerCase().includes(searchQuery.toLowerCase())
     );
 

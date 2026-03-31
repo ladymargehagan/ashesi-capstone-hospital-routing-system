@@ -17,11 +17,13 @@ def fetch_patients(physician_id: Optional[int] = None, hospital_id: Optional[int
                 (physician_id, physician_id, physician_id),
             )
         elif hospital_id:
-            # Patients registered at this hospital PLUS patients referred to it
+            # Patients registered at this hospital (via physician) PLUS patients referred to it
             cur.execute(
                 """
                 SELECT DISTINCT p.* FROM patients p
-                WHERE p.hospital_id = %s
+                JOIN physicians ph ON p.physician_id = ph.physician_id
+                JOIN users u ON ph.user_id = u.user_id
+                WHERE u.hospital_id = %s
                 UNION
                 SELECT DISTINCT p.* FROM patients p
                 JOIN referrals r ON p.patient_id = r.patient_id
@@ -49,7 +51,6 @@ def fetch_patient_by_id(patient_id: int):
 
 def insert_patient(
     physician_id: int,
-    hospital_id: int,
     patient_identifier: str,
     full_name: str,
     date_of_birth: Optional[str] = None,
@@ -65,13 +66,13 @@ def insert_patient(
         cur.execute(
             """
             INSERT INTO patients
-                (physician_id, hospital_id, patient_identifier, full_name,
+                (physician_id, patient_identifier, full_name,
                  date_of_birth, sex, nhis_number, nhis_status, contact_number,
                  address, next_of_kin_name, next_of_kin_contact)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING patient_id
             """,
-            (physician_id, hospital_id, patient_identifier,
+            (physician_id, patient_identifier,
              full_name, date_of_birth, sex, nhis_number,
              nhis_status, contact_number, address,
              next_of_kin_name, next_of_kin_contact),

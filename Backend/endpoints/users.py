@@ -28,7 +28,8 @@ class UserStatusUpdate(BaseModel):
 
 
 class UserProfileUpdate(BaseModel):
-    full_name: Optional[str] = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
     phone_number: Optional[str] = None
     title: Optional[str] = None
     license_number: Optional[str] = None

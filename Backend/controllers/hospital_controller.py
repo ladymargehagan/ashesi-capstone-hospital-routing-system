@@ -36,8 +36,7 @@ def _row_to_hospital(row) -> dict:
         "address": row["address"],
         "gps_coordinates": {"lat": lat, "lng": lng} if lat is not None else None,
         "level": row.get("level"),
-        "type": row["type"],
-        "ownership": row["ownership"],
+        "ownership": row.get("ownership"),
         "operating_hours": row.get("operating_hours"),
         "contact_phone": row.get("contact_phone"),
         "email": row.get("email"),
@@ -98,7 +97,7 @@ def update_hospital_profile(hospital_id: int, data: dict, actor_user_id: int) ->
     params = []
 
     # Map the JSON keys to DB columns
-    fields = ["name", "license_number", "address", "level", "type", "ownership", "operating_hours", "contact_phone", "email"]
+    fields = ["name", "license_number", "address", "level", "ownership", "operating_hours", "contact_phone", "email"]
     for field in fields:
         if data.get(field) is not None:
             updates.append(f"{field} = %s")

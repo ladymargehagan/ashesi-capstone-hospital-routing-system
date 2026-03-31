@@ -29,7 +29,8 @@ function RegisterForm() {
     const [isAdminInvite, setIsAdminInvite] = useState(false);
 
     // Form state
-    const [fullName, setFullName] = useState('');
+    const [firstName, setFirstName] = useState('');
+    const [lastName, setLastName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -93,7 +94,7 @@ function RegisterForm() {
 
         let hasError = false;
         
-        if (!fullName.trim()) {
+        if (!firstName.trim() || !lastName.trim()) {
             hasError = true;
         }
         
@@ -153,12 +154,14 @@ function RegisterForm() {
                 ? {
                     auth_uid: authUid,
                     token: inviteToken,
-                    full_name: fullName,
+                    first_name: firstName,
+                    last_name: lastName,
                     phone_number: phoneNumber,
                 }
                 : {
                     auth_uid: authUid,
-                    full_name: fullName,
+                    first_name: firstName,
+                    last_name: lastName,
                     email,
                     phone_number: phoneNumber,
                     hospital_id: parseInt(hospitalId),
@@ -293,9 +296,15 @@ function RegisterForm() {
                             <form onSubmit={handleSubmit} className="space-y-4">
                                 {step === 1 && (
                                     <>
-                                        <div className="space-y-2">
-                                            <Label htmlFor="fullName">Full Name *</Label>
-                                            <Input id="fullName" placeholder="Dr. Kwame Mensah" value={fullName} onChange={(e) => setFullName(e.target.value)} required className="h-11" />
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div className="space-y-2">
+                                                <Label htmlFor="firstName">First Name *</Label>
+                                                <Input id="firstName" placeholder="Kwame" value={firstName} onChange={(e) => setFirstName(e.target.value)} required className="h-11" />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label htmlFor="lastName">Last Name *</Label>
+                                                <Input id="lastName" placeholder="Mensah" value={lastName} onChange={(e) => setLastName(e.target.value)} required className="h-11" />
+                                            </div>
                                         </div>
                                         <div className="space-y-2">
                                             <Label htmlFor="regEmail">Email Address *</Label>
