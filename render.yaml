@@ -39,3 +39,5 @@ services:
         sync: false
       - key: SMTP_FROM
         sync: false
+      - key: FRONTEND_URL
+        sync: false

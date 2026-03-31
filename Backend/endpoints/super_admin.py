@@ -1,3 +1,5 @@
+import os
+
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from core.auth import get_current_user, require_role
@@ -7,6 +9,8 @@ from services.email_service import send_email, _base_email, EMAIL_ENABLED
 
 router = APIRouter(prefix="/api/super-admin", tags=["super-admin"])
 
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
+
 class InviteRequest(BaseModel):
     email: str
     hospital_id: int
@@ -15,7 +19,7 @@ class InviteRequest(BaseModel):
 def generate_invite(req: InviteRequest, current_user: dict = Depends(require_role("super_admin"))):
     """Generate a secure invite link for a new hospital admin and email it."""
     token = create_admin_invite(req.email, req.hospital_id, current_user["id"])
-    invite_link = f"http://localhost:3000/register?invite={token}"
+    invite_link = f"{FRONTEND_URL}/register?invite={token}"
 
     # Look up hospital name for the email
     hospital_name = "your assigned hospital"
