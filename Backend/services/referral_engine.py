@@ -40,6 +40,7 @@ class Hospital:
     resources: Dict[str, ResourceState] = field(default_factory=dict)
     last_update: datetime = field(default_factory=datetime.utcnow)
     hospital_type: str = "General"
+    hospital_level: str = "health_centre"
     phone: str = "N/A"
     travel_time_override_mins: Optional[float] = None
 
@@ -48,11 +49,23 @@ class Hospital:
             return True
 
         windows = self.operating_hours.get(at_time.weekday(), [])
+        if not windows:
+            # No operating hours data — assume open (benefit of the doubt)
+            return True
+
         hour = at_time.hour
         for start_hour, end_hour in windows:
             if start_hour <= hour < end_hour:
                 return True
         return False
+
+    def has_valid_gps(self) -> bool:
+        """Check that GPS coordinates are not the default fallback (central Accra)."""
+        if self.lat == 0.0 and self.lon == 0.0:
+            return False
+        if abs(self.lat) < 0.01 and abs(self.lon) < 0.01:
+            return False
+        return True
 
 
 @dataclass
@@ -265,6 +278,31 @@ TMAX_BY_CONTEXT: Dict[Tuple[str, str], int] = {
 }
 
 
+# ---------------------------------------------------------------------------
+# Level-appropriateness bonus.
+# Higher-level facilities get a small score boost for complex cases.
+# This acts as a tiebreaker — it won't override proximity or capability,
+# but between two equally scored hospitals, the higher-level one wins.
+# The bonus scales with severity: critical cases favour teaching/regional
+# more than low-severity cases.
+# ---------------------------------------------------------------------------
+LEVEL_RANK: Dict[str, int] = {
+    "teaching": 5,
+    "regional": 4,
+    "district": 3,
+    "polyclinic": 2,
+    "health_centre": 1,
+    "chps": 0,
+}
+
+SEVERITY_LEVEL_BONUS: Dict[str, float] = {
+    "critical": 0.08,   # teaching/regional get up to +0.08 boost
+    "high":     0.05,
+    "medium":   0.02,
+    "low":      0.00,   # low severity — level doesn't matter
+}
+
+
 class ReferralEngine:
     def __init__(self, hospitals: Sequence[Hospital], config: Optional[EngineConfig] = None) -> None:
         self.hospitals = list(hospitals)
@@ -275,8 +313,13 @@ class ReferralEngine:
         required = self._required_resources(patient.referral_reason)
         warnings: List[str] = []
 
-        # first, we calcualte distance for everyone, and keep nearby hospitals.
-        # We also fill a count-min sketch so distance lookups stay fast.
+        # Filter out hospitals with invalid GPS coordinates
+        valid_hospitals = [h for h in self.hospitals if h.has_valid_gps()]
+        skipped_gps = len(self.hospitals) - len(valid_hospitals)
+        if skipped_gps > 0:
+            warnings.append(f"{skipped_gps} hospital(s) excluded due to missing GPS data.")
+
+        # Calculate distance for all valid hospitals and keep nearby ones.
         distance_lookup = DistanceLookup(
             bucket_km=self.config.distance_bucket_km,
             cms_width=self.config.cms_width,
@@ -284,23 +327,48 @@ class ReferralEngine:
         )
 
         nearby: List[Hospital] = []
-        for hospital in self.hospitals:
+        radius = self.config.radius_km
+        for hospital in valid_hospitals:
             distance = haversine_km(patient.lat, patient.lon, hospital.lat, hospital.lon)
             distance_lookup.add_distance(hospital.hospital_id, distance)
-            if distance <= self.config.radius_km:
+            if distance <= radius:
                 nearby.append(hospital)
 
-        # second, if hospital is closed right now, we skip it.
+        # If no hospitals within radius, expand progressively before giving up
+        if not nearby:
+            for expanded in [radius * 2, radius * 3]:
+                nearby = [
+                    h for h in valid_hospitals
+                    if (distance_lookup.get_exact_distance(h.hospital_id) or float("inf")) <= expanded
+                ]
+                if nearby:
+                    warnings.append(
+                        f"No hospitals within {radius:.0f} km. Search expanded to {expanded:.0f} km."
+                    )
+                    radius = expanded
+                    break
+
+        if not nearby:
+            return self._empty_result(patient, warnings, len(valid_hospitals),
+                                      "No hospitals found within search radius.")
+
+        # Filter by operating hours
         open_now = [h for h in nearby if h.is_open(patient.at_time)]
 
-        # third, hospital must have all needed capabilities.
+        if not open_now:
+            # All nearby hospitals appear closed — include them anyway with a warning
+            warnings.append(
+                "All nearby hospitals appear closed. Including them in results — verify availability by phone."
+            )
+            open_now = nearby
+
+        # Filter by capability match
         required_keys = set(required.keys())
         capable = [h for h in open_now if required_keys.issubset(h.capabilities)]
 
         used_partial_fallback = False
         if not capable:
             used_partial_fallback = True
-            # no full match, so we fallback and still give best partial options.
             warnings.append(
                 "No fully capable hospital found. Showing partial matches ranked by matched capability and proximity."
             )
@@ -332,12 +400,13 @@ class ReferralEngine:
                 fallback_distance_km=distance_km,
                 at_time=patient.at_time,
             )
-            # close hospitals get higher score; beyond thresehold goes to 0.
             proximity_score = max(0.0, 1.0 - (travel_mins / float(tmax)))
             freshness_factor = self._freshness_factor(hospital.last_update, patient.at_time)
+            level_bonus = self._level_bonus(hospital.hospital_level, patient.severity)
 
-            # final score mixes capability + proximity, then freshness penalty.
-            composite = freshness_factor * (alpha * resource_score + beta * proximity_score)
+            # Final score: capability + proximity weighted by urgency, freshness penalty,
+            # plus a small level-appropriateness bonus for complex cases.
+            composite = freshness_factor * (alpha * resource_score + beta * proximity_score) + level_bonus
             scored.append(
                 {
                     "hospital": hospital,
@@ -448,6 +517,7 @@ class ReferralEngine:
             
             # Freshness penalizes hospitals that haven't updated their data recently
             freshness = self._freshness_factor(hospital.last_update, patient.at_time)
+            level_bonus = self._level_bonus(hospital.hospital_level, severity)
 
             resource_breakdown = {}
             for key in req_keys:
@@ -467,9 +537,7 @@ class ReferralEngine:
                     "resource_score": match_ratio,
                     "proximity_score": proximity,
                     "freshness_factor": freshness,
-                    # In fallback mode, we use a softer composite score: 
-                    # (Capability Score + Distance Score) scaled by how fresh their bed data is.
-                    "composite_score": partial_score * freshness,
+                    "composite_score": partial_score * freshness + level_bonus,
                     "resource_breakdown": resource_breakdown,
                     "distance_band_density_estimate": distance_lookup.estimate_density_near(distance),
                 }
@@ -528,6 +596,7 @@ class ReferralEngine:
             "hospital_name": hospital.name,
             "hospital_id": hospital.hospital_id,
             "hospital_type": hospital.hospital_type,
+            "hospital_level": hospital.hospital_level,
             "contact": hospital.phone,
             "distance_km": round(row["distance_km"], 2),
             "travel_time_minutes": round(row["travel_time_minutes"], 1),
@@ -548,6 +617,44 @@ class ReferralEngine:
             ],
             "distance_band_density_estimate": row["distance_band_density_estimate"],
         }
+
+    def _empty_result(
+        self, patient: PatientCase, warnings: List[str],
+        total: int, message: str,
+    ) -> Dict[str, Any]:
+        """Return a structured response when no hospitals can be recommended."""
+        warnings.append(message)
+        return {
+            "input_summary": {
+                "referral_reason": patient.referral_reason,
+                "severity": patient.severity,
+                "stability": patient.stability,
+                "time": patient.at_time.isoformat(),
+                "radius_km": self.config.radius_km,
+            },
+            "debug": {
+                "counts": {
+                    "total": total,
+                    "nearby": 0,
+                    "open_now": 0,
+                    "capable": 0,
+                    "partial_fallback_used": False,
+                },
+                "weights": {"alpha_capability": 0, "beta_proximity": 0},
+                "tmax_minutes": 0,
+            },
+            "warnings": warnings,
+            "recommendations": [],
+        }
+
+    def _level_bonus(self, hospital_level: str, severity: str) -> float:
+        """Small score bonus for higher-level facilities on complex cases."""
+        max_bonus = SEVERITY_LEVEL_BONUS.get(severity.lower(), 0.0)
+        if max_bonus == 0.0:
+            return 0.0
+        rank = LEVEL_RANK.get(hospital_level.lower(), 1)
+        max_rank = max(LEVEL_RANK.values())
+        return max_bonus * (rank / max_rank)
 
     def _required_resources(self, referral_reason: str) -> Dict[str, float]:
         key = referral_reason.lower().strip()

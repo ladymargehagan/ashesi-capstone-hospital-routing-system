@@ -56,12 +56,17 @@ app = FastAPI(
     version="2.0.0",
 )
 
+cors_origins = os.getenv(
+    "CORS_ORIGINS",
+    "http://localhost:3000,http://127.0.0.1:3000"
+).split(",")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_origins=cors_origins,
     allow_methods=["*"],
     allow_headers=["*"],
-    allow_credentials=True,  # Required for cookie-based auth
+    allow_credentials=True,
 )
 
 # Mount route modules
@@ -259,6 +264,7 @@ def _load_hospitals_from_db(now: datetime) -> list[Hospital]:
                     resources=resources,
                     last_update=last_update,
                     hospital_type=h.get("type", "general").title(),
+                    hospital_level=h.get("level", "health_centre"),
                     phone=h.get("contact_phone", ""),
                 ))
 

@@ -36,7 +36,7 @@ export default function RootLayout({
             __html: `
               (async function() {
                 try {
-                  const res = await fetch('http://localhost:8000/api/maps-key');
+                  const res = await fetch('${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/maps-key');
                   const data = await res.json();
                   if (data.key) {
                     const script = document.createElement('script');
