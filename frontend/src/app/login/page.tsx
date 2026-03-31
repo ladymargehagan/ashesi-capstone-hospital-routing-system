@@ -169,15 +169,6 @@ export default function LoginPage() {
                                 </Link>
                             </div>
 
-                            {/* Demo credentials */}
-                            <div className="mt-4 pt-4 border-t border-slate-100">
-                                <p className="text-xs text-slate-400 text-center mb-2">Demo Accounts:</p>
-                                <div className="space-y-1 text-xs text-slate-500">
-                                    <p><span className="font-medium text-slate-600">Admin:</span> admin@hrs.gov.gh / admin123</p>
-                                    <p><span className="font-medium text-slate-600">Hospital:</span> admin@korlebu.gov.gh / hospital123</p>
-                                    <p><span className="font-medium text-slate-600">Physician:</span> dr.mensah@korlebu.gov.gh / physician123</p>
-                                </div>
-                            </div>
                         </CardContent>
                     </Card>
                 </div>
