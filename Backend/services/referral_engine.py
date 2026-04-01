@@ -138,6 +138,40 @@ class TravelTimeProvider:
     def __init__(self, config: EngineConfig, google_api_key: Optional[str] = None) -> None:
         self.config = config
         self.google_api_key = google_api_key or os.getenv("GOOGLE_MAPS_API_KEY")
+        self._cache: Dict[str, float] = {}
+
+    def prefetch_batch_travel_times(self, origin: Tuple[float, float], hospitals: List[Hospital]) -> None:
+        if not self.google_api_key or requests is None or not hospitals:
+            return
+
+        chunk_size = 25
+        for i in range(0, len(hospitals), chunk_size):
+            chunk = hospitals[i : i + chunk_size]
+            destinations_str = "|".join([f"{h.lat},{h.lon}" for h in chunk])
+            
+            url = "https://maps.googleapis.com/maps/api/distancematrix/json"
+            params = {
+                "origins": f"{origin[0]},{origin[1]}",
+                "destinations": destinations_str,
+                "mode": "driving",
+                "departure_time": "now",
+                "key": self.google_api_key,
+            }
+            try:
+                response = requests.get(url, params=params, timeout=5)
+                response.raise_for_status()
+                body = response.json()
+                if body.get("status") == "OK" and body.get("rows"):
+                    elements = body["rows"][0].get("elements", [])
+                    for idx, h in enumerate(chunk):
+                        if idx < len(elements):
+                            elem = elements[idx]
+                            if elem.get("status") == "OK":
+                                seconds = elem.get("duration_in_traffic", elem.get("duration", {})).get("value")
+                                if seconds is not None:
+                                    self._cache[h.hospital_id] = float(seconds) / 60.0
+            except Exception:
+                pass
 
     def get_travel_time_minutes(
         self,
@@ -149,9 +183,13 @@ class TravelTimeProvider:
         if hospital.travel_time_override_mins is not None:
             return max(0.0, float(hospital.travel_time_override_mins))
 
+        if hospital.hospital_id in self._cache:
+            return self._cache[hospital.hospital_id]
+
         if self.google_api_key and requests is not None:
             api_time = self._google_distance_matrix_minutes(origin, (hospital.lat, hospital.lon))
             if api_time is not None:
+                self._cache[hospital.hospital_id] = api_time
                 return api_time
 
         return self._estimated_drive_time_minutes(fallback_distance_km, at_time)
@@ -366,6 +404,13 @@ class ReferralEngine:
         required_keys = set(required.keys())
         capable = [h for h in open_now if required_keys.issubset(h.capabilities)]
 
+        # PRE-FETCH GOOGLE MAPS TRAVEL TIMES
+        if capable:
+            self.travel_time_provider.prefetch_batch_travel_times(
+                origin=(patient.lat, patient.lon),
+                hospitals=capable,
+            )
+
         used_partial_fallback = False
         if not capable:
             used_partial_fallback = True
@@ -493,6 +538,14 @@ class ReferralEngine:
 
         rows: List[Dict[str, Any]] = []
         hospitals_list = list(hospitals)
+        
+        # PRE-FETCH GOOGLE MAPS TRAVEL TIMES
+        if hospitals_list:
+            self.travel_time_provider.prefetch_batch_travel_times(
+                origin=(patient.lat, patient.lon),
+                hospitals=hospitals_list,
+            )
+            
         req_keys = set(required.keys())
         for hospital in hospitals_list:
             distance = distance_lookup.get_exact_distance(hospital.hospital_id)

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import json
 import os
+from collections import defaultdict
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 
@@ -197,6 +198,31 @@ def _load_hospitals_from_db(now: datetime) -> list[Hospital]:
         with db_cursor() as cur:
             cur.execute("SELECT * FROM hospitals WHERE status = 'active'")
             hospital_rows = cur.fetchall()
+            
+            if not hospital_rows:
+                return []
+
+            hospital_ids = tuple(h["hospital_id"] for h in hospital_rows)
+
+            # Batch load resources
+            cur.execute(
+                "SELECT * FROM hospital_resources WHERE hospital_id IN %s",
+                (hospital_ids,)
+            )
+            all_resources = cur.fetchall()
+            resources_by_hospital = defaultdict(list)
+            for r in all_resources:
+                resources_by_hospital[str(r["hospital_id"])].append(r)
+
+            # Batch load specialists
+            cur.execute(
+                "SELECT * FROM specialists WHERE hospital_id IN %s",
+                (hospital_ids,)
+            )
+            all_specialists = cur.fetchall()
+            specialists_by_hospital = defaultdict(list)
+            for s in all_specialists:
+                specialists_by_hospital[str(s["hospital_id"])].append(s)
 
             for h in hospital_rows:
                 hospital_id = str(h["hospital_id"])
@@ -216,13 +242,7 @@ def _load_hospitals_from_db(now: datetime) -> list[Hospital]:
                 oper_hrs = h.get("operating_hours")
                 is_24_7 = (oper_hrs or "").strip().lower() in ("24/7", "24 hours", "")
 
-                # Load resources for this hospital
-                cur.execute(
-                    "SELECT * FROM hospital_resources WHERE hospital_id = %s",
-                    (h["hospital_id"],),
-                )
-                resource_rows = cur.fetchall()
-
+                resource_rows = resources_by_hospital.get(hospital_id, [])
                 capabilities = set()
                 resources = {}
                 for r in resource_rows:
@@ -237,11 +257,7 @@ def _load_hospitals_from_db(now: datetime) -> list[Hospital]:
                     )
 
                 # Load specialists as capabilities
-                cur.execute(
-                    "SELECT * FROM specialists WHERE hospital_id = %s",
-                    (h["hospital_id"],),
-                )
-                specialist_rows = cur.fetchall()
+                specialist_rows = specialists_by_hospital.get(hospital_id, [])
                 for s in specialist_rows:
                     spec_name = s["specialty"].replace(" ", "_")
                     capabilities.add(spec_name)
