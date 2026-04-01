@@ -142,6 +142,13 @@ def flag_hospital_data(
         category=req.category,
         notes=req.notes
     )
+    
+    from services.email_service import notify_data_flagged
+    try:
+        notify_data_flagged(hospital_id, req.category, req.notes, current_user["id"])
+    except Exception as e:
+        print(f"[WARN] Failed to send data flag email: {e}")
+        
     return {"message": "Data flag created successfully", "flag_id": flag_id}
 
 

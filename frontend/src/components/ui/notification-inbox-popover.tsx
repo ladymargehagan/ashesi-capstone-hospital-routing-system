@@ -7,6 +7,8 @@ import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNotifications } from "@/hooks/use-notifications";
 import { Notification } from "@/types";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/hooks/use-auth";
 import {
   Bell,
   CheckCircle2,
@@ -64,10 +66,29 @@ interface NotificationRowProps {
 function NotificationRow({ notification: n, onMarkRead }: NotificationRowProps) {
   const meta = getTypeMeta(n.type);
   const Icon = meta.icon;
+  const router = useRouter();
+  const { user } = useAuth();
+
+  const handleClick = () => {
+    if (!n.is_read) onMarkRead(n.id);
+    
+    // Route based on type
+    if (n.type.startsWith('referral_') || n.type === 'patient_arrived') {
+        if (user?.role === 'physician') router.push('/physician');
+        else if (user?.role === 'hospital_admin') router.push('/hospital-admin/referrals');
+        else router.push('/dashboard');
+    } else if (n.type.startsWith('hospital_') || n.type === 'data_flagged') {
+        if (user?.role === 'super_admin') router.push('/super-admin');
+        else if (user?.role === 'hospital_admin') router.push('/hospital-admin');
+    } else if (n.type.startsWith('physician_') || n.type === 'account_approved') {
+        if (user?.role === 'hospital_admin') router.push('/hospital-admin/doctors');
+        else if (user?.role === 'physician') router.push('/physician');
+    }
+  };
 
   return (
     <button
-      onClick={() => !n.is_read && onMarkRead(n.id)}
+      onClick={handleClick}
       className={`flex w-full items-start gap-3 border-b px-4 py-3 text-left transition-colors hover:bg-accent/60 ${
         !n.is_read ? "bg-blue-50/60" : ""
       }`}

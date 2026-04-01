@@ -117,9 +117,22 @@ export default function PhysicianDashboard() {
                 />
             </div>
 
-            {/* Outcomes Chart */}
-            <div className="mb-6 lg:w-1/2">
-                <ReferralOutcomesChart referrals={outgoingReferrals} />
+            {/* Outcomes Charts */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <div className="bg-white rounded-lg border p-6">
+                    <h3 className="text-sm font-semibold mb-4 text-gray-800 flex items-center gap-2">
+                        <ArrowUpRight className="h-4 w-4 text-blue-600" />
+                        Outcomes (Sent Referrals)
+                    </h3>
+                    <ReferralOutcomesChart referrals={outgoingReferrals} />
+                </div>
+                <div className="bg-white rounded-lg border p-6">
+                    <h3 className="text-sm font-semibold mb-4 text-gray-800 flex items-center gap-2">
+                        <ArrowDownLeft className="h-4 w-4 text-purple-600" />
+                        Outcomes (Received Referrals)
+                    </h3>
+                    <ReferralOutcomesChart referrals={incomingReferrals} />
+                </div>
             </div>
 
             {/* Tabs */}

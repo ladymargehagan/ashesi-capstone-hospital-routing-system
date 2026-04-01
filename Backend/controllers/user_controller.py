@@ -133,6 +133,14 @@ def modify_user_profile(user_id: int, data: dict) -> dict:
 
     if not user_updates and not physician_updates:
         return {"error": True, "message": "No fields to update"}
+        
+    full_name = fetch_user_name_by_id(user_id)
+    if full_name:
+        from services.email_service import notify_profile_updated
+        try:
+            notify_profile_updated(user_id, full_name)
+        except Exception as e:
+            print(f"[WARN] Failed to send profile updated email: {e}")
 
     return {"success": True, "user_id": str(user_id)}
 

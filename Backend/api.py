@@ -455,7 +455,10 @@ def physician_stats(physician_id: int):
         total_patients = cur.fetchone()["count"]
 
         cur.execute("SELECT COUNT(*) as count FROM referrals WHERE referring_physician_id = %s", (physician_id,))
-        total_referrals = cur.fetchone()["count"]
+        referrals_sent = cur.fetchone()["count"]
+
+        cur.execute("SELECT COUNT(*) as count FROM referrals WHERE assigned_physician_id = %s", (physician_id,))
+        referrals_received = cur.fetchone()["count"]
 
         cur.execute(
             "SELECT COUNT(*) as count FROM referrals WHERE referring_physician_id = %s AND status = 'pending'",
@@ -471,7 +474,8 @@ def physician_stats(physician_id: int):
 
     return {
         "total_patients": total_patients,
-        "total_referrals": total_referrals,
+        "referrals_sent": referrals_sent,
+        "referrals_received": referrals_received,
         "pending_referrals": pending,
         "completed_referrals": completed,
     }

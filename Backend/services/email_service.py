@@ -378,3 +378,58 @@ def notify_account_rejected(user_id: int, full_name: str):
             """,
         ),
     )
+
+
+def notify_data_flagged(hospital_id: int, category: str, notes: str, flagger_user_id: int):
+    """Notify all receiving hospital admins when a referring physician flags their data as inconsistent."""
+    with db_cursor() as cur:
+        cur.execute("SELECT name FROM hospitals WHERE hospital_id = %s", (hospital_id,))
+        h_row = cur.fetchone()
+        hospital_name = h_row["name"] if h_row else "Your Hospital"
+        
+        cur.execute(
+            """
+            SELECT u.user_id FROM users u
+            JOIN role r ON u.role_id = r.role_id
+            WHERE u.hospital_id = %s AND r.role_name = 'hospital_admin' AND u.status = 'active'
+            """,
+            (hospital_id,),
+        )
+        admins = cur.fetchall()
+
+    for admin in admins:
+        notify_user(
+            user_id=admin["user_id"],
+            message=f"A physician has flagged inconsistent data for {hospital_name}: {category}",
+            notification_type="data_flagged",
+            email_subject=f"[HRS] Inconsistent Data Flagged — {hospital_name}",
+            email_body=_base_email(
+                "Inconsistent Data Flagged",
+                f"""
+                <p>A referring physician has reported inconsistent data matching your hospital's profile during a referral transfer.</p>
+                <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
+                    <tr><td style="padding: 8px; color: #64748b;">Category</td><td style="padding: 8px; font-weight: 600;">{category}</td></tr>
+                    <tr><td style="padding: 8px; color: #64748b; vertical-align: top;">Notes</td><td style="padding: 8px; font-weight: 600; white-space: pre-wrap;">{notes or 'None provided'}</td></tr>
+                </table>
+                <p>Please log in to your dashboard to review and resolve this flag.</p>
+                """,
+            ),
+        )
+
+
+def notify_profile_updated(user_id: int, full_name: str):
+    """Notify a user that their profile information has been changed."""
+    notify_user(
+        user_id=user_id,
+        message="Your HRS profile information has been successfully updated.",
+        notification_type="profile_updated",
+        email_subject="[HRS] Profile Information Updated",
+        email_body=_base_email(
+            "Profile Updated",
+            f"""
+            <p>Dear {full_name},</p>
+            <p>Your Hospital Routing System profile information was recently updated.</p>
+            <p>If you did not authorize these changes, please contact your super administrator immediately.</p>
+            """,
+        ),
+    )
