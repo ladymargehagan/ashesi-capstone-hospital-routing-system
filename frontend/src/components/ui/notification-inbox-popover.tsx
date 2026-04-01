@@ -72,7 +72,8 @@ function NotificationRow({ notification: n, onMarkRead }: NotificationRowProps) 
   const handleClick = () => {
     if (!n.is_read) onMarkRead(n.id);
     
-    // Route based on type
+    // NOTE: Routing disabled based on request: "should not take us to any page yet"
+    /*
     if (n.type.startsWith('referral_') || n.type === 'patient_arrived') {
         if (user?.role === 'physician') router.push('/physician');
         else if (user?.role === 'hospital_admin') router.push('/hospital-admin/referrals');
@@ -84,6 +85,7 @@ function NotificationRow({ notification: n, onMarkRead }: NotificationRowProps) 
         if (user?.role === 'hospital_admin') router.push('/hospital-admin/doctors');
         else if (user?.role === 'physician') router.push('/physician');
     }
+    */
   };
 
   return (

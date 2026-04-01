@@ -23,9 +23,16 @@ export default function LandingPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#C4D8E5]/30">
+    <div className="min-h-screen relative overflow-hidden bg-[#E8F1FF]">
+      {/* Decorative medical dot pattern */}
+      <div className="absolute inset-0 z-0 bg-[radial-gradient(#116BF8_1.5px,transparent_1.5px)] [background-size:28px_28px] opacity-[0.06] pointer-events-none" />
+      
+      {/* Ambient background glows */}
+      <div className="absolute top-[-10%] left-[20%] w-[800px] h-[800px] z-0 bg-white/70 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-[20%] right-[-10%] w-[600px] h-[600px] z-0 bg-[#21BCEE]/10 rounded-full blur-[120px] pointer-events-none" />
+
       {/* ── Navigation ── */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-xl border-b border-border shadow-sm">
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/70 backdrop-blur-xl border-b border-white/50 shadow-sm">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center shadow-md">
@@ -56,7 +63,7 @@ export default function LandingPage() {
       </nav>
 
       {/* ── Hero Section (Split) ── */}
-      <section className="pt-36 pb-24 bg-muted/30">
+      <section className="relative pt-36 pb-24 z-10">
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             {/* Left: Elevated Card */}
