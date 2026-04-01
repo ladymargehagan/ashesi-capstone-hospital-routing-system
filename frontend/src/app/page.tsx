@@ -148,15 +148,53 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
             {/* Map Imagery */}
-            <div className="relative aspect-square md:aspect-[4/3] rounded-3xl overflow-hidden bg-muted/30 border border-border p-8 flex items-center justify-center">
-              <div className="relative w-full h-full rounded-2xl overflow-hidden shadow-lg shadow-primary/5">
+            <div className="relative w-full aspect-square md:aspect-[4/3] flex items-center justify-center p-4">
+                {/* Background SVG Map */}
                 <Image
-                  src="/images/accra-map-interconnected.png"
-                  alt="Stylized map of Greater Accra hospital network"
+                  src="/images/Ghanamap.svg"
+                  alt="Accra City Map Base"
                   fill
-                  className="object-contain p-4"
+                  className="object-contain opacity-90 drop-shadow-md"
                 />
-              </div>
+                
+                {/* Header Overlay */}
+                <div className="absolute top-4 left-4 z-20 bg-white/40 backdrop-blur-md p-3 rounded-2xl border border-white/50">
+                  <h3 className="text-xl md:text-3xl font-black text-secondary tracking-tight">ACCRA</h3>
+                  <p className="text-primary font-bold tracking-widest text-[10px] md:text-xs">HOSPITAL NETWORK</p>
+                </div>
+
+                {/* Interconnectors */}
+                <svg className="absolute inset-0 w-full h-full pointer-events-none z-10" viewBox="0 0 100 100" preserveAspectRatio="none">
+                    <path d="M 26,62 L 40,45 L 53,60 L 68,52 L 40,45 M 53,60 L 60,78 M 68,52 L 26,62" fill="none" stroke="#173DED" strokeWidth="0.5" strokeDasharray="1.5 1.5" className="animate-pulse opacity-60" />
+                </svg>
+
+                {/* HTML PINS Overlay */}
+                <div className="absolute w-full h-full z-20 pointer-events-none">
+                    <div className="absolute top-[62%] left-[26%] flex flex-col items-center -translate-x-1/2 -translate-y-1/2">
+                        <div className="w-3 h-3 md:w-5 md:h-5 bg-primary rounded-full border-2 border-white shadow-lg flex items-center justify-center"><div className="w-1 h-1 md:w-2 md:h-2 bg-white rounded-full"></div></div>
+                        <span className="mt-1 text-[8px] md:text-[10px] font-bold text-secondary bg-white/90 px-1.5 py-0.5 rounded shadow-sm">Korle Bu Teaching</span>
+                    </div>
+                    
+                    <div className="absolute top-[45%] left-[40%] flex flex-col items-center -translate-x-1/2 -translate-y-1/2">
+                        <div className="w-4 h-4 md:w-6 md:h-6 bg-secondary rounded-full border-2 border-white shadow-lg flex items-center justify-center"><div className="w-1.5 h-1.5 md:w-2.5 md:h-2.5 bg-primary rounded-full"></div></div>
+                        <span className="mt-1 text-[8px] md:text-[11px] font-extrabold text-primary bg-white/90 px-2 py-0.5 rounded shadow-sm border border-primary/20">Ridge Hospital</span>
+                    </div>
+                    
+                    <div className="absolute top-[60%] left-[53%] flex flex-col items-center -translate-x-1/2 -translate-y-1/2">
+                        <div className="w-3 h-3 md:w-4 md:h-4 bg-primary rounded-full border-2 border-white shadow-lg flex items-center justify-center"><div className="w-1 h-1 md:w-1.5 md:h-1.5 bg-white rounded-full"></div></div>
+                        <span className="mt-1 text-[8px] md:text-[10px] font-bold text-secondary bg-white/90 px-1.5 py-0.5 rounded shadow-sm">37 Military</span>
+                    </div>
+                    
+                    <div className="absolute top-[52%] left-[68%] flex flex-col items-center -translate-x-1/2 -translate-y-1/2">
+                        <div className="w-3 h-3 md:w-5 md:h-5 bg-primary rounded-full border-2 border-white shadow-lg flex items-center justify-center"><div className="w-1 h-1 md:w-2 md:h-2 bg-white rounded-full"></div></div>
+                        <span className="mt-1 text-[8px] md:text-[10px] font-bold text-secondary bg-white/90 px-1.5 py-0.5 rounded shadow-sm">La General</span>
+                    </div>
+                    
+                    <div className="absolute top-[78%] left-[60%] flex flex-col items-center -translate-x-1/2 -translate-y-1/2">
+                        <div className="w-3 h-3 md:w-4 md:h-4 bg-primary rounded-full border-2 border-white shadow-lg flex items-center justify-center"><div className="w-1 h-1 md:w-1.5 md:h-1.5 bg-white rounded-full"></div></div>
+                        <span className="mt-1 text-[8px] md:text-[10px] font-bold text-secondary bg-white/90 px-1.5 py-0.5 rounded shadow-sm">LEKMA</span>
+                    </div>
+                </div>
             </div>
 
             {/* Map Content */}
@@ -306,17 +344,12 @@ export default function LandingPage() {
                </p>
              </div>
              <div className="flex md:justify-end">
-                <Link href="/register">
-                  <Button className="bg-primary hover:bg-white hover:text-primary text-white font-bold px-8 py-6 rounded-xl transition-colors shadow-lg shadow-black/20">
-                    Access System Portal
-                  </Button>
-                </Link>
              </div>
            </div>
            
           <div className="border-t border-white/10 pt-8 flex flex-col items-center justify-center">
             <p className="text-white/40 text-sm font-medium tracking-wide">
-              © 2026 HRS Ghana • Ashesi University Capstone Project
+              &copy; 2026 HRS
             </p>
           </div>
         </div>
