@@ -1,36 +1,53 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Activity, Shield, Clock, Users, ArrowRight, Stethoscope, Building2, FileText, Bell } from 'lucide-react';
+import Image from 'next/image';
+import { Activity, Shield, Clock, Users, ArrowRight, Stethoscope, Building2, FileText, Bell, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
+const carouselImages = [
+  '/images/doctor-1.png',
+  '/images/doctor-2.png',
+  '/images/doctor-3.png'
+];
+
 export default function LandingPage() {
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentImageIndex((prev) => (prev + 1) % carouselImages.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-background">
       {/* ── Navigation ── */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-100">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-blue-600 to-cyan-500 flex items-center justify-center shadow-md shadow-blue-200">
-              <Activity className="h-5 w-5 text-white" />
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-xl border-b border-border shadow-sm">
+        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center shadow-md">
+              <Activity className="h-6 w-6 text-primary-foreground" />
             </div>
-            <span className="text-lg font-bold tracking-tight text-slate-900">
-              HRS<span className="text-blue-600"> Ghana</span>
+            <span className="text-xl font-bold tracking-tight text-foreground">
+              HRS<span className="text-primary font-semibold"> Ghana</span>
             </span>
           </div>
-          <div className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-600">
-            <a href="#features" className="hover:text-blue-600 transition-colors">Features</a>
-            <a href="#how-it-works" className="hover:text-blue-600 transition-colors">How It Works</a>
-            <a href="#coverage" className="hover:text-blue-600 transition-colors">Coverage</a>
+          <div className="hidden md:flex items-center gap-10 text-sm font-medium text-foreground/80">
+            <a href="#features" className="hover:text-primary transition-colors">Features</a>
+            <a href="#coverage" className="hover:text-primary transition-colors">Coverage</a>
+            <a href="#how-it-works" className="hover:text-primary transition-colors">How It Works</a>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             <Link href="/login">
-              <Button variant="ghost" className="text-sm font-medium text-slate-700 hover:text-blue-600">
+              <Button variant="ghost" className="text-sm font-semibold text-foreground hover:text-primary">
                 Log In
               </Button>
             </Link>
             <Link href="/register">
-              <Button className="text-sm font-medium bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 shadow-md shadow-blue-200/60 rounded-xl px-5">
+              <Button className="text-sm font-semibold bg-primary hover:bg-secondary text-primary-foreground shadow-md rounded-xl px-6 py-5 transition-colors">
                 Get Started
               </Button>
             </Link>
@@ -38,82 +55,154 @@ export default function LandingPage() {
         </div>
       </nav>
 
-      {/* ── Hero Section ── */}
-      <section className="relative pt-32 pb-20 overflow-hidden">
-        {/* Background gradient blobs */}
-        <div className="absolute inset-0 -z-10">
-          <div className="absolute top-20 left-1/4 w-96 h-96 bg-blue-100/60 rounded-full blur-3xl" />
-          <div className="absolute top-40 right-1/4 w-80 h-80 bg-cyan-100/50 rounded-full blur-3xl" />
-          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full h-48 bg-gradient-to-t from-slate-50/80 to-transparent" />
-        </div>
-
+      {/* ── Hero Section (Split) ── */}
+      <section className="pt-36 pb-24 bg-muted/30">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="max-w-3xl mx-auto text-center">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-50 text-blue-700 rounded-full text-xs font-semibold tracking-wide mb-6 border border-blue-100">
-              <span className="h-1.5 w-1.5 bg-blue-500 rounded-full animate-pulse" />
-              GREATER ACCRA REGION • 170+ HEALTHCARE FACILITIES
-            </div>
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tighter text-slate-900 leading-[1.08]">
-              Smarter Patient
-              <br />
-              <span className="bg-gradient-to-r from-blue-600 via-cyan-500 to-teal-400 bg-clip-text text-transparent">
-                Referrals
-              </span>
-            </h1>
-            <p className="mt-6 text-lg md:text-xl text-slate-500 leading-relaxed max-w-2xl mx-auto">
-              The Hospital Routing System streamlines patient referrals across
-              Greater Accra's healthcare network — ensuring the right patient
-              reaches the right facility, faster.
-            </p>
-            <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link href="/register">
-                <Button size="lg" className="text-base px-8 py-6 rounded-2xl bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 shadow-xl shadow-blue-300/40 font-semibold">
-                  <Stethoscope className="h-5 w-5 mr-2" />
-                  Register as a Doctor
-                </Button>
-              </Link>
-              <Link href="/login">
-                <Button size="lg" variant="outline" className="text-base px-8 py-6 rounded-2xl border-slate-200 text-slate-700 hover:bg-slate-50 font-semibold">
-                  Sign In
-                  <ArrowRight className="h-4 w-4 ml-2" />
-                </Button>
-              </Link>
-            </div>
-          </div>
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            {/* Left: Elevated Card */}
+            <div className="bg-white p-10 md:p-14 rounded-3xl shadow-xl shadow-primary/5 border border-border">
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-primary/10 text-primary rounded-full text-xs font-bold tracking-wider mb-8 uppercase">
+                <span className="h-2 w-2 bg-primary rounded-full animate-pulse" />
+                Greater Accra Region
+              </div>
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-foreground leading-[1.1]">
+                Smarter, Faster
+                <br />
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">
+                  Patient Referrals
+                </span>
+              </h1>
+              <p className="mt-6 text-lg text-foreground/70 leading-relaxed">
+                The Hospital Routing System streamlines patient referrals across Greater Accra's healthcare network — ensuring the right patient reaches the right facility, without delay.
+              </p>
+              
+              <div className="mt-10 flex flex-col sm:flex-row items-center gap-4">
+                <Link href="/register" className="w-full sm:w-auto">
+                  <Button size="lg" className="w-full text-base px-8 py-7 rounded-2xl bg-gradient-to-r from-primary to-secondary hover:opacity-90 transition-opacity shadow-lg shadow-primary/20 font-bold text-white">
+                    <Stethoscope className="h-5 w-5 mr-3" />
+                    Register as a Doctor
+                  </Button>
+                </Link>
+                <Link href="/login" className="w-full sm:w-auto">
+                  <Button size="lg" variant="outline" className="w-full text-base px-8 py-7 rounded-2xl border-border text-foreground hover:bg-muted font-bold transition-colors">
+                    Sign In
+                    <ArrowRight className="h-5 w-5 ml-2" />
+                  </Button>
+                </Link>
+              </div>
 
-          {/* Stats bar */}
-          <div className="mt-20 max-w-4xl mx-auto">
-            <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/60 border border-slate-100 p-8 grid grid-cols-2 md:grid-cols-4 gap-6">
-              <div className="text-center">
-                <div className="text-3xl font-extrabold text-slate-900">170+</div>
-                <div className="text-sm text-slate-500 mt-1">Health Facilities</div>
+              {/* Stats Mini */}
+              <div className="mt-12 pt-8 border-t border-border grid grid-cols-3 gap-4 text-center sm:text-left">
+                <div>
+                  <div className="text-2xl font-black text-foreground">170+</div>
+                  <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide mt-1">Facilities</div>
+                </div>
+                <div>
+                  <div className="text-2xl font-black text-primary">24/7</div>
+                  <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide mt-1">Routing</div>
+                </div>
+                <div>
+                  <div className="text-2xl font-black text-foreground">100%</div>
+                  <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide mt-1">Digital</div>
+                </div>
               </div>
-              <div className="text-center">
-                <div className="text-3xl font-extrabold text-slate-900">8</div>
-                <div className="text-sm text-slate-500 mt-1">Districts Covered</div>
-              </div>
-              <div className="text-center">
-                <div className="text-3xl font-extrabold text-blue-600">24/7</div>
-                <div className="text-sm text-slate-500 mt-1">Real-time Routing</div>
-              </div>
-              <div className="text-center">
-                <div className="text-3xl font-extrabold text-slate-900">100%</div>
-                <div className="text-sm text-slate-500 mt-1">Digital Records</div>
+            </div>
+
+            {/* Right: Carousel */}
+            <div className="relative h-[600px] w-full rounded-3xl overflow-hidden shadow-2xl shadow-secondary/10 border border-border">
+              {carouselImages.map((src, index) => (
+                <div
+                  key={src}
+                  className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
+                    index === currentImageIndex ? 'opacity-100' : 'opacity-0'
+                  }`}
+                >
+                  <Image
+                    src={src}
+                    alt={`Healthcare professional ${index + 1}`}
+                    fill
+                    className="object-cover"
+                    priority={index === 0}
+                  />
+                  {/* Subtle gradient overlay to match premium aesthetic */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-secondary/40 to-transparent" />
+                </div>
+              ))}
+              
+              {/* Carousel Indicators */}
+              <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-3">
+                {carouselImages.map((_, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setCurrentImageIndex(idx)}
+                    className={`h-2.5 rounded-full transition-all duration-300 ${
+                      idx === currentImageIndex ? 'w-8 bg-white' : 'w-2.5 bg-white/50 hover:bg-white/80'
+                    }`}
+                    aria-label={`Go to slide ${idx + 1}`}
+                  />
+                ))}
               </div>
             </div>
           </div>
         </div>
       </section>
 
+      {/* ── Accra Map Section ── */}
+      <section id="coverage" className="py-24 bg-white">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="grid lg:grid-cols-2 gap-16 items-center">
+            {/* Map Imagery */}
+            <div className="relative aspect-square md:aspect-[4/3] rounded-3xl overflow-hidden bg-muted/30 border border-border p-8 flex items-center justify-center">
+              <div className="relative w-full h-full rounded-2xl overflow-hidden shadow-lg shadow-primary/5">
+                <Image
+                  src="/images/accra-map.png"
+                  alt="Stylized map of Greater Accra hospital network"
+                  fill
+                  className="object-contain p-4"
+                />
+              </div>
+            </div>
+
+            {/* Map Content */}
+            <div>
+              <div className="h-14 w-14 rounded-2xl bg-secondary flex items-center justify-center shadow-lg mb-8">
+                <MapPin className="h-6 w-6 text-white" />
+              </div>
+              <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground">
+                Connecting Healthcare Across the Region
+              </h2>
+              <p className="mt-6 text-lg text-foreground/70 leading-relaxed">
+                The HRS integrates with clinics, polyclinics, and major teaching hospitals throughout the Greater Accra region. Our intelligent routing network ensures an equitable distribution of patients based on active bed capacity and specialist availability.
+              </p>
+              <ul className="mt-8 space-y-4 text-foreground/80 font-medium">
+                {[
+                  'Accra Metropolitan & Sub-metros',
+                  'Tema & Ashaiman Districts',
+                  'Ga East, West & South Municipalities',
+                  'Dangme East & West Districts'
+                ].map((item, i) => (
+                  <li key={i} className="flex items-center gap-3">
+                    <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center">
+                      <div className="h-2 w-2 rounded-full bg-primary" />
+                    </div>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ── Features ── */}
-      <section id="features" className="py-24 bg-slate-50/70">
+      <section id="features" className="py-24 bg-muted/40">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center max-w-2xl mx-auto mb-16">
-            <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-slate-900">
-              Built for Ghana's Healthcare Workers
+            <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground">
+              Built for Ghana's Healthcare Workforce
             </h2>
-            <p className="mt-4 text-slate-500 text-lg">
-              Every feature designed to reduce referral delays and improve patient outcomes.
+            <p className="mt-4 text-foreground/60 text-lg">
+              Every feature designed with precision to reduce referral delays and improve patient outcomes.
             </p>
           </div>
 
@@ -123,40 +212,32 @@ export default function LandingPage() {
                 icon: Clock,
                 title: 'Instant Referrals',
                 description: 'Submit a referral in minutes — no more paperwork, phone tag, or lost forms.',
-                color: 'from-blue-500 to-blue-600',
-                shadow: 'shadow-blue-200',
               },
               {
                 icon: Shield,
                 title: 'Secure Records',
-                description: 'Patient data encrypted and shared only between referring and receiving hospitals.',
-                color: 'from-emerald-500 to-teal-500',
-                shadow: 'shadow-emerald-200',
+                description: 'Patient data encrypted and shared only securely between healthcare personnel.',
               },
               {
                 icon: Building2,
                 title: 'Smart Routing',
-                description: 'Algorithm considers facility resources, bed availability, and specialist access.',
-                color: 'from-violet-500 to-purple-500',
-                shadow: 'shadow-violet-200',
+                description: 'Algorithm considers real facility resources, operational bed capacity, and specialist access.',
               },
               {
                 icon: Bell,
                 title: 'Live Notifications',
-                description: 'In-app and email alerts keep everyone updated at every stage of the referral.',
-                color: 'from-amber-500 to-orange-500',
-                shadow: 'shadow-amber-200',
+                description: 'In-app and email alerts keep everyone accurately updated at every critical stage.',
               },
             ].map((f, i) => (
-              <div
+               <div
                 key={i}
-                className="group bg-white rounded-2xl p-7 border border-slate-100 hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-300 hover:-translate-y-1"
+                className="group bg-white rounded-3xl p-8 border border-border shadow-sm hover:shadow-xl hover:shadow-primary/5 transition-all duration-300 hover:-translate-y-1"
               >
-                <div className={`h-12 w-12 rounded-xl bg-gradient-to-br ${f.color} flex items-center justify-center mb-5 shadow-md ${f.shadow}`}>
+                <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center mb-6">
                   <f.icon className="h-6 w-6 text-white" />
                 </div>
-                <h3 className="text-lg font-bold text-slate-900 mb-2">{f.title}</h3>
-                <p className="text-slate-500 text-sm leading-relaxed">{f.description}</p>
+                <h3 className="text-xl font-bold text-foreground mb-3">{f.title}</h3>
+                <p className="text-foreground/70 text-sm leading-relaxed">{f.description}</p>
               </div>
             ))}
           </div>
@@ -164,89 +245,82 @@ export default function LandingPage() {
       </section>
 
       {/* ── How It Works ── */}
-      <section id="how-it-works" className="py-24">
+      <section id="how-it-works" className="py-24 bg-white">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center max-w-2xl mx-auto mb-16">
-            <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-slate-900">
+          <div className="text-center max-w-2xl mx-auto mb-20">
+            <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground">
               How It Works
             </h2>
-            <p className="mt-4 text-slate-500 text-lg">
-              Three simple steps to get your patient the care they need.
+            <p className="mt-4 text-foreground/60 text-lg">
+              Three robust steps to get your patient the specialized care they desperately need.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-10 max-w-5xl mx-auto">
+          <div className="grid md:grid-cols-3 gap-12 max-w-6xl mx-auto relative">
+            {/* Connecting Line (Desktop) */}
+            <div className="hidden md:block absolute top-12 left-[15%] right-[15%] h-px bg-border border-dashed border-t-2" />
+            
             {[
               {
                 step: '01',
-                title: 'Register & Get Verified',
-                description: 'Sign up as a doctor, select your hospital, and get approved by your hospital admin.',
+                title: 'Register & Verify',
+                description: 'Sign up securely. Your local hospital administrator quickly verifies your credentials.',
                 icon: Users,
               },
               {
                 step: '02',
-                title: 'Create a Referral',
-                description: 'Enter patient details, clinical notes, attach lab results, and select the best receiving facility.',
+                title: 'Submit Data',
+                description: 'Enter clinical notes, attach necessary labs, and let the algorithm rank receiving facilities.',
                 icon: FileText,
               },
               {
                 step: '03',
-                title: 'Track & Complete',
-                description: 'Monitor referral status in real-time. Get notified when accepted, en-route, or completed.',
+                title: 'Monitor & Complete',
+                description: 'Track the referral status instantly via the central dashboard and automated emails.',
                 icon: Activity,
               },
             ].map((s, i) => (
-              <div key={i} className="relative text-center">
-                <div className="text-7xl font-black text-slate-100 mb-4">{s.step}</div>
-                <div className="h-14 w-14 mx-auto rounded-2xl bg-gradient-to-br from-blue-600 to-cyan-500 flex items-center justify-center -mt-12 mb-5 shadow-lg shadow-blue-200/50 relative z-10">
-                  <s.icon className="h-6 w-6 text-white" />
+              <div key={i} className="relative z-10 bg-white p-8 rounded-3xl border border-border shadow-md shadow-primary/5 text-center transition-transform hover:-translate-y-2">
+                <div className="h-16 w-16 mx-auto rounded-full bg-muted flex items-center justify-center mb-6 text-primary font-bold text-xl border-4 border-white shadow-sm shadow-black/5">
+                  {s.step}
                 </div>
-                <h3 className="text-xl font-bold text-slate-900 mb-2">{s.title}</h3>
-                <p className="text-slate-500 text-sm leading-relaxed max-w-xs mx-auto">{s.description}</p>
+                <h3 className="text-xl font-extrabold text-foreground mb-3">{s.title}</h3>
+                <p className="text-foreground/70 text-sm leading-relaxed max-w-xs mx-auto">{s.description}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ── Coverage / CTA ── */}
-      <section id="coverage" className="py-24 relative overflow-hidden bg-gradient-to-br from-blue-600 via-blue-700 to-cyan-600">
-        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)', backgroundSize: '32px 32px' }} />
-
-        <div className="max-w-4xl mx-auto px-6 text-center">
-          <h2 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight">
-            Serving the Greater Accra Region
-          </h2>
-          <p className="mt-5 text-blue-100 text-lg max-w-2xl mx-auto leading-relaxed">
-            From Korle-Bu Teaching Hospital to community health centres in Dangme,
-            the HRS connects healthcare facilities across all districts in the
-            Greater Accra region — including Accra Metropolitan, Tema, Ga East,
-            Ga West, Dangme East, and Dangme West.
-          </p>
-
-          <div className="mt-10 flex items-center justify-center">
-            <Link href="/register">
-              <Button size="lg" className="text-base px-8 py-6 rounded-2xl bg-white text-blue-700 hover:bg-blue-50 shadow-xl shadow-blue-900/30 font-semibold">
-                <Stethoscope className="h-5 w-5 mr-2" />
-                Join as a Doctor
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </section>
-
       {/* ── Footer ── */}
-      <footer className="bg-slate-900 py-12">
+      <footer className="bg-secondary pt-16 pb-8 border-t border-secondary/80">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="flex items-center gap-2.5">
-              <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center">
-                <Activity className="h-4 w-4 text-white" />
-              </div>
-              <span className="text-sm font-bold text-white">Hospital Routing System</span>
-            </div>
-            <p className="text-slate-500 text-sm">
-              © 2026 HRS Ghana • Greater Accra Region • Ashesi University Capstone Project
+           <div className="grid md:grid-cols-2 gap-10 mb-12 items-center">
+             <div>
+               <div className="flex items-center gap-3 mb-4">
+                  <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center">
+                    <Activity className="h-6 w-6 text-white" />
+                  </div>
+                  <span className="text-2xl font-bold tracking-tight text-white">
+                    HRS
+                  </span>
+               </div>
+               <p className="text-white/60 text-sm max-w-sm leading-relaxed">
+                 A comprehensive software platform built for optimizing resource allocation and reducing referral latency across Greater Accra.
+               </p>
+             </div>
+             <div className="flex md:justify-end">
+                <Link href="/register">
+                  <Button className="bg-primary hover:bg-white hover:text-primary text-white font-bold px-8 py-6 rounded-xl transition-colors shadow-lg shadow-black/20">
+                    Access System Portal
+                  </Button>
+                </Link>
+             </div>
+           </div>
+           
+          <div className="border-t border-white/10 pt-8 flex flex-col items-center justify-center">
+            <p className="text-white/40 text-sm font-medium tracking-wide">
+              © 2026 HRS Ghana • Ashesi University Capstone Project
             </p>
           </div>
         </div>
