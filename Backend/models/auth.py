@@ -8,7 +8,7 @@ def fetch_user_for_login(email: str):
             """
             SELECT u.user_id, u.email, u.password_hash, u.full_name, u.phone_number,
                    u.hospital_id, u.status, u.auth_provider, u.profile_picture_url,
-                   r.role_name, u.created_at,
+                   r.role_name, u.created_at, u.updated_at,
                    h.name AS hospital_name, h.address AS hospital_address,
                    h.contact_phone,
                    p.title, p.license_number, p.specialization, p.department, p.grade

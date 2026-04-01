@@ -72,7 +72,7 @@ def _compute_health_status(rows):
     results = []
     
     now = datetime.datetime.now()
-    threshold_days = 7
+    threshold_hours = 24
     flag_threshold = 3
     
     for r in rows:
@@ -89,8 +89,8 @@ def _compute_health_status(rows):
             stale = True
         else:
             diff = now - data["last_resource_update"]
-            if diff.days > threshold_days:
-                issues.append(f"Resources Stale (> {threshold_days} days)")
+            if diff.total_seconds() > threshold_hours * 3600:
+                issues.append(f"Resources Stale (> {threshold_hours} hours)")
                 stale = True
                 
         # Check flags

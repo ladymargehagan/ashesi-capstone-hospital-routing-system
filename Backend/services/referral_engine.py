@@ -82,7 +82,7 @@ class PatientCase:
 class EngineConfig:
     radius_km: float = 16.0
     top_k: int = 5
-    stale_half_life_hours: float = 6.0
+    stale_half_life_hours: float = 24.0
     default_tmax_minutes: int = 60
     base_capability_weight: float = 0.7
     base_proximity_weight: float = 0.3
@@ -421,9 +421,9 @@ class ReferralEngine:
                 }
             )
 
-        if scored and all(item["freshness_factor"] < 0.3 for item in scored):
+        if scored and all(item["freshness_factor"] < 0.501 for item in scored):
             warnings.append(
-                "Hospital data is stale (>10 hours old equivalent confidence). Call to confirm before transfer."
+                "Hospital data is stale (>24 hours old). Call to confirm before transfer."
             )
 
         if scored and all(item["proximity_score"] == 0.0 for item in scored):
@@ -543,9 +543,9 @@ class ReferralEngine:
                 }
             )
 
-        if rows and all(item["freshness_factor"] < 0.3 for item in rows):
+        if rows and all(item["freshness_factor"] < 0.501 for item in rows):
             warnings.append(
-                "Hospital data is stale (>10 hours old equivalent confidence). Call to confirm before transfer."
+                "Hospital data is stale (>24 hours old). Call to confirm before transfer."
             )
 
         rows.sort(

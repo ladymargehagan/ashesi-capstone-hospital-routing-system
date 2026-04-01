@@ -213,7 +213,8 @@ def _load_hospitals_from_db(now: datetime) -> list[Hospital]:
                         lat, lon = float(gps[0]), float(gps[1])
 
                 # Determine 24/7 or operating hours
-                is_24_7 = h.get("operating_hours", "").strip().lower() in ("24/7", "24 hours", "")
+                oper_hrs = h.get("operating_hours")
+                is_24_7 = (oper_hrs or "").strip().lower() in ("24/7", "24 hours", "")
 
                 # Load resources for this hospital
                 cur.execute(

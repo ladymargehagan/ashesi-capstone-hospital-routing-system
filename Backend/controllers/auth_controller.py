@@ -1,5 +1,6 @@
 import os
 import bcrypt
+from datetime import datetime, timezone
 from typing import Optional
 
 from models.auth import (
@@ -94,12 +95,20 @@ def process_login(email: str, password: str) -> dict:
 
 
 def process_doctor_registration(data: dict) -> dict:
-    # First check if the email exists. If it does, we can only re-register if it's rejected.
     if check_email_exists(data["email"]):
         existing = fetch_user_for_login(data["email"])
         if existing and existing["status"] == "rejected":
-            # Allowed to re-register. We will update their status to pending later in this function.
-            pass
+            if existing.get("updated_at"):
+                updated_at = existing["updated_at"]
+                now = datetime.now(timezone.utc) if updated_at.tzinfo else datetime.utcnow()
+                diff = now - updated_at
+                days_left = 30 - diff.days
+                if days_left > 0:
+                    return {
+                        "error": True, 
+                        "code": 403, 
+                        "message": f"Your registration was rejected. You must wait {days_left} more day{'s' if days_left != 1 else ''} to re-apply."
+                    }
         else:
             return {"error": True, "code": 400, "message": "Email already registered"}
 
