@@ -99,7 +99,7 @@ export function ReferralDetailsModal({ referral, open, onClose, onStatusChanged 
             pending: 'bg-amber-100 text-amber-700',
             approved: 'bg-green-100 text-green-700',
             rejected: 'bg-red-100 text-red-700',
-            in_transit: 'bg-blue-100 text-blue-700',
+            in_transit: 'bg-primary/10 text-secondary',
             arrived: 'bg-purple-100 text-purple-700',
             completed: 'bg-gray-100 text-gray-700',
             cancelled: 'bg-gray-100 text-gray-500',
@@ -306,7 +306,7 @@ export function ReferralDetailsModal({ referral, open, onClose, onStatusChanged 
 
                 {detailsLoading ? (
                     <div className="flex items-center justify-center py-8">
-                        <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+                        <Loader2 className="h-6 w-6 animate-spin text-primary" />
                     </div>
                 ) : (
                     <div className="space-y-5 mt-4">
@@ -422,46 +422,46 @@ export function ReferralDetailsModal({ referral, open, onClose, onStatusChanged 
                                     <FileText className="h-4 w-4" />
                                     Clinical Details
                                 </h3>
-                                <div className="space-y-3 bg-blue-50 p-3 rounded-lg">
+                                <div className="space-y-3 bg-[#C4D8E5]/30 p-3 rounded-lg">
                                     {details.presenting_complaint && (
                                         <div>
-                                            <p className="text-xs font-medium text-blue-700">Presenting Complaint</p>
+                                            <p className="text-xs font-medium text-secondary">Presenting Complaint</p>
                                             <p className="text-sm text-gray-800">{details.presenting_complaint}</p>
                                         </div>
                                     )}
                                     {details.clinical_history && (
                                         <div>
-                                            <p className="text-xs font-medium text-blue-700">Clinical History</p>
+                                            <p className="text-xs font-medium text-secondary">Clinical History</p>
                                             <p className="text-sm text-gray-800">{details.clinical_history}</p>
                                         </div>
                                     )}
                                     {details.examination_findings && (
                                         <div>
-                                            <p className="text-xs font-medium text-blue-700">Examination Findings</p>
+                                            <p className="text-xs font-medium text-secondary">Examination Findings</p>
                                             <p className="text-sm text-gray-800">{details.examination_findings}</p>
                                         </div>
                                     )}
                                     {(details.working_diagnosis || details.initial_diagnosis) && (
                                         <div>
-                                            <p className="text-xs font-medium text-blue-700">Working Diagnosis</p>
+                                            <p className="text-xs font-medium text-secondary">Working Diagnosis</p>
                                             <p className="text-sm text-gray-800">{details.working_diagnosis || details.initial_diagnosis}</p>
                                         </div>
                                     )}
                                     {details.investigations_done && (
                                         <div>
-                                            <p className="text-xs font-medium text-blue-700">Investigations Done</p>
+                                            <p className="text-xs font-medium text-secondary">Investigations Done</p>
                                             <p className="text-sm text-gray-800">{details.investigations_done}</p>
                                         </div>
                                     )}
                                     {details.treatment_given && (
                                         <div>
-                                            <p className="text-xs font-medium text-blue-700">Treatment Given</p>
+                                            <p className="text-xs font-medium text-secondary">Treatment Given</p>
                                             <p className="text-sm text-gray-800">{details.treatment_given}</p>
                                         </div>
                                     )}
                                     {details.reason_for_referral && (
                                         <div>
-                                            <p className="text-xs font-medium text-blue-700">Reason for Referral</p>
+                                            <p className="text-xs font-medium text-secondary">Reason for Referral</p>
                                             <p className="text-sm text-gray-800">{details.reason_for_referral}</p>
                                         </div>
                                     )}
@@ -483,7 +483,7 @@ export function ReferralDetailsModal({ referral, open, onClose, onStatusChanged 
                                                 href={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/referrals/attachments/${att.id}/download`}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="font-medium text-blue-600 hover:underline flex items-center gap-1"
+                                                className="font-medium text-primary hover:underline flex items-center gap-1"
                                             >
                                                 {att.file_name}
                                             </a>
@@ -493,7 +493,7 @@ export function ReferralDetailsModal({ referral, open, onClose, onStatusChanged 
                                                     href={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/referrals/attachments/${att.id}/download`}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
-                                                    className="text-blue-600 hover:text-blue-800"
+                                                    className="text-primary hover:text-blue-800"
                                                     title="Download"
                                                 >
                                                     ↓
@@ -550,7 +550,7 @@ export function ReferralDetailsModal({ referral, open, onClose, onStatusChanged 
                                         </SelectContent>
                                     </Select>
                                     <Button 
-                                        className="bg-blue-600 hover:bg-blue-700 text-white shrink-0" 
+                                        className="bg-primary hover:bg-secondary text-white shrink-0" 
                                         onClick={() => handleAssign(selectedPhysicianId)}
                                         disabled={!selectedPhysicianId || assignLoading}
                                     >
@@ -605,7 +605,7 @@ export function ReferralDetailsModal({ referral, open, onClose, onStatusChanged 
                         {canDispatch && (
                             <div className="flex justify-end pt-2 border-t mt-4">
                                 <Button
-                                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                                    className="bg-primary hover:bg-secondary text-white"
                                     onClick={() => handleAction('depart')}
                                     disabled={loading}
                                 >
@@ -620,7 +620,7 @@ export function ReferralDetailsModal({ referral, open, onClose, onStatusChanged 
                             <div className="pt-2 border-t mt-4 space-y-4">
                                 <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 shadow-inner">
                                     <h3 className="text-sm font-semibold text-slate-800 mb-3 flex items-center gap-2">
-                                        <Activity className="h-4 w-4 text-blue-500" />
+                                        <Activity className="h-4 w-4 text-primary/80" />
                                         Live Condition Updates
                                     </h3>
                                     
@@ -659,7 +659,7 @@ export function ReferralDetailsModal({ referral, open, onClose, onStatusChanged 
                                             />
                                             <Button 
                                                 size="icon" 
-                                                className="bg-blue-600 hover:bg-blue-700 shrink-0"
+                                                className="bg-primary hover:bg-secondary shrink-0"
                                                 onClick={handleTransitUpdateSubmit}
                                                 disabled={updateLoading || !newTransitUpdate.trim()}
                                             >

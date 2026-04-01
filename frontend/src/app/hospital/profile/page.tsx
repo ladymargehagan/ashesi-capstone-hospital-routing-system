@@ -64,7 +64,7 @@ export default function HospitalProfilePage() {
     if (!user || loading) {
         return (
             <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
         );
     }
@@ -94,8 +94,8 @@ export default function HospitalProfilePage() {
                 <Card>
                     <CardContent className="pt-6">
                         <div className="flex items-center gap-4">
-                            <div className="h-16 w-16 rounded-full bg-blue-100 flex items-center justify-center">
-                                <User className="h-8 w-8 text-blue-600" />
+                            <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
+                                <User className="h-8 w-8 text-primary" />
                             </div>
                             <div>
                                 <h2 className="text-xl font-bold text-gray-900">{user.full_name}</h2>
@@ -209,7 +209,7 @@ export default function HospitalProfilePage() {
                             <div className="grid grid-cols-2 gap-4 pt-2">
                                 <div className="p-3 bg-gray-50 rounded-lg">
                                     <p className="text-xs text-gray-500">Level</p>
-                                    <Badge className="mt-1 bg-blue-100 text-blue-700 border-blue-200" variant="outline">
+                                    <Badge className="mt-1 bg-primary/10 text-secondary border-primary/20" variant="outline">
                                         {getLevelLabel(hospital.level)}
                                     </Badge>
                                 </div>

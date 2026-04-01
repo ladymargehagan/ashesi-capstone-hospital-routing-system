@@ -30,7 +30,7 @@ export function HospitalHealthTable({ healthData }: HospitalHealthTableProps) {
             case 'Warning': return 'bg-amber-100 text-amber-700';
             case 'Critical': return 'bg-red-100 text-red-700';
             case 'Inactive': return 'bg-gray-100 text-gray-700';
-            default: return 'bg-blue-100 text-blue-700';
+            default: return 'bg-primary/10 text-secondary';
         }
     };
 

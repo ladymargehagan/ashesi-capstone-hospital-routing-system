@@ -68,8 +68,8 @@ export function PatientDetailsModal({ patient, open, onClose }: PatientDetailsMo
                 <div className="space-y-5 mt-2">
                     {/* Name & ID */}
                     <div className="flex items-center gap-3">
-                        <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center">
-                            <User className="h-6 w-6 text-blue-600" />
+                        <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                            <User className="h-6 w-6 text-primary" />
                         </div>
                         <div>
                             <h3 className="font-semibold text-lg text-gray-900">{patient.full_name}</h3>
@@ -135,7 +135,7 @@ export function PatientDetailsModal({ patient, open, onClose }: PatientDetailsMo
                         <div className="grid grid-cols-2 gap-3">
                             <div>
                                 <p className="text-xs text-gray-500">Current Diagnosis</p>
-                                <p className="text-sm font-medium text-blue-700">{patient.diagnosis || '-'}</p>
+                                <p className="text-sm font-medium text-secondary">{patient.diagnosis || '-'}</p>
                             </div>
                             <div>
                                 <p className="text-xs text-gray-500">Last Visit</p>
@@ -178,7 +178,7 @@ export function PatientDetailsModal({ patient, open, onClose }: PatientDetailsMo
                         
                         {loadingReferrals ? (
                             <div className="flex justify-center py-4">
-                                <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
+                                <Loader2 className="h-5 w-5 animate-spin text-primary" />
                             </div>
                         ) : referrals.length === 0 ? (
                             <p className="text-sm text-gray-500 italic text-center py-2">No past referrals found.</p>
@@ -194,7 +194,7 @@ export function PatientDetailsModal({ patient, open, onClose }: PatientDetailsMo
                                             <Badge variant="outline" className={
                                                 ref.status === 'completed' ? 'bg-green-50 text-green-700' :
                                                 ref.status === 'rejected' ? 'bg-red-50 text-red-700' :
-                                                'bg-blue-50 text-blue-700'
+                                                'bg-[#C4D8E5]/30 text-secondary'
                                             }>
                                                 {ref.status}
                                             </Badge>

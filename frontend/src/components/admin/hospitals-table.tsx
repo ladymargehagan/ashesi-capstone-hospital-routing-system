@@ -40,8 +40,8 @@ export function HospitalsTable({ hospitals, onStatusChanged }: HospitalsTablePro
     const getLevelBadge = (level: string) => {
         const styles: Record<string, string> = {
             teaching: 'bg-purple-100 text-purple-700',
-            regional: 'bg-blue-100 text-blue-700',
-            district: 'bg-cyan-100 text-cyan-700',
+            regional: 'bg-primary/10 text-secondary',
+            district: 'bg-secondary text-cyan-700',
             polyclinic: 'bg-teal-100 text-teal-700',
             health_centre: 'bg-green-100 text-green-700',
             chps: 'bg-slate-100 text-slate-600',

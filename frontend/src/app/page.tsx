@@ -23,7 +23,7 @@ export default function LandingPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-[#C4D8E5]/30">
       {/* ── Navigation ── */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-xl border-b border-border shadow-sm">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
@@ -61,10 +61,6 @@ export default function LandingPage() {
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             {/* Left: Elevated Card */}
             <div className="bg-white p-10 md:p-14 rounded-3xl shadow-xl shadow-primary/5 border border-border">
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-primary/10 text-primary rounded-full text-xs font-bold tracking-wider mb-8 uppercase">
-                <span className="h-2 w-2 bg-primary rounded-full animate-pulse" />
-                Greater Accra Region
-              </div>
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-foreground leading-[1.1]">
                 Smarter, Faster
                 <br />
@@ -155,7 +151,7 @@ export default function LandingPage() {
             <div className="relative aspect-square md:aspect-[4/3] rounded-3xl overflow-hidden bg-muted/30 border border-border p-8 flex items-center justify-center">
               <div className="relative w-full h-full rounded-2xl overflow-hidden shadow-lg shadow-primary/5">
                 <Image
-                  src="/images/accra-map.png"
+                  src="/images/accra-map-interconnected.png"
                   alt="Stylized map of Greater Accra hospital network"
                   fill
                   className="object-contain p-4"

@@ -80,7 +80,7 @@ export default function MyHospitalPage() {
     if (loading) {
         return (
             <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
         );
     }
@@ -89,7 +89,7 @@ export default function MyHospitalPage() {
         <div>
             <div className="mb-6">
                 <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                    <Building2 className="h-6 w-6 text-blue-600" />
+                    <Building2 className="h-6 w-6 text-primary" />
                     {hospitalName || 'My Hospital'}
                 </h1>
                 <p className="text-gray-500">View your hospital&apos;s resources and report any data inaccuracies</p>

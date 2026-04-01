@@ -81,7 +81,7 @@ function TripMapInner({
     if (!isLoaded) {
         return (
             <div className="w-full h-[300px] bg-gray-50 flex items-center justify-center rounded-lg border border-gray-200">
-                <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
+                <Loader2 className="h-6 w-6 animate-spin text-primary/80" />
                 <span className="ml-2 text-sm text-gray-500">Loading Map...</span>
             </div>
         );
@@ -91,7 +91,7 @@ function TripMapInner({
         <div className="space-y-3">
             <div className="flex justify-between items-center text-sm px-1">
                 <div className="flex items-center gap-2">
-                    <div className="h-3 w-3 rounded-full bg-blue-500"></div>
+                    <div className="h-3 w-3 rounded-full bg-[#C4D8E5]/300"></div>
                     <span className="font-medium text-gray-700">{originName}</span>
                 </div>
                 {duration && (
@@ -164,7 +164,7 @@ export function TripMap(props: TripMapProps) {
     if (!apiKey) {
         return (
             <div className="w-full h-[300px] bg-gray-50 flex items-center justify-center rounded-lg border border-gray-200">
-                <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
+                <Loader2 className="h-6 w-6 animate-spin text-primary/80" />
                 <span className="ml-2 text-sm text-gray-500">Loading Map Config...</span>
             </div>
         );

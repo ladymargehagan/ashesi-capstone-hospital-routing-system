@@ -50,7 +50,7 @@ export function SpecialistsTab({ specialists, onSpecialistUpdated }: Specialists
                         >
                             <div className="flex items-center gap-3">
                                 <Avatar className="h-10 w-10">
-                                    <AvatarFallback className="bg-blue-100 text-blue-700">
+                                    <AvatarFallback className="bg-primary/10 text-secondary">
                                         {getInitials(specialist.specialist_name)}
                                     </AvatarFallback>
                                 </Avatar>

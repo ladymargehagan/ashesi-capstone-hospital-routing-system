@@ -245,7 +245,7 @@ export function AddHospitalModal({ open, onClose, onAdded }: AddHospitalModalPro
                         <Button type="button" variant="ghost" onClick={onClose} disabled={loading}>
                             Cancel
                         </Button>
-                        <Button type="submit" disabled={loading} className="bg-blue-600 hover:bg-blue-700">
+                        <Button type="submit" disabled={loading} className="bg-primary hover:bg-secondary">
                             {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
                             Create Hospital
                         </Button>

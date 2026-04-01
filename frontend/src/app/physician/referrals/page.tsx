@@ -56,7 +56,7 @@ export default function ReferralsPage() {
     if (loading) {
         return (
             <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
         );
     }
@@ -70,7 +70,7 @@ export default function ReferralsPage() {
                     <p className="text-gray-500">Track outgoing referrals and manage patients assigned to you</p>
                 </div>
                 <Link href="/physician/referral">
-                    <Button className="bg-blue-600 hover:bg-blue-700">
+                    <Button className="bg-primary hover:bg-secondary">
                         <Plus className="h-4 w-4 mr-2" />
                         New Referral
                     </Button>
@@ -119,7 +119,7 @@ export default function ReferralsPage() {
                     value={outgoing.filter(r => r.status === 'in_transit').length}
                     description="Patients en route"
                     icon={Truck}
-                    iconColor="text-blue-600"
+                    iconColor="text-primary"
                 />
                 <StatsCard
                     title="Completed"
@@ -148,7 +148,7 @@ export default function ReferralsPage() {
                     <TabsTrigger value="outgoing">
                         <ArrowUpRight className="h-4 w-4 mr-1.5" />
                         Referrals Sent
-                        <Badge className="ml-2 bg-blue-100 text-blue-700 text-xs">{filteredOutgoing.length}</Badge>
+                        <Badge className="ml-2 bg-primary/10 text-secondary text-xs">{filteredOutgoing.length}</Badge>
                     </TabsTrigger>
                     <TabsTrigger value="incoming">
                         <ArrowDownLeft className="h-4 w-4 mr-1.5" />

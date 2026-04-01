@@ -64,7 +64,7 @@ export default function PhysicianDashboard() {
     if (loading) {
         return (
             <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
         );
     }
@@ -78,7 +78,7 @@ export default function PhysicianDashboard() {
                     <p className="text-gray-500">{user?.full_name}</p>
                 </div>
                 <Link href="/physician/referral">
-                    <Button className="bg-blue-600 hover:bg-blue-700">
+                    <Button className="bg-primary hover:bg-secondary">
                         <Plus className="h-4 w-4 mr-2" />
                         New Referral
                     </Button>
@@ -92,7 +92,7 @@ export default function PhysicianDashboard() {
                     value={stats.total_patients}
                     description="In your care"
                     icon={Users}
-                    iconColor="text-blue-600"
+                    iconColor="text-primary"
                 />
                 <StatsCard
                     title="Pending Referrals"
@@ -121,7 +121,7 @@ export default function PhysicianDashboard() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
                 <div className="bg-white rounded-lg border p-6">
                     <h3 className="text-sm font-semibold mb-4 text-gray-800 flex items-center gap-2">
-                        <ArrowUpRight className="h-4 w-4 text-blue-600" />
+                        <ArrowUpRight className="h-4 w-4 text-primary" />
                         Outcomes (Sent Referrals)
                     </h3>
                     <ReferralOutcomesChart referrals={outgoingReferrals} />
@@ -146,7 +146,7 @@ export default function PhysicianDashboard() {
                         <ArrowUpRight className="h-4 w-4 mr-1.5" />
                         Referrals Sent
                         {outgoingReferrals.length > 0 && (
-                            <Badge className="ml-2 bg-blue-100 text-blue-700 text-xs">{outgoingReferrals.length}</Badge>
+                            <Badge className="ml-2 bg-primary/10 text-secondary text-xs">{outgoingReferrals.length}</Badge>
                         )}
                     </TabsTrigger>
                     <TabsTrigger value="incoming">
@@ -169,7 +169,7 @@ export default function PhysicianDashboard() {
                 <TabsContent value="outgoing" className="mt-4">
                     <div className="bg-white rounded-lg border p-6">
                         <div className="flex items-center gap-2 mb-1">
-                            <ArrowUpRight className="h-5 w-5 text-blue-600" />
+                            <ArrowUpRight className="h-5 w-5 text-primary" />
                             <h2 className="text-lg font-semibold">Referrals You Sent</h2>
                         </div>
                         <p className="text-sm text-gray-500 mb-4">

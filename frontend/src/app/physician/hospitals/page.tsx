@@ -8,7 +8,7 @@ import { Hospital } from '@/types';
 
 const LEVEL_COLORS: Record<string, string> = {
     teaching:      'bg-purple-100 text-purple-800',
-    regional:      'bg-blue-100   text-blue-800',
+    regional:      'bg-primary/10   text-blue-800',
     district:      'bg-green-100  text-green-800',
     polyclinic:    'bg-yellow-100 text-yellow-800',
     health_centre: 'bg-orange-100 text-orange-800',
@@ -58,7 +58,7 @@ export default function HospitalsDirectoryPage() {
     if (loading) {
         return (
             <div className="flex items-center justify-center h-64 gap-3 text-gray-500">
-                <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
                 <span>Loading hospitals…</span>
             </div>
         );
@@ -77,7 +77,7 @@ export default function HospitalsDirectoryPage() {
         <div className="space-y-6">
             {/* Page header */}
             <div className="flex items-center gap-3">
-                <Building2 className="h-6 w-6 text-blue-600" />
+                <Building2 className="h-6 w-6 text-primary" />
                 <div>
                     <h1 className="text-xl font-semibold text-gray-900">Hospital Directory</h1>
                     <p className="text-sm text-gray-500">
@@ -126,7 +126,7 @@ export default function HospitalsDirectoryPage() {
                     {filtered.map(hospital => (
                         <div
                             key={hospital.id}
-                            className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm transition hover:shadow-md cursor-pointer hover:border-blue-200"
+                            className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm transition hover:shadow-md cursor-pointer hover:border-primary/20"
                             onClick={() => setSelectedHospitalId(hospital.id)}
                         >
                             {/* Name + level badge */}
@@ -164,7 +164,7 @@ export default function HospitalsDirectoryPage() {
 
                             {/* Phone (if present) */}
                             {hospital.contact_phone && (
-                                <p className="mt-3 text-xs text-blue-600 font-medium">
+                                <p className="mt-3 text-xs text-primary font-medium">
                                     📞 {hospital.contact_phone}
                                 </p>
                             )}

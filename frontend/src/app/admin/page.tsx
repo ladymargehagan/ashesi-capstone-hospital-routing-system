@@ -74,7 +74,7 @@ export default function AdminDashboard() {
     if (loading) {
         return (
             <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
         );
     }
@@ -108,7 +108,7 @@ export default function AdminDashboard() {
                     value={hospitals.length}
                     description="In the network"
                     icon={Building2}
-                    iconColor="text-blue-600"
+                    iconColor="text-primary"
                 />
                 <StatsCard
                     title="Total Physicians"
@@ -162,7 +162,7 @@ export default function AdminDashboard() {
                             {activeTab === 'hospitals' && (
                                 <Button 
                                     onClick={() => setIsAddHospitalOpen(true)}
-                                    className="bg-blue-600 hover:bg-blue-700"
+                                    className="bg-primary hover:bg-secondary"
                                 >
                                     <Plus className="h-4 w-4 mr-2" />
                                     Add Hospital

@@ -49,7 +49,7 @@ export function Header() {
                 <div className="flex items-center justify-between h-full px-6">
                     {/* Logo */}
                     <Link href="/" className="flex items-center gap-2">
-                        <div className="h-9 w-9 rounded-lg bg-blue-600 flex items-center justify-center">
+                        <div className="h-9 w-9 rounded-lg bg-primary flex items-center justify-center">
                             <Building2 className="h-5 w-5 text-white" />
                         </div>
                         <div>
@@ -68,7 +68,7 @@ export function Header() {
                             <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" className="flex items-center gap-3 h-auto py-2">
                                     <Avatar className="h-8 w-8">
-                                        <AvatarFallback className="bg-blue-100 text-blue-700 text-sm">
+                                        <AvatarFallback className="bg-primary/10 text-secondary text-sm">
                                             {user ? getInitials(user.full_name) : 'U'}
                                         </AvatarFallback>
                                     </Avatar>

@@ -393,8 +393,8 @@ function ReferralFormContent() {
     const getLevelBadgeStyle = (level: string) => {
         const styles: Record<string, string> = {
             teaching: 'bg-purple-100 text-purple-700 border-purple-200',
-            regional: 'bg-blue-100 text-blue-700 border-blue-200',
-            district: 'bg-cyan-100 text-cyan-700 border-cyan-200',
+            regional: 'bg-primary/10 text-secondary border-primary/20',
+            district: 'bg-secondary text-cyan-700 border-cyan-200',
             polyclinic: 'bg-teal-100 text-teal-700 border-teal-200',
             health_centre: 'bg-green-100 text-green-700 border-green-200',
             chps: 'bg-gray-100 text-gray-700 border-gray-200',
@@ -435,7 +435,7 @@ function ReferralFormContent() {
                                     <SelectValue placeholder="Select a patient or Create New" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="-1" className="font-semibold text-blue-600">
+                                    <SelectItem value="-1" className="font-semibold text-primary">
                                         + Create New Patient
                                     </SelectItem>
                                     {allPatients.map((patient) => (
@@ -899,7 +899,7 @@ function ReferralFormContent() {
                                                 return (
                                                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                                                         <div className="bg-white rounded-md p-2 text-center">
-                                                            <Bed className="h-4 w-4 text-blue-500 mx-auto mb-1" />
+                                                            <Bed className="h-4 w-4 text-primary/80 mx-auto mb-1" />
                                                             <p className="text-xs text-gray-500">General Beds</p>
                                                             <p className="font-semibold text-sm">{preview.generalBeds}</p>
                                                         </div>
@@ -982,7 +982,7 @@ function ReferralFormContent() {
                                                         <button
                                                             key={hospital.id}
                                                             type="button"
-                                                            className="w-full px-4 py-3 text-left hover:bg-blue-50 border-b last:border-b-0 transition-colors"
+                                                            className="w-full px-4 py-3 text-left hover:bg-[#C4D8E5]/30 border-b last:border-b-0 transition-colors"
                                                             onClick={() => handleHospitalSelect(hospital)}
                                                         >
                                                             <div className="flex items-center justify-between">
@@ -1040,11 +1040,11 @@ function ReferralFormContent() {
                         <div
                             className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors cursor-pointer"
                             onClick={() => document.getElementById('file-upload')?.click()}
-                            onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('border-blue-400', 'bg-blue-50'); }}
-                            onDragLeave={(e) => { e.currentTarget.classList.remove('border-blue-400', 'bg-blue-50'); }}
+                            onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('border-blue-400', 'bg-[#C4D8E5]/30'); }}
+                            onDragLeave={(e) => { e.currentTarget.classList.remove('border-blue-400', 'bg-[#C4D8E5]/30'); }}
                             onDrop={(e) => {
                                 e.preventDefault();
-                                e.currentTarget.classList.remove('border-blue-400', 'bg-blue-50');
+                                e.currentTarget.classList.remove('border-blue-400', 'bg-[#C4D8E5]/30');
                                 const files = Array.from(e.dataTransfer.files).filter(f => {
                                     const ext = f.name.split('.').pop()?.toLowerCase();
                                     return ['pdf', 'jpg', 'jpeg', 'png', 'webp'].includes(ext || '') && f.size <= 10 * 1024 * 1024;
@@ -1089,7 +1089,7 @@ function ReferralFormContent() {
                             </div>
                         )}
                         {uploadProgress && (
-                            <p className="text-sm text-blue-600 mt-2 flex items-center gap-2">
+                            <p className="text-sm text-primary mt-2 flex items-center gap-2">
                                 <Loader2 className="h-4 w-4 animate-spin" />
                                 {uploadProgress}
                             </p>
@@ -1132,7 +1132,7 @@ export default function ReferralFormPage() {
     return (
         <Suspense fallback={
             <div className="flex items-center justify-center min-h-screen">
-                <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
         }>
             <ReferralFormContent />

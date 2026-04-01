@@ -51,7 +51,7 @@ export default function HospitalReferralsPage() {
     if (loading) {
         return (
             <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
         );
     }
@@ -84,7 +84,7 @@ export default function HospitalReferralsPage() {
                     value={referrals.length}
                     description="All referrals"
                     icon={FileText}
-                    iconColor="text-blue-600"
+                    iconColor="text-primary"
                 />
             </div>
 
@@ -112,7 +112,7 @@ export default function HospitalReferralsPage() {
                                 key={filter.value}
                                 onClick={() => setStatusFilter(filter.value)}
                                 className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${statusFilter === filter.value
-                                    ? 'bg-blue-100 text-blue-700'
+                                    ? 'bg-primary/10 text-secondary'
                                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                     }`}
                             >

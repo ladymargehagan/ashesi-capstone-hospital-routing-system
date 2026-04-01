@@ -93,7 +93,7 @@ export function ResourceUpdateModal({ resource, open, onClose, onSaved }: Resour
 
                     {/* Occupied (calculated) */}
                     <div>
-                        <p className="text-sm text-blue-600">Occupied: {Math.max(0, occupied)}</p>
+                        <p className="text-sm text-primary">Occupied: {Math.max(0, occupied)}</p>
                     </div>
 
                     {/* Operator Info */}

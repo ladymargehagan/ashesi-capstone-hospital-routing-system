@@ -89,7 +89,7 @@ export function HospitalDetailsModal({ hospitalId, open, onClose }: HospitalDeta
                 <DialogTitle className="sr-only">Hospital Details</DialogTitle>
                 {loading ? (
                     <div className="flex items-center justify-center p-12">
-                        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+                        <Loader2 className="w-8 h-8 animate-spin text-primary" />
                     </div>
                 ) : hospital ? (
                     <>
@@ -97,7 +97,7 @@ export function HospitalDetailsModal({ hospitalId, open, onClose }: HospitalDeta
                             <div className="flex items-center justify-between mt-2">
                                 <div>
                                     <DialogTitle className="text-2xl flex items-center gap-2">
-                                        <Building2 className="w-6 h-6 text-blue-600" />
+                                        <Building2 className="w-6 h-6 text-primary" />
                                         {hospital.name}
                                     </DialogTitle>
                                     <DialogDescription className="flex items-center gap-2 mt-1">
@@ -105,7 +105,7 @@ export function HospitalDetailsModal({ hospitalId, open, onClose }: HospitalDeta
                                         {hospital.address}
                                     </DialogDescription>
                                 </div>
-                                <Badge className={hospital.level === 'teaching' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}>
+                                <Badge className={hospital.level === 'teaching' ? 'bg-purple-100 text-purple-700' : 'bg-primary/10 text-secondary'}>
                                     {hospital.level.replace('_', ' ')}
                                 </Badge>
                             </div>
@@ -158,7 +158,7 @@ export function HospitalDetailsModal({ hospitalId, open, onClose }: HospitalDeta
                                                     <span className="text-gray-500 flex items-center gap-1">
                                                         <Phone className="w-3 h-3" /> Contact
                                                     </span>
-                                                    <span className="font-medium text-blue-600">{hospital.contact_phone}</span>
+                                                    <span className="font-medium text-primary">{hospital.contact_phone}</span>
                                                 </div>
                                             )}
                                         </div>

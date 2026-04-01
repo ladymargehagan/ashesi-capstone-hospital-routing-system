@@ -46,7 +46,7 @@ export function HospitalReferralsTable({ referrals, onStatusChanged }: HospitalR
             pending: 'bg-amber-100 text-amber-700',
             approved: 'bg-green-100 text-green-700',
             rejected: 'bg-red-100 text-red-700',
-            in_transit: 'bg-blue-100 text-blue-700',
+            in_transit: 'bg-primary/10 text-secondary',
             arrived: 'bg-purple-100 text-purple-700',
             completed: 'bg-gray-100 text-gray-700',
             cancelled: 'bg-gray-100 text-gray-500',

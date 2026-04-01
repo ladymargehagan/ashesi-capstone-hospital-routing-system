@@ -61,7 +61,7 @@ export default function LoginPage() {
     return (
         <div className="min-h-screen flex">
             {/* Left panel — branding */}
-            <div className="hidden lg:flex lg:w-1/2 relative bg-gradient-to-br from-blue-600 via-blue-700 to-cyan-600 items-center justify-center p-12">
+            <div className="hidden lg:flex lg:w-1/2 relative bg-gradient-to-br from-primary via-primary to-secondary items-center justify-center p-12">
                 <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)', backgroundSize: '32px 32px' }} />
                 <div className="relative z-10 max-w-md text-center">
                     <div className="mx-auto mb-8 h-20 w-20 rounded-3xl bg-white/20 backdrop-blur-lg flex items-center justify-center border border-white/30">
@@ -93,14 +93,14 @@ export default function LoginPage() {
             {/* Right panel — form */}
             <div className="flex-1 flex items-center justify-center p-6 bg-slate-50">
                 <div className="w-full max-w-md">
-                    <Link href="/" className="inline-flex items-center text-sm text-slate-500 hover:text-blue-600 transition-colors mb-8 group">
+                    <Link href="/" className="inline-flex items-center text-sm text-slate-500 hover:text-primary transition-colors mb-8 group">
                         <ArrowLeft className="h-4 w-4 mr-1.5 group-hover:-translate-x-0.5 transition-transform" />
                         Back to home
                     </Link>
 
                     <Card className="shadow-xl shadow-slate-200/60 border-slate-100">
                         <CardHeader className="pb-2">
-                            <div className="lg:hidden mx-auto mb-4 h-12 w-12 rounded-xl bg-gradient-to-br from-blue-600 to-cyan-500 flex items-center justify-center shadow-md shadow-blue-200">
+                            <div className="lg:hidden mx-auto mb-4 h-12 w-12 rounded-xl bg-gradient-to-br from-primary to-secondary/80 flex items-center justify-center shadow-md shadow-primary/20">
                                 <Activity className="h-6 w-6 text-white" />
                             </div>
                             <CardTitle className="text-2xl font-bold text-center lg:text-left">Welcome back</CardTitle>
@@ -146,7 +146,7 @@ export default function LoginPage() {
                                     </div>
                                 )}
 
-                                <Button type="submit" className="w-full h-11 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 rounded-xl shadow-md shadow-blue-200/50 font-semibold" disabled={loading}>
+                                <Button type="submit" className="w-full h-11 bg-gradient-to-r from-primary to-secondary/80 hover:from-secondary hover:to-secondary rounded-xl shadow-md shadow-primary/20/50 font-semibold" disabled={loading}>
                                     {loading ? (
                                         <>
                                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -162,7 +162,7 @@ export default function LoginPage() {
                             <div className="mt-6 pt-5 border-t border-slate-100 text-center">
                                 <p className="text-sm text-slate-500 mb-3">Are you a doctor? Join the network.</p>
                                 <Link href="/register">
-                                    <Button variant="outline" className="w-full rounded-xl border-slate-200 hover:bg-blue-50 hover:border-blue-200 hover:text-blue-700 transition-colors">
+                                    <Button variant="outline" className="w-full rounded-xl border-slate-200 hover:bg-[#C4D8E5]/30 hover:border-primary/20 hover:text-secondary transition-colors">
                                         <Stethoscope className="h-4 w-4 mr-2" />
                                         Register as a Doctor
                                     </Button>

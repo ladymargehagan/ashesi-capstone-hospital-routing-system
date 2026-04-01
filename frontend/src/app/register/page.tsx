@@ -286,7 +286,7 @@ function RegisterForm() {
                                 : "Your account is pending approval by your hospital administrator. You'll receive an email notification once approved."}
                         </p>
                         <Link href="/login">
-                            <Button className={`rounded-xl px-8 shadow-md font-semibold ${isAdminInvite ? 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 shadow-purple-200/50' : 'bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 shadow-blue-200/50'}`}>
+                            <Button className={`rounded-xl px-8 shadow-md font-semibold ${isAdminInvite ? 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 shadow-purple-200/50' : 'bg-gradient-to-r from-primary to-secondary/80 hover:from-secondary hover:to-secondary shadow-primary/20/50'}`}>
                                 Go to Login
                             </Button>
                         </Link>
@@ -433,7 +433,7 @@ function RegisterForm() {
     return (
         <div className="min-h-screen flex">
             {/* Left panel — branding */}
-            <div className="hidden lg:flex lg:w-2/5 relative bg-gradient-to-br from-blue-600 via-blue-700 to-cyan-600 items-center justify-center p-12">
+            <div className="hidden lg:flex lg:w-2/5 relative bg-gradient-to-br from-primary via-primary to-secondary items-center justify-center p-12">
                 <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)', backgroundSize: '32px 32px' }} />
                 <div className="relative z-10 max-w-sm text-center">
                     <div className="mx-auto mb-8 h-20 w-20 rounded-3xl bg-white/20 backdrop-blur-lg flex items-center justify-center border border-white/30">
@@ -464,14 +464,14 @@ function RegisterForm() {
             {/* Right panel — form */}
             <div className="flex-1 flex items-start justify-center p-6 pt-8 bg-slate-50 overflow-y-auto">
                 <div className="w-full max-w-lg">
-                    <Link href="/" className="inline-flex items-center text-sm text-slate-500 hover:text-blue-600 transition-colors mb-6 group">
+                    <Link href="/" className="inline-flex items-center text-sm text-slate-500 hover:text-primary transition-colors mb-6 group">
                         <ArrowLeft className="h-4 w-4 mr-1.5 group-hover:-translate-x-0.5 transition-transform" />
                         Back to home
                     </Link>
 
                     <Card className="shadow-xl shadow-slate-200/60 border-slate-100">
                         <CardHeader className="pb-2">
-                            <div className="lg:hidden mx-auto mb-4 h-12 w-12 rounded-xl bg-gradient-to-br from-blue-600 to-cyan-500 flex items-center justify-center shadow-md shadow-blue-200">
+                            <div className="lg:hidden mx-auto mb-4 h-12 w-12 rounded-xl bg-gradient-to-br from-primary to-secondary/80 flex items-center justify-center shadow-md shadow-primary/20">
                                 <Activity className="h-6 w-6 text-white" />
                             </div>
                             <CardTitle className="text-2xl font-bold text-center lg:text-left">Doctor Registration</CardTitle>
@@ -483,14 +483,14 @@ function RegisterForm() {
                             <div className="flex items-center gap-2 mb-6">
                                 <button
                                     onClick={() => setStep(1)}
-                                    className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-colors ${step === 1 ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
+                                    className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-colors ${step === 1 ? 'bg-primary text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
                                 >
                                     1. Account Details
                                 </button>
                                 <button
                                     type="button"
                                     onClick={handleNextStep}
-                                    className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-colors ${step === 2 ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
+                                    className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-colors ${step === 2 ? 'bg-primary text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
                                 >
                                     2. Professional Info
                                 </button>
@@ -542,7 +542,7 @@ function RegisterForm() {
                                         <Button
                                             type="button"
                                             onClick={handleNextStep}
-                                            className="w-full h-11 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 shadow-md shadow-blue-200/50 font-semibold mt-2"
+                                            className="w-full h-11 rounded-xl bg-gradient-to-r from-primary to-secondary/80 hover:from-secondary hover:to-secondary shadow-md shadow-primary/20/50 font-semibold mt-2"
                                         >
                                             Continue to Professional Info
                                         </Button>
@@ -569,7 +569,7 @@ function RegisterForm() {
                                                             key={h.id}
                                                             type="button"
                                                             onClick={() => { setHospitalId(h.id); setHospitalSearch(h.name); }}
-                                                            className={`w-full text-left px-3 py-2 text-sm hover:bg-blue-50 transition-colors border-b border-slate-50 last:border-0 ${hospitalId === h.id ? 'bg-blue-50 text-blue-700 font-medium' : 'text-slate-700'}`}
+                                                            className={`w-full text-left px-3 py-2 text-sm hover:bg-[#C4D8E5]/30 transition-colors border-b border-slate-50 last:border-0 ${hospitalId === h.id ? 'bg-[#C4D8E5]/30 text-secondary font-medium' : 'text-slate-700'}`}
                                                         >
                                                             <div className="font-medium">{h.name}</div>
                                                             <div className="text-xs text-slate-400">{h.level} {h.address}</div>
@@ -643,7 +643,7 @@ function RegisterForm() {
                                             <Button type="button" variant="outline" onClick={() => setStep(1)} className="flex-1 h-11 rounded-xl">
                                                 Back
                                             </Button>
-                                            <Button type="submit" className="flex-1 h-11 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 shadow-md shadow-blue-200/50 font-semibold" disabled={loading}>
+                                            <Button type="submit" className="flex-1 h-11 rounded-xl bg-gradient-to-r from-primary to-secondary/80 hover:from-secondary hover:to-secondary shadow-md shadow-primary/20/50 font-semibold" disabled={loading}>
                                                 {loading ? (
                                                     <>
                                                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -665,7 +665,7 @@ function RegisterForm() {
                             <div className="mt-6 pt-4 border-t border-slate-100 text-center">
                                 <p className="text-sm text-slate-500">
                                     Already have an account?{' '}
-                                    <Link href="/login" className="text-blue-600 hover:text-blue-700 font-medium">Sign in</Link>
+                                    <Link href="/login" className="text-primary hover:text-secondary font-medium">Sign in</Link>
                                 </p>
                             </div>
                         </CardContent>
@@ -678,7 +678,7 @@ function RegisterForm() {
 
 export default function RegisterPage() {
     return (
-        <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-slate-50"><Loader2 className="h-8 w-8 animate-spin text-blue-600" /></div>}>
+        <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-slate-50"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
             <RegisterForm />
         </Suspense>
     );

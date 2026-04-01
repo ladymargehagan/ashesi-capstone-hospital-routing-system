@@ -114,7 +114,7 @@ export function InviteAdminModal({ open, onClose, hospitals }: InviteAdminModalP
                             <Button type="button" variant="outline" onClick={handleClose}>
                                 Cancel
                             </Button>
-                            <Button type="submit" className="bg-blue-600 hover:bg-blue-700" disabled={loading}>
+                            <Button type="submit" className="bg-primary hover:bg-secondary" disabled={loading}>
                                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                 Generate Invite Link
                             </Button>

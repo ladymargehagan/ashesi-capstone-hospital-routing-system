@@ -50,7 +50,7 @@ export default function HospitalsPage() {
     if (loading) {
         return (
             <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
         );
     }
@@ -64,7 +64,7 @@ export default function HospitalsPage() {
                     <p className="text-gray-500">Manage and review hospital applications</p>
                 </div>
                 <Button 
-                    className="bg-blue-600 hover:bg-blue-700 text-white shrink-0" 
+                    className="bg-primary hover:bg-secondary text-white shrink-0" 
                     onClick={() => setIsInviteModalOpen(true)}
                 >
                     <UserPlus className="h-4 w-4 mr-2" />
@@ -79,7 +79,7 @@ export default function HospitalsPage() {
                     value={hospitals.length}
                     description="All registered hospitals"
                     icon={Building2}
-                    iconColor="text-blue-600"
+                    iconColor="text-primary"
                 />
                 <StatsCard
                     title="Pending Approval"

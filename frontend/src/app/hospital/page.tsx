@@ -72,7 +72,7 @@ export default function HospitalDashboard() {
     if (loading) {
         return (
             <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
         );
     }
@@ -106,7 +106,7 @@ export default function HospitalDashboard() {
                     value={stats.total_beds}
                     description={`${stats.available_beds} available`}
                     icon={Bed}
-                    iconColor="text-blue-600"
+                    iconColor="text-primary"
                 />
                 <StatsCard
                     title="ICU Capacity"

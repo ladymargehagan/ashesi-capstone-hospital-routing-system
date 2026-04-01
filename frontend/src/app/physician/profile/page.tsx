@@ -62,7 +62,7 @@ export default function PhysicianProfilePage() {
     if (!user) {
         return (
             <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
         );
     }
@@ -88,8 +88,8 @@ export default function PhysicianProfilePage() {
                 <Card>
                     <CardContent className="pt-6">
                         <div className="flex items-center gap-4">
-                            <div className="h-16 w-16 rounded-full bg-blue-100 flex items-center justify-center">
-                                <User className="h-8 w-8 text-blue-600" />
+                            <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
+                                <User className="h-8 w-8 text-primary" />
                             </div>
                             <div>
                                 <h2 className="text-xl font-bold text-gray-900">{user.full_name}</h2>

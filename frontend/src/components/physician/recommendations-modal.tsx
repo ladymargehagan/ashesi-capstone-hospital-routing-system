@@ -110,14 +110,14 @@ export function RecommendationsModal({
 
     const getScoreColor = (score: number) => {
         if (score >= 0.7) return 'text-green-600';
-        if (score >= 0.4) return 'text-blue-600';
+        if (score >= 0.4) return 'text-primary';
         if (score >= 0.2) return 'text-amber-600';
         return 'text-red-600';
     };
 
     const getScoreBarColor = (score: number) => {
         if (score >= 0.7) return 'bg-green-500';
-        if (score >= 0.4) return 'bg-blue-500';
+        if (score >= 0.4) return 'bg-[#C4D8E5]/300';
         if (score >= 0.2) return 'bg-amber-500';
         return 'bg-red-500';
     };
@@ -135,7 +135,7 @@ export function RecommendationsModal({
             <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
-                        <TrendingUp className="h-5 w-5 text-blue-600" />
+                        <TrendingUp className="h-5 w-5 text-primary" />
                         Engine Recommendations
                     </DialogTitle>
                     <DialogDescription>
@@ -168,7 +168,7 @@ export function RecommendationsModal({
                 {loading && (
                     <div className="flex items-center justify-center py-12">
                         <div className="text-center">
-                            <Activity className="h-8 w-8 animate-pulse text-blue-600 mx-auto mb-2" />
+                            <Activity className="h-8 w-8 animate-pulse text-primary mx-auto mb-2" />
                             <p className="text-sm text-gray-500">Running referral engine...</p>
                         </div>
                     </div>
@@ -202,7 +202,7 @@ export function RecommendationsModal({
                                         {/* Header: Rank, Name, Score */}
                                         <div className="flex items-start justify-between mb-3">
                                             <div className="flex items-center gap-3">
-                                                <div className={`h-8 w-8 rounded-full flex items-center justify-center text-sm font-bold ${rec.rank === 1 ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600'
+                                                <div className={`h-8 w-8 rounded-full flex items-center justify-center text-sm font-bold ${rec.rank === 1 ? 'bg-primary text-white' : 'bg-gray-100 text-gray-600'
                                                     }`}>
                                                     #{rec.rank}
                                                 </div>
@@ -268,7 +268,7 @@ export function RecommendationsModal({
                                                 <span className="text-gray-600"><strong>{rec.travel_time_minutes}</strong> min</span>
                                             </div>
                                             <div className="flex items-center gap-1.5 text-sm">
-                                                <Activity className="h-3.5 w-3.5 text-blue-500" />
+                                                <Activity className="h-3.5 w-3.5 text-primary/80" />
                                                 <span className="text-gray-600">
                                                     Updated <strong>{rec.last_update_hours_ago}h</strong> ago
                                                 </span>

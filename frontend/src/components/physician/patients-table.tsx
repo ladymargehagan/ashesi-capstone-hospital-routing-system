@@ -60,14 +60,14 @@ export function PatientsTable({ patients }: PatientsTableProps) {
                             <TableCell className="font-medium">{patient.full_name}</TableCell>
                             <TableCell>{getAge(patient.date_of_birth)}</TableCell>
                             <TableCell className="capitalize">{patient.sex || '-'}</TableCell>
-                            <TableCell className="text-blue-600">{patient.diagnosis || '-'}</TableCell>
+                            <TableCell className="text-primary">{patient.diagnosis || '-'}</TableCell>
                             <TableCell>{formatDate(patient.last_visit)}</TableCell>
                             <TableCell>
                                 <div className="flex items-center gap-2">
                                     <Button
                                         variant="ghost"
                                         size="sm"
-                                        className="text-gray-600 hover:text-blue-600"
+                                        className="text-gray-600 hover:text-primary"
                                         onClick={() => setSelectedPatient(patient)}
                                     >
                                         <Eye className="h-4 w-4" />

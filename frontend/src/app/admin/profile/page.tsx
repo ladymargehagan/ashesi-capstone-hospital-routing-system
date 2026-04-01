@@ -27,7 +27,7 @@ export default function AdminProfilePage() {
     if (!user) {
         return (
             <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
         );
     }
@@ -97,7 +97,7 @@ export default function AdminProfilePage() {
                         {/* Avatar Section */}
                         <div className="flex items-center gap-4">
                             <Avatar className="h-16 w-16">
-                                <AvatarFallback className="bg-blue-100 text-blue-700 text-lg font-bold">
+                                <AvatarFallback className="bg-primary/10 text-secondary text-lg font-bold">
                                     {getInitials(user.full_name)}
                                 </AvatarFallback>
                             </Avatar>

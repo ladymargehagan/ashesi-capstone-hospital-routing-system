@@ -17,7 +17,7 @@ export function StatsCard({
     value,
     description,
     icon: Icon,
-    iconColor = 'text-blue-600'
+    iconColor = 'text-primary'
 }: StatsCardProps) {
     return (
         <Card className="hover:shadow-md transition-shadow">

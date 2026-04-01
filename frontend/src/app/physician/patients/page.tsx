@@ -73,7 +73,7 @@ export default function PatientsPage() {
     if (loading) {
         return (
             <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
         );
     }
@@ -87,7 +87,7 @@ export default function PatientsPage() {
                     <p className="text-gray-500">View and manage your patient records</p>
                 </div>
                 <Link href="/physician/referral">
-                    <Button className="bg-blue-600 hover:bg-blue-700">
+                    <Button className="bg-primary hover:bg-secondary">
                         <Plus className="h-4 w-4 mr-2" />
                         New Referral
                     </Button>
@@ -141,7 +141,7 @@ export default function PatientsPage() {
                                         <TableCell className="font-medium">{patient.full_name}</TableCell>
                                         <TableCell>{getAge(patient.date_of_birth)}</TableCell>
                                         <TableCell className="capitalize">{patient.sex || '-'}</TableCell>
-                                        <TableCell className="text-blue-600">{patient.diagnosis || '-'}</TableCell>
+                                        <TableCell className="text-primary">{patient.diagnosis || '-'}</TableCell>
                                         <TableCell>
                                             <Badge className={getNHISBadge(patient.nhis_status)} variant="outline">
                                                 {patient.nhis_status || 'None'}
@@ -153,7 +153,7 @@ export default function PatientsPage() {
                                                 <Button
                                                     variant="ghost"
                                                     size="sm"
-                                                    className="text-gray-600 hover:text-blue-600"
+                                                    className="text-gray-600 hover:text-primary"
                                                     onClick={() => setSelectedPatient(patient)}
                                                 >
                                                     <Eye className="h-4 w-4" />

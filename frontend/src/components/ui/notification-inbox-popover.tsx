@@ -28,7 +28,7 @@ const TYPE_META: Record<
   string,
   { icon: LucideIcon; color: string; label: string }
 > = {
-  referral_created:        { icon: FileText,      color: "text-blue-500",   label: "New Referral" },
+  referral_created:        { icon: FileText,      color: "text-primary/80",   label: "New Referral" },
   referral_approved:       { icon: CheckCircle2,  color: "text-green-500",  label: "Referral Accepted" },
   referral_rejected:       { icon: XCircle,       color: "text-red-500",    label: "Referral Rejected" },
   referral_completed:      { icon: CheckCheck,    color: "text-green-600",  label: "Referral Completed" },
@@ -90,7 +90,7 @@ function NotificationRow({ notification: n, onMarkRead }: NotificationRowProps) 
     <button
       onClick={handleClick}
       className={`flex w-full items-start gap-3 border-b px-4 py-3 text-left transition-colors hover:bg-accent/60 ${
-        !n.is_read ? "bg-blue-50/60" : ""
+        !n.is_read ? "bg-[#C4D8E5]/30/60" : ""
       }`}
     >
       <div className={`mt-0.5 shrink-0 ${meta.color}`}>
@@ -105,7 +105,7 @@ function NotificationRow({ notification: n, onMarkRead }: NotificationRowProps) 
         </p>
       </div>
       {!n.is_read && (
-        <span className="mt-2 size-2 shrink-0 rounded-full bg-blue-500" />
+        <span className="mt-2 size-2 shrink-0 rounded-full bg-[#C4D8E5]/300" />
       )}
     </button>
   );
@@ -136,7 +136,7 @@ export function NotificationInboxPopover() {
         >
           <Bell className="h-5 w-5 text-gray-600" />
           {unreadCount > 0 && (
-            <Badge className="absolute -top-1.5 -right-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-blue-600 px-1.5 text-[10px] font-bold text-white">
+            <Badge className="absolute -top-1.5 -right-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-[10px] font-bold text-white">
               {unreadCount > 99 ? "99+" : unreadCount}
             </Badge>
           )}
@@ -163,7 +163,7 @@ export function NotificationInboxPopover() {
             {unreadCount > 0 && (
               <button
                 onClick={markAllRead}
-                className="flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-700 hover:underline"
+                className="flex items-center gap-1 text-xs font-medium text-primary hover:text-secondary hover:underline"
               >
                 <CheckCheck size={13} />
                 Mark all read
@@ -175,7 +175,7 @@ export function NotificationInboxPopover() {
           <div className="max-h-[360px] overflow-y-auto">
             {loading ? (
               <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
+                <Loader2 className="h-6 w-6 animate-spin text-primary/80" />
               </div>
             ) : filtered.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 text-gray-400">

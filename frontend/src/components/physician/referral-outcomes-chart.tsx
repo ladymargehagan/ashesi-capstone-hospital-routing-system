@@ -49,7 +49,7 @@ export function ReferralOutcomesChart({ referrals }: ReferralOutcomesChartProps)
         <Card>
             <CardHeader className="pb-2">
                 <CardTitle className="text-md flex items-center gap-2">
-                    <Activity className="h-4 w-4 text-blue-500" />
+                    <Activity className="h-4 w-4 text-primary/80" />
                     Completed Referral Outcomes
                 </CardTitle>
                 <CardDescription>Visual breakdown of final patient outcomes</CardDescription>

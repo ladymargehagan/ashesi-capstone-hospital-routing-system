@@ -38,7 +38,7 @@ export default function PhysiciansPage() {
     if (loading) {
         return (
             <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
         );
     }
@@ -58,7 +58,7 @@ export default function PhysiciansPage() {
                     value={physicians.length}
                     description="Across all hospitals"
                     icon={Users}
-                    iconColor="text-blue-600"
+                    iconColor="text-primary"
                 />
                 <StatsCard
                     title="Specialties"

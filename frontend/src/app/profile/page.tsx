@@ -46,7 +46,7 @@ export default function ProfilePage() {
 
     const getRoleBadgeStyle = (role: string) => {
         const styles = {
-            physician: 'bg-blue-100 text-blue-700 border-blue-200',
+            physician: 'bg-primary/10 text-secondary border-primary/20',
             hospital_admin: 'bg-purple-100 text-purple-700 border-purple-200',
             super_admin: 'bg-amber-100 text-amber-700 border-amber-200',
         };
@@ -100,7 +100,7 @@ export default function ProfilePage() {
                 <CardContent className="pt-6">
                     <div className="flex items-center gap-6">
                         <Avatar className="h-20 w-20">
-                            <AvatarFallback className="bg-blue-100 text-blue-700 text-2xl">
+                            <AvatarFallback className="bg-primary/10 text-secondary text-2xl">
                                 {getInitials(user.full_name)}
                             </AvatarFallback>
                         </Avatar>
