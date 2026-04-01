@@ -64,7 +64,7 @@ export default function LandingPage() {
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-foreground leading-[1.1]">
                 Smarter, Faster
                 <br />
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-secondary via-primary to-accent">
                   Patient Referrals
                 </span>
               </h1>
@@ -74,9 +74,11 @@ export default function LandingPage() {
               
               <div className="mt-10 flex flex-col sm:flex-row items-center gap-4">
                 <Link href="/register" className="w-full sm:w-auto">
-                  <Button size="lg" className="w-full text-base px-8 py-7 rounded-2xl bg-gradient-to-r from-primary to-secondary hover:opacity-90 transition-opacity shadow-lg shadow-primary/20 font-bold text-white">
-                    <Stethoscope className="h-5 w-5 mr-3" />
-                    Register as a Doctor
+                  <Button size="lg" className="w-full text-base px-8 py-7 rounded-2xl bg-gradient-to-r from-secondary via-primary to-accent hover:opacity-90 transition-opacity shadow-lg shadow-primary/20 font-bold text-white group overflow-hidden relative">
+                    <span className="relative z-10 flex items-center justify-center">
+                      <Stethoscope className="h-5 w-5 mr-3 group-hover:scale-110 transition-transform" />
+                      Register as a Doctor
+                    </span>
                   </Button>
                 </Link>
                 <Link href="/login" className="w-full sm:w-auto">
@@ -121,7 +123,7 @@ export default function LandingPage() {
                     priority={index === 0}
                   />
                   {/* Subtle gradient overlay to match premium aesthetic */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-secondary/40 to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-tr from-secondary/60 mix-blend-multiply via-primary/30 to-transparent" />
                 </div>
               ))}
               
@@ -144,11 +146,14 @@ export default function LandingPage() {
       </section>
 
       {/* ── Accra Map Section ── */}
-      <section id="coverage" className="py-24 bg-white">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
+      <section id="coverage" className="py-24 bg-white relative overflow-hidden">
+        {/* Decorative Background Blob */}
+        <div className="absolute top-0 right-0 -mr-40 -mt-40 w-[600px] h-[600px] bg-accent/10 rounded-full blur-[100px] pointer-events-none" />
+        
+        <div className="max-w-[1400px] mx-auto px-6 relative z-10">
+          <div className="grid lg:grid-cols-[1.5fr_1fr] gap-12 items-center">
             {/* Map Imagery */}
-            <div className="relative w-full aspect-square md:aspect-[4/3] flex items-center justify-center p-4">
+            <div className="relative w-full aspect-[4/3] lg:aspect-[16/10] flex items-center justify-center p-0 md:p-8">
                 {/* Background SVG Map */}
                 <Image
                   src="/images/Ghanamap.svg"
@@ -165,7 +170,14 @@ export default function LandingPage() {
 
                 {/* Interconnectors */}
                 <svg className="absolute inset-0 w-full h-full pointer-events-none z-10" viewBox="0 0 100 100" preserveAspectRatio="none">
-                    <path d="M 26,62 L 40,45 L 53,60 L 68,52 L 40,45 M 53,60 L 60,78 M 68,52 L 26,62" fill="none" stroke="#173DED" strokeWidth="0.5" strokeDasharray="1.5 1.5" className="animate-pulse opacity-60" />
+                    <defs>
+                      <linearGradient id="lineGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="#05269B" />
+                        <stop offset="50%" stopColor="#116BF8" />
+                        <stop offset="100%" stopColor="#21BCEE" />
+                      </linearGradient>
+                    </defs>
+                    <path d="M 26,62 L 40,45 L 53,60 L 68,52 L 40,45 M 53,60 L 60,78 M 68,52 L 26,62" fill="none" stroke="url(#lineGrad)" strokeWidth="0.8" strokeDasharray="1.5 1.5" className="animate-pulse opacity-80" />
                 </svg>
 
                 {/* HTML PINS Overlay */}
@@ -267,7 +279,7 @@ export default function LandingPage() {
                 key={i}
                 className="group bg-white rounded-3xl p-8 border border-border shadow-sm hover:shadow-xl hover:shadow-primary/5 transition-all duration-300 hover:-translate-y-1"
               >
-                <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center mb-6">
+                <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-secondary via-primary to-accent flex items-center justify-center mb-6 shadow-lg shadow-primary/20">
                   <f.icon className="h-6 w-6 text-white" />
                 </div>
                 <h3 className="text-xl font-bold text-foreground mb-3">{f.title}</h3>
@@ -290,9 +302,9 @@ export default function LandingPage() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-12 max-w-6xl mx-auto relative">
+          <div className="grid md:grid-cols-3 gap-12 max-w-6xl mx-auto relative mt-16">
             {/* Connecting Line (Desktop) */}
-            <div className="hidden md:block absolute top-12 left-[15%] right-[15%] h-px bg-border border-dashed border-t-2" />
+            <div className="hidden md:block absolute top-[2.25rem] left-[15%] right-[15%] h-1 bg-gradient-to-r from-secondary via-primary to-accent opacity-30 rounded-full" />
             
             {[
               {
@@ -314,8 +326,8 @@ export default function LandingPage() {
                 icon: Activity,
               },
             ].map((s, i) => (
-              <div key={i} className="relative z-10 bg-white p-8 rounded-3xl border border-border shadow-md shadow-primary/5 text-center transition-transform hover:-translate-y-2">
-                <div className="h-16 w-16 mx-auto rounded-full bg-muted flex items-center justify-center mb-6 text-primary font-bold text-xl border-4 border-white shadow-sm shadow-black/5">
+              <div key={i} className="relative z-10 bg-white p-8 rounded-3xl border border-border shadow-md shadow-primary/5 text-center transition-transform hover:-translate-y-2 group">
+                <div className="h-20 w-20 mx-auto rounded-full bg-gradient-to-br from-secondary/5 via-primary/10 to-accent/20 flex items-center justify-center mb-6 text-primary font-bold text-2xl border-4 border-white shadow-lg shadow-primary/10 group-hover:scale-110 transition-transform">
                   {s.step}
                 </div>
                 <h3 className="text-xl font-extrabold text-foreground mb-3">{s.title}</h3>
