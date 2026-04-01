@@ -202,7 +202,7 @@ def resolve_hospital_flag(
             raise HTTPException(status_code=403, detail="Not authorized to resolve flags for this hospital")
             
         cur.execute(
-            "UPDATE hospital_data_flags SET resolved = TRUE, resolved_at = CURRENT_TIMESTAMP WHERE flag_id = %s",
+            "UPDATE hospital_data_flags SET resolved = TRUE WHERE flag_id = %s",
             (flag_id,)
         )
         if cur.rowcount == 0:

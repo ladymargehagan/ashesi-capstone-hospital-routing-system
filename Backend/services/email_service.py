@@ -25,6 +25,9 @@ from email.mime.text import MIMEText
 from typing import Optional
 
 from core.db import db_cursor
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # SMTP config from environment
 SMTP_HOST = os.getenv("SMTP_HOST", "smtp.gmail.com")
@@ -178,6 +181,8 @@ def notify_referral_status_changed(
         "cancelled": "🚫 Cancelled",
         "in_transit": "🚑 Patient Dispatched (In Transit)",
         "no_capacity": "⚠️ Hospital Full (No Capacity)",
+        "cascaded": "🔄 Auto-Rerouted (Rejected by Target)",
+        "timeout_cascaded": "⏳ Auto-Rerouted (Target Timed Out)",
     }
     status_label = status_labels.get(new_status, new_status.title())
 
@@ -187,6 +192,11 @@ def notify_referral_status_changed(
         title_suffix = "Outcome" if new_status == "completed" else "Reason"
         message_details = f"<tr><td style='padding: 8px; color: #64748b; vertical-align: top;'>{title_suffix}</td><td style='padding: 8px; font-weight: 600; white-space: pre-wrap;'>{reason}</td></tr>"
 
+    if new_status in ("cascaded", "timeout_cascaded"):
+        body_intro = "<p>Your referral was not accepted by the initial hospital in time and has been <strong>automatically rerouted</strong> to the next recommended facility in your backup queue.</p>"
+    else:
+        body_intro = "<p>Your referral has been updated.</p>"
+
     notify_user(
         user_id=referring_physician_user_id,
         message=f"Referral #{referral_id} for {patient_name} has been {new_status}. {f'Details: {reason[:100]}...' if reason else ''}",
@@ -195,7 +205,7 @@ def notify_referral_status_changed(
         email_body=_base_email(
             f"Referral {status_label}",
             f"""
-            <p>Your referral has been updated.</p>
+            {body_intro}
             <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
                 <tr><td style="padding: 8px; color: #64748b; width: 30%;">Referral ID</td><td style="padding: 8px; font-weight: 600;">#{referral_id}</td></tr>
                 <tr><td style="padding: 8px; color: #64748b;">Patient</td><td style="padding: 8px; font-weight: 600;">{patient_name}</td></tr>

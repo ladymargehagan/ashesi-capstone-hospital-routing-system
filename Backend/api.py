@@ -91,7 +91,7 @@ app.include_router(health_router, prefix="/api/health", tags=["health"])
 # Background Tasks
 # ---------------------------------------------------------------------------
 import asyncio
-from services.email_service import notify_referral_created
+from services.email_service import notify_referral_created, notify_referral_status_changed
 
 async def referral_timeout_sweep():
     """Background task to automatically reject and reroute timed-out pending referrals."""
@@ -142,9 +142,30 @@ async def referral_timeout_sweep():
                             cur.execute("SELECT full_name FROM patients WHERE patient_id = %s", (r["patient_id"],))
                             p = cur.fetchone()
                             patient_name = p["full_name"] if p else "Unknown"
+                            
+                            # Get referring physician user_id for notification
+                            cur.execute(
+                                """
+                                SELECT u.user_id 
+                                FROM referrals r2 
+                                JOIN physicians ph ON r2.referring_physician_id = ph.physician_id
+                                JOIN users u ON ph.user_id = u.user_id
+                                WHERE r2.referral_id = %s
+                                """,
+                                (r["referral_id"],)
+                            )
+                            phys_row = cur.fetchone()
+                            
                             try:
                                 # Run synchronously for now in this loop
                                 notify_referral_created(r["referral_id"], patient_name, next_hospital_id)
+                                if phys_row:
+                                    notify_referral_status_changed(
+                                        r["referral_id"], 
+                                        patient_name, 
+                                        "timeout_cascaded", 
+                                        phys_row["user_id"]
+                                    )
                             except Exception as e:
                                 print(f"[WARN] Email notification failed dynamically: {e}")
 
