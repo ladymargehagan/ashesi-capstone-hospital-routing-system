@@ -43,7 +43,7 @@ def send_email(to_email: str, subject: str, html_body: str) -> bool:
     Silently fails if email is not configured (logs a warning).
     """
     if not EMAIL_ENABLED:
-        print(f"[EMAIL] Skipped (not configured): {subject} → {to_email}")
+        print(f"[EMAIL] Skipped (not configured): SMTP_USER={'set' if SMTP_USER else 'empty'}, SMTP_PASSWORD={'set' if SMTP_PASSWORD else 'empty'}")
         return False
 
     try:
@@ -53,16 +53,17 @@ def send_email(to_email: str, subject: str, html_body: str) -> bool:
         msg["To"] = to_email
         msg.attach(MIMEText(html_body, "html"))
 
+        print(f"[EMAIL] Connecting to {SMTP_HOST}:{SMTP_PORT} as {SMTP_USER}...")
         with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=10) as server:
             server.starttls()
             server.login(SMTP_USER, SMTP_PASSWORD)
-            server.sendmail(SMTP_FROM, to_email, msg.as_string())
+            server.sendmail(SMTP_USER, to_email, msg.as_string())
 
         print(f"[EMAIL] Sent: {subject} → {to_email}")
         return True
 
     except Exception as e:
-        print(f"[EMAIL] Failed: {subject} → {to_email}: {e}")
+        print(f"[EMAIL] Failed: {subject} → {to_email}: {type(e).__name__}: {e}")
         return False
 
 
