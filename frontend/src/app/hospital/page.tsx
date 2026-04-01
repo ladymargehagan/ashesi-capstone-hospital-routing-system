@@ -5,11 +5,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { StatsCard } from '@/components/stats-card';
 import { HospitalReferralsTable } from '@/components/hospital/referrals-table';
 import { ResourcesTab } from '@/components/hospital/resources-tab';
-import { SpecialistsTab } from '@/components/hospital/specialists-tab';
 import { FlagsTab } from '@/components/hospital/flags-tab';
 import { useAuth } from '@/hooks/use-auth';
-import { referralsApi, resourcesApi, specialistsApi, hospitalsApi, healthApi } from '@/lib/api-client';
-import { Referral, Resource, Specialist } from '@/types';
+import { referralsApi, resourcesApi, hospitalsApi, healthApi, usersApi } from '@/lib/api-client';
+import { Referral, Resource, Physician } from '@/types';
 import { Bed, Heart, Users, Clock, Loader2, AlertTriangle, ShieldAlert } from 'lucide-react';
 
 export default function HospitalDashboard() {
@@ -17,7 +16,7 @@ export default function HospitalDashboard() {
     const [activeTab, setActiveTab] = useState('referrals');
     const [referrals, setReferrals] = useState<Referral[]>([]);
     const [resources, setResources] = useState<Resource[]>([]);
-    const [specialists, setSpecialists] = useState<Specialist[]>([]);
+    const [physicians, setPhysicians] = useState<Physician[]>([]);
     const [flags, setFlags] = useState<any[]>([]);
     const [healthSummary, setHealthSummary] = useState<any>(null);
     const [loading, setLoading] = useState(true);
@@ -37,29 +36,29 @@ export default function HospitalDashboard() {
         Promise.all([
             referralsApi.list({ hospital_id: hospitalId }).catch(() => []),
             resourcesApi.list(hospitalId).catch(() => []),
-            specialistsApi.list(hospitalId).catch(() => []),
+            usersApi.listPhysicians({ hospital_id: hospitalId }).catch(() => []),
             hospitalsApi.getFlags(hospitalId.toString()).catch(() => []),
             healthApi.getHospitalSummary(hospitalId.toString()).catch(() => null),
-        ]).then(([refs, res, specs, flgs, hSummary]) => {
+        ]).then(([refs, res, phys, flgs, hSummary]) => {
             setReferrals(refs as unknown as Referral[]);
             setResources(res as unknown as Resource[]);
-            setSpecialists(specs as unknown as Specialist[]);
+            setPhysicians(phys as unknown as Physician[]);
             setFlags(flgs);
             setHealthSummary(hSummary);
 
-            // Compute stats from real data
             const resList = res as unknown as Resource[];
+            const physList = phys as unknown as Physician[];
             const generalBeds = resList.find(r => r.resource_type === 'general_beds');
             const icuBeds = resList.find(r => r.resource_type === 'icu_beds');
+            const activePhysicians = physList.filter(p => p.status === 'active');
+            const uniqueSpecs = new Set(activePhysicians.map(p => p.specialization).filter(Boolean));
             setStats({
                 total_beds: generalBeds?.total_count || 0,
                 available_beds: generalBeds?.available_count || 0,
                 icu_capacity: icuBeds?.total_count || 0,
                 icu_available: icuBeds?.available_count || 0,
-                specialists_total: specs.length,
-                specialists_available: (specs as unknown as Specialist[]).filter(
-                    s => s.on_call_available
-                ).length,
+                specialists_total: activePhysicians.length,
+                specialists_available: uniqueSpecs.size,
             });
         }).finally(() => setLoading(false));
     }, [user?.hospital_id]);
@@ -117,9 +116,9 @@ export default function HospitalDashboard() {
                     iconColor="text-red-500"
                 />
                 <StatsCard
-                    title="Specialists Available"
-                    value={stats.specialists_available}
-                    description={`of ${stats.specialists_total} total`}
+                    title="Active Physicians"
+                    value={stats.specialists_total}
+                    description={`${stats.specialists_available} specializations`}
                     icon={Users}
                     iconColor="text-purple-600"
                 />
@@ -139,7 +138,6 @@ export default function HospitalDashboard() {
                         Referrals ({referrals.length})
                     </TabsTrigger>
                     <TabsTrigger value="resources">Resources</TabsTrigger>
-                    <TabsTrigger value="specialists">Specialists</TabsTrigger>
                     {flags.length > 0 && (
                         <TabsTrigger value="flags" className="text-amber-600 font-medium">
                             <AlertTriangle className="h-4 w-4 mr-1.5 inline" />
@@ -158,10 +156,6 @@ export default function HospitalDashboard() {
 
                 <TabsContent value="resources" className="mt-4">
                     <ResourcesTab resources={resources} onResourceUpdated={fetchData} />
-                </TabsContent>
-
-                <TabsContent value="specialists" className="mt-4">
-                    <SpecialistsTab specialists={specialists} onSpecialistUpdated={fetchData} />
                 </TabsContent>
 
                 {flags.length > 0 && (

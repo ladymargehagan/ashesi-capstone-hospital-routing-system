@@ -33,8 +33,8 @@ const physicianNavItems: NavItem[] = [
 const hospitalNavItems: NavItem[] = [
     { title: 'Dashboard', href: '/hospital', icon: LayoutDashboard },
     { title: 'Referrals', href: '/hospital/referrals', icon: FileText },
+    { title: 'Physicians', href: '/hospital/physicians', icon: UserCheck },
     { title: 'Resources', href: '/hospital/resources', icon: Bed },
-    { title: 'Specialists', href: '/hospital/specialists', icon: Stethoscope },
 ];
 
 const adminNavItems: NavItem[] = [
