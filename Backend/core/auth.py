@@ -143,6 +143,7 @@ def get_current_user(request: Request) -> dict:
         "full_name": row["full_name"],
         "role": row.get("role_name", ""),
         "hospital_id": row.get("hospital_id"),
+        "physician_id": row.get("physician_id"),
         "status": row["status"],
     }
 
@@ -164,6 +165,7 @@ def get_current_user_any_status(request: Request) -> dict:
         "full_name": row["full_name"],
         "role": row.get("role_name", ""),
         "hospital_id": row.get("hospital_id"),
+        "physician_id": row.get("physician_id"),
         "status": row["status"],
     }
 

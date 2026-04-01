@@ -99,7 +99,7 @@ export default function PatientsPage() {
                 <CardHeader>
                     <div className="flex items-center justify-between">
                         <div>
-                            <CardTitle className="text-lg">All Patients</CardTitle>
+                            <CardTitle className="text-lg">My Patients</CardTitle>
                             <CardDescription>{filteredPatients.length} patients found</CardDescription>
                         </div>
                         <div className="relative w-64">

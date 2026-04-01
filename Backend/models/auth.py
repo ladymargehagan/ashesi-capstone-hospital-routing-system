@@ -134,7 +134,7 @@ def fetch_user_by_auth_uid(auth_uid: str):
                    u.profile_picture_url, r.role_name, u.created_at,
                    h.name AS hospital_name, h.address AS hospital_address,
                    h.contact_phone,
-                   p.title, p.license_number, p.specialization, p.department, p.grade
+                   p.physician_id, p.title, p.license_number, p.specialization, p.department, p.grade
             FROM users u
             JOIN role r ON u.role_id = r.role_id
             LEFT JOIN hospitals h ON u.hospital_id = h.hospital_id

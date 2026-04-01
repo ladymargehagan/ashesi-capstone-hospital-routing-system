@@ -63,6 +63,14 @@ def get_patient(
     patient = get_patient_details(patient_id)
     if not patient:
         raise HTTPException(status_code=404, detail="Patient not found")
+
+    # Physicians can only view their own patients
+    if current_user.get("role") == "physician":
+        my_phys_id = current_user.get("physician_id")
+        my_patients = get_patients_list(my_phys_id, None, strict_rule=True)
+        if not any(p["id"] == str(patient_id) for p in my_patients):
+            raise HTTPException(status_code=403, detail="Access denied")
+
     return patient
 
 
