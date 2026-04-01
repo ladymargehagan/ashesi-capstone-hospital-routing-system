@@ -9,6 +9,7 @@ from models.auth import (
     fetch_role_id_by_name,
     insert_pending_user,
     insert_pending_physician,
+    update_rejected_user_to_pending,
     fetch_user_by_google_id,
     fetch_user_by_email_google,
     link_google_account,
@@ -93,11 +94,21 @@ def process_login(email: str, password: str) -> dict:
 
 
 def process_doctor_registration(data: dict) -> dict:
+    # First check if the email exists. If it does, we can only re-register if it's rejected.
     if check_email_exists(data["email"]):
-        return {"error": True, "code": 400, "message": "Email already registered"}
+        existing = fetch_user_for_login(data["email"])
+        if existing and existing["status"] == "rejected":
+            # Allowed to re-register. We will update their status to pending later in this function.
+            pass
+        else:
+            return {"error": True, "code": 400, "message": "Email already registered"}
 
+    # Also check license number. A rejected physician might have the same license number,
+    # but a different user might have it.
     if check_license_exists(data["license_number"]):
-        return {"error": True, "code": 400, "message": "License number already registered"}
+        # Check if the existing license number belongs to the same rejected user
+        if not (existing and existing["status"] == "rejected" and existing.get("license_number") == data["license_number"]):
+            return {"error": True, "code": 400, "message": "License number already registered"}
 
     hospital = fetch_hospital_by_id(data["hospital_id"])
     if not hospital or hospital.get("status") != "active":
@@ -110,6 +121,25 @@ def process_doctor_registration(data: dict) -> dict:
     # Password is handled by Supabase Auth — no need to hash here
     # If password is provided (legacy flow), hash it; otherwise store NULL
     pw_hash = hash_password(data["password"]) if data.get("password") else None
+    
+    existing = fetch_user_for_login(data["email"]) if check_email_exists(data["email"]) else None
+    
+    if existing and existing["status"] == "rejected":
+        # Overwrite specific rejected user row
+        try:
+            res = update_rejected_user_to_pending(data)
+            user_id = res["user_id"]
+            physician_id = res["physician_id"]
+            return {
+                "success": True,
+                "user_id": str(user_id),
+                "physician_id": str(physician_id),
+                "message": "Registration re-submitted. Your account is back to pending approval.",
+            }
+        except Exception as e:
+            return {"error": True, "code": 500, "message": f"Database error updating application: {e}"}
+
+    # Fresh user insert
     user_id = insert_pending_user(
         data["email"], pw_hash, role_id, data["first_name"], data["last_name"],
         data.get("phone_number"), data["hospital_id"],

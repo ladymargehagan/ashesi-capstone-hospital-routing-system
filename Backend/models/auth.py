@@ -184,3 +184,68 @@ def fetch_physician_id_by_user(user_id: int) -> Optional[str]:
         )
         row = cur.fetchone()
         return str(row["physician_id"]) if row else None
+
+
+def update_rejected_user_to_pending(data: dict) -> dict:
+    """Update a rejected user's status back to pending and overwrite their details."""
+    with db_cursor() as cur:
+        cur.execute(
+            """
+            UPDATE users SET
+                status = 'pending',
+                first_name = %s,
+                last_name = %s,
+                phone_number = %s,
+                hospital_id = %s,
+                auth_uid = COALESCE(auth_uid, %s),
+                updated_at = CURRENT_TIMESTAMP
+            WHERE email = %s
+            RETURNING user_id
+            """,
+            (
+                data["first_name"], data["last_name"], data.get("phone_number"),
+                data["hospital_id"], data.get("auth_uid"), data["email"]
+            )
+        )
+        row = cur.fetchone()
+        if not row:
+            raise Exception("User not found during update")
+        user_id = row["user_id"]
+
+        cur.execute("SELECT physician_id FROM physicians WHERE user_id = %s", (user_id,))
+        phys_row = cur.fetchone()
+
+        if phys_row:
+            cur.execute(
+                """
+                UPDATE physicians SET
+                    status = 'pending',
+                    license_number = %s,
+                    title = %s,
+                    specialization = %s,
+                    department = %s,
+                    grade = %s
+                WHERE user_id = %s
+                RETURNING physician_id
+                """,
+                (
+                    data["license_number"], data.get("title"), data.get("specialization"),
+                    data.get("department"), data.get("grade"), user_id
+                )
+            )
+            physician_id = cur.fetchone()["physician_id"]
+        else:
+            cur.execute(
+                """
+                INSERT INTO physicians (user_id, license_number, title, specialization, department, grade, status)
+                VALUES (%s, %s, %s, %s, %s, %s, 'pending')
+                RETURNING physician_id
+                """,
+                (
+                    user_id, data["license_number"], data.get("title"),
+                    data.get("specialization"), data.get("department"), data.get("grade")
+                )
+            )
+            physician_id = cur.fetchone()["physician_id"]
+
+        return {"user_id": user_id, "physician_id": physician_id}

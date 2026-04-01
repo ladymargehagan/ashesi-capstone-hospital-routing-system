@@ -153,20 +153,37 @@ function RegisterForm() {
         setLoading(true);
 
         try {
+            let authUid = null;
+
             const { data: authData, error: authError } = await supabase.auth.signUp({
                 email,
                 password,
             });
 
             if (authError) {
-                setError(authError.message);
-                setLoading(false);
-                return;
+                if (authError.message.toLowerCase().includes('already registered')) {
+                    // Try to log them in, they might be re-applying after a rejection
+                    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+                        email,
+                        password,
+                    });
+                    if (signInError) {
+                        setError('This email is already registered. If this is your account, the password you entered does not match.');
+                        setLoading(false);
+                        return;
+                    }
+                    authUid = signInData.user?.id;
+                } else {
+                    setError(authError.message);
+                    setLoading(false);
+                    return;
+                }
+            } else {
+                authUid = authData.user?.id;
             }
 
-            const authUid = authData.user?.id;
             if (!authUid) {
-                setError('Failed to create account. Please try again.');
+                setError('Failed to authenticate account securely. Please try again.');
                 setLoading(false);
                 return;
             }
@@ -373,7 +390,10 @@ function RegisterForm() {
                                     <div className="grid grid-cols-2 gap-3">
                                         <div className="space-y-2">
                                             <Label htmlFor="regPassword">Password *</Label>
-                                            <Input id="regPassword" type="password" placeholder="Min 8 characters" value={password} onChange={(e) => { setPassword(e.target.value); setPasswordError(''); }} className={`h-11 ${passwordError ? 'border-red-500' : ''}`} />
+                                            <Input id="regPassword" type="password" placeholder="Min 8 chars, 1 uppercase, 1 special char" value={password} onChange={(e) => { setPassword(e.target.value); setPasswordError(''); }} className={`h-11 ${passwordError ? 'border-red-500' : ''}`} />
+                                            <p className="text-[10px] text-slate-500 leading-tight">
+                                                Required: Minimum 8 characters, 1 uppercase, 1 lowercase, 1 number, and 1 special character.
+                                            </p>
                                         </div>
                                         <div className="space-y-2">
                                             <Label htmlFor="confirm">Confirm Password *</Label>
@@ -508,7 +528,10 @@ function RegisterForm() {
                                         <div className="grid grid-cols-2 gap-3">
                                             <div className="space-y-2">
                                                 <Label htmlFor="regPassword">Password *</Label>
-                                                <Input id="regPassword" type="password" placeholder="Min 8 characters, complex" value={password} onChange={(e) => { setPassword(e.target.value); setPasswordError(''); }} required className={`h-11 ${passwordError ? 'border-red-500' : ''}`} />
+                                                <Input id="regPassword" type="password" placeholder="Min 8 chars, 1 uppercase, 1 special char" value={password} onChange={(e) => { setPassword(e.target.value); setPasswordError(''); }} required className={`h-11 ${passwordError ? 'border-red-500' : ''}`} />
+                                                <p className="text-[10px] text-slate-500 leading-tight">
+                                                    Required: Minimum 8 characters, 1 uppercase, 1 lowercase, 1 number, and 1 special character.
+                                                </p>
                                             </div>
                                             <div className="space-y-2">
                                                 <Label htmlFor="confirm">Confirm Password *</Label>
