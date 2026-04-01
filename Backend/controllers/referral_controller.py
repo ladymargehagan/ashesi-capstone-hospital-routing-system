@@ -22,7 +22,7 @@ from models.referral import (
     fetch_transit_updates
 )
 from models.patient import fetch_patient_by_id
-from services.email_service import notify_referral_created, notify_referral_status_changed, notify_user, notify_patient_dispatched_and_updates
+from services.email_service import notify_referral_created, notify_referral_status_changed, notify_user, notify_patient_dispatched_and_updates, notify_referral_assigned
 from utils.audit import log_action
 
 
@@ -478,34 +478,40 @@ def handle_referral_assignment(referral_id: int, physician_id: int, actor_user_i
         return {"error": True, "code": 404, "message": "Physician not found or inactive"}
 
     assign_referral_to_physician(referral_id, physician_id)
-    
+
     from core.db import db_cursor
     with db_cursor() as cur:
-        cur.execute("SELECT user_id FROM physicians WHERE physician_id = %s", (physician_id,))
+        # Get assigned physician's user_id and name
+        cur.execute("""
+            SELECT p.user_id, u.first_name, u.last_name
+            FROM physicians p JOIN users u ON p.user_id = u.user_id
+            WHERE p.physician_id = %s
+        """, (physician_id,))
         p_user = cur.fetchone()
-        if p_user:
-            notify_user(
-                user_id=p_user["user_id"],
-                message=f"You have been assigned to Referral #{referral_id}. Please review the patient's file.",
-                notification_type="referral_assigned"
-            )
-            
-        cur.execute(
-            """
-            SELECT p.user_id 
-            FROM referrals r 
-            JOIN physicians p ON r.referring_physician_id = p.physician_id 
+
+        # Get referring physician's user_id and patient name
+        cur.execute("""
+            SELECT p.user_id, pat.full_name as patient_name
+            FROM referrals r
+            JOIN physicians p ON r.referring_physician_id = p.physician_id
+            JOIN patients pat ON r.patient_id = pat.patient_id
             WHERE r.referral_id = %s
-            """, 
-            (referral_id,)
-        )
+        """, (referral_id,))
         ref_user = cur.fetchone()
-        if ref_user:
-            notify_user(
-                user_id=ref_user["user_id"],
-                message=f"Hospital B has assigned a doctor to Referral #{referral_id}.",
-                notification_type="referral_assigned_update"
+
+    if p_user and ref_user:
+        assigned_name = f"{p_user.get('first_name', '')} {p_user.get('last_name', '')}".strip()
+        patient_name = ref_user.get("patient_name", "Unknown")
+        try:
+            notify_referral_assigned(
+                referral_id=referral_id,
+                patient_name=patient_name,
+                assigned_physician_user_id=p_user["user_id"],
+                referring_physician_user_id=ref_user["user_id"],
+                assigned_physician_name=assigned_name,
             )
+        except Exception as e:
+            print(f"[WARN] Assignment notification failed: {e}")
             
     if actor_user_id:
         log_action(actor_user_id, "referral_assigned", entity_type="referral",

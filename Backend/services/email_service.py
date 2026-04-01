@@ -266,8 +266,8 @@ def notify_patient_dispatched_and_updates(
         message = f"New transit update for {patient_name} (Referral #{referral_id}): {update_text[:50]}..."
         body_content = f"<p>A new condition update was posted during transit:</p><blockquote style='border-left: 4px solid #3b82f6; padding-left: 10px; color: #475569;'>{update_text}</blockquote>"
 
-    # Only email for patient_dispatched (actionable); transit updates stay in-app only
-    should_email = event_type == "patient_dispatched"
+    # Email for both dispatched and transit updates so all parties stay informed
+    should_email = True
 
     for uid in target_user_ids:
         notify_user(
@@ -288,8 +288,57 @@ def notify_patient_dispatched_and_updates(
         )
 
 
+def notify_referral_assigned(
+    referral_id: int,
+    patient_name: str,
+    assigned_physician_user_id: int,
+    referring_physician_user_id: int,
+    assigned_physician_name: str = "",
+):
+    """Notify both the assigned physician and the referring physician when a doctor is assigned to a referral."""
+    # Notify the assigned physician
+    notify_user(
+        user_id=assigned_physician_user_id,
+        message=f"You have been assigned to Referral #{referral_id} for patient {patient_name}. Please review the patient's file.",
+        notification_type="referral_assigned",
+        email_subject=f"[HRS] You've Been Assigned to a Referral — {patient_name}",
+        email_body=_base_email(
+            "Referral Assignment",
+            f"""
+            <p>You have been assigned as the receiving physician for a patient referral.</p>
+            <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
+                <tr><td style="padding: 8px; color: #64748b;">Referral ID</td><td style="padding: 8px; font-weight: 600;">#{referral_id}</td></tr>
+                <tr><td style="padding: 8px; color: #64748b;">Patient</td><td style="padding: 8px; font-weight: 600;">{patient_name}</td></tr>
+            </table>
+            <p>Please log in to review the patient's file and prepare for their arrival.</p>
+            """,
+        ),
+    )
+
+    # Notify the referring physician
+    assigned_label = f"Dr. {assigned_physician_name}" if assigned_physician_name else "a physician"
+    notify_user(
+        user_id=referring_physician_user_id,
+        message=f"Referral #{referral_id} for {patient_name} has been assigned to {assigned_label} at the receiving hospital.",
+        notification_type="referral_assigned_update",
+        email_subject=f"[HRS] Doctor Assigned to Your Referral — {patient_name}",
+        email_body=_base_email(
+            "Doctor Assigned to Your Referral",
+            f"""
+            <p>A physician has been assigned to your referral at the receiving hospital.</p>
+            <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
+                <tr><td style="padding: 8px; color: #64748b;">Referral ID</td><td style="padding: 8px; font-weight: 600;">#{referral_id}</td></tr>
+                <tr><td style="padding: 8px; color: #64748b;">Patient</td><td style="padding: 8px; font-weight: 600;">{patient_name}</td></tr>
+                <tr><td style="padding: 8px; color: #64748b;">Assigned Doctor</td><td style="padding: 8px; font-weight: 600;">{assigned_label}</td></tr>
+            </table>
+            """,
+        ),
+    )
+
+
 def notify_account_approved(user_id: int, full_name: str):
     """Notify a doctor that their account has been approved."""
+    frontend_url = os.getenv("FRONTEND_URL", "http://localhost:3000")
     notify_user(
         user_id=user_id,
         message=f"Your account has been approved! You can now create referrals.",
@@ -302,7 +351,7 @@ def notify_account_approved(user_id: int, full_name: str):
             <p>Your HRS account has been <strong style="color: #16a34a;">approved</strong>.
             You can now log in and start creating patient referrals.</p>
             <p style="margin-top: 20px;">
-                <a href="http://localhost:3000"
+                <a href="{frontend_url}"
                    style="background: #1e40af; color: white; padding: 12px 24px;
                           border-radius: 8px; text-decoration: none; display: inline-block;">
                     Log In to HRS

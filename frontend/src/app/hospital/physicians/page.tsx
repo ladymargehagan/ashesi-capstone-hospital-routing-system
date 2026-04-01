@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { usersApi } from '@/lib/api-client';
-import { PhysiciansTable } from '@/components/admin/physicians-table';
+import { HospitalPhysiciansTab } from '@/components/hospital/physicians-tab';
 import { Physician } from '@/types';
 import { Loader2 } from 'lucide-react';
 
@@ -40,7 +40,7 @@ export default function HospitalPhysiciansPage() {
             </div>
 
             <div className="bg-white rounded-lg border p-6">
-                <PhysiciansTable physicians={physicians} onStatusChanged={fetchPhysicians} />
+                <HospitalPhysiciansTab physicians={physicians} onStatusChanged={fetchPhysicians} />
             </div>
         </div>
     );
