@@ -5,7 +5,10 @@ from core.db import db_cursor
 
 def fetch_patients(physician_id: Optional[int] = None, hospital_id: Optional[int] = None, strict_rule: bool = False):
     with db_cursor() as cur:
-        if strict_rule and physician_id:
+        if strict_rule:
+            if not physician_id:
+                return []
+            
             # Patients referred by this physician OR assigned to this physician
             cur.execute(
                 """

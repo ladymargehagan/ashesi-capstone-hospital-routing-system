@@ -48,10 +48,18 @@ def list_patients(
     Doctors ONLY see patients referred out by them OR assigned to them.
     Admins see hospital specific or all.
     """
-    if current_user.get("role") == "physician":
+    role = current_user.get("role")
+    
+    if role == "physician":
         my_phys_id = current_user.get("physician_id")
         return get_patients_list(my_phys_id, None, strict_rule=True)
         
+    if role == "hospital_admin":
+        my_hospital_id = current_user.get("hospital_id")
+        # Ensure they only see patients from their hospital (or referred to their hospital)
+        return get_patients_list(physician_id, my_hospital_id)
+        
+    # fallback for super_admin
     return get_patients_list(physician_id, hospital_id)
 
 
