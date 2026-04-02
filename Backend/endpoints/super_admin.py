@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from core.auth import get_current_user, require_role
 from core.db import db_cursor
 from models.admin_invite import create_admin_invite, get_valid_invite
-from services.email_service import send_email, _base_email, EMAIL_ENABLED
+from services.email_service import send_email, _base_email
 
 router = APIRouter(prefix="/api/super-admin", tags=["super-admin"])
 

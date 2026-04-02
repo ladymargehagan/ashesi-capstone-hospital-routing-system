@@ -29,43 +29,53 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# SMTP config from environment — strip whitespace to avoid invisible chars
-SMTP_HOST = os.getenv("SMTP_HOST", "smtp.gmail.com").strip()
-SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
-SMTP_USER = os.getenv("SMTP_USER", "").strip()
-SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "").strip()
-SMTP_FROM = os.getenv("SMTP_FROM", SMTP_USER).strip()
 
-# Feature flag: disable email if SMTP not configured
-EMAIL_ENABLED = bool(SMTP_USER and SMTP_PASSWORD)
+def _get_smtp_config():
+    """Read SMTP config fresh from environment every time (not cached at import)."""
+    host = os.getenv("SMTP_HOST", "smtp.gmail.com").strip()
+    port = int(os.getenv("SMTP_PORT", "587"))
+    user = os.getenv("SMTP_USER", "").strip()
+    password = os.getenv("SMTP_PASSWORD", "").strip()
+    from_addr = os.getenv("SMTP_FROM", user).strip()
+    return host, port, user, password, from_addr
+
+
+def _is_email_enabled() -> bool:
+    _, _, user, password, _ = _get_smtp_config()
+    return bool(user and password)
+
 
 # Startup diagnostic — shows in Render logs
-print(f"[EMAIL] Config at startup: SMTP_USER={'set (' + SMTP_USER[:3] + '...)' if SMTP_USER else 'EMPTY'}, "
-      f"SMTP_PASSWORD={'set (' + str(len(SMTP_PASSWORD)) + ' chars)' if SMTP_PASSWORD else 'EMPTY'}, "
-      f"SMTP_HOST={SMTP_HOST}, EMAIL_ENABLED={EMAIL_ENABLED}")
+_h, _p, _u, _pw, _f = _get_smtp_config()
+print(f"[EMAIL] Config at startup: SMTP_USER={'set (' + _u[:3] + '...)' if _u else 'EMPTY'}, "
+      f"SMTP_PASSWORD={'set (' + str(len(_pw)) + ' chars)' if _pw else 'EMPTY'}, "
+      f"SMTP_HOST={_h}, EMAIL_ENABLED={_is_email_enabled()}")
 
 
 def send_email(to_email: str, subject: str, html_body: str) -> bool:
     """
     Send an HTML email. Returns True on success, False on failure.
-    Silently fails if email is not configured (logs a warning).
+    Reads SMTP config fresh from env each call so that config changes
+    after module import are picked up (important on Render).
     """
-    if not EMAIL_ENABLED:
-        print(f"[EMAIL] Skipped (not configured): SMTP_USER={'set' if SMTP_USER else 'empty'}, SMTP_PASSWORD={'set' if SMTP_PASSWORD else 'empty'}")
+    smtp_host, smtp_port, smtp_user, smtp_password, smtp_from = _get_smtp_config()
+
+    if not smtp_user or not smtp_password:
+        print(f"[EMAIL] Skipped (not configured): SMTP_USER={'set' if smtp_user else 'EMPTY'}, SMTP_PASSWORD={'set' if smtp_password else 'EMPTY'}")
         return False
 
     try:
         msg = MIMEMultipart("alternative")
         msg["Subject"] = subject
-        msg["From"] = SMTP_FROM
+        msg["From"] = smtp_from
         msg["To"] = to_email
         msg.attach(MIMEText(html_body, "html"))
 
-        print(f"[EMAIL] Connecting to {SMTP_HOST}:{SMTP_PORT} as {SMTP_USER}...")
-        with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=10) as server:
+        print(f"[EMAIL] Connecting to {smtp_host}:{smtp_port} as {smtp_user}...")
+        with smtplib.SMTP(smtp_host, smtp_port, timeout=10) as server:
             server.starttls()
-            server.login(SMTP_USER, SMTP_PASSWORD)
-            server.sendmail(SMTP_USER, to_email, msg.as_string())
+            server.login(smtp_user, smtp_password)
+            server.sendmail(smtp_user, to_email, msg.as_string())
 
         print(f"[EMAIL] Sent: {subject} → {to_email}")
         return True

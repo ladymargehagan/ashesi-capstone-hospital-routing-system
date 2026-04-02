@@ -388,6 +388,11 @@ def recommend(req: RecommendRequest):
     Run the referral engine and return ranked hospital recommendations.
     This function does NOT modify the engine — it only calls engine.rank().
     """
+    import time
+    t0 = time.time()
+    print(f"[RECOMMEND] Request received: reason={req.referral_reason}, severity={req.severity}, "
+          f"stability={req.stability}, referring_hospital_id={req.referring_hospital_id}")
+
     # Validate enums
     if req.referral_reason.lower() not in VALID_REFERRAL_REASONS:
         raise HTTPException(
@@ -408,44 +413,53 @@ def recommend(req: RecommendRequest):
                    f"Must be one of: {', '.join(sorted(VALID_STABILITIES))}",
         )
 
-    now = datetime.utcnow()
-    hospitals = _load_hospitals_from_db(now)
+    try:
+        now = datetime.utcnow()
+        hospitals = _load_hospitals_from_db(now)
+        print(f"[RECOMMEND] Loaded {len(hospitals)} hospitals in {time.time()-t0:.2f}s")
 
-    # Exclude the referring hospital so it doesn't recommend itself
-    if req.referring_hospital_id is not None:
-        exclude_id = str(req.referring_hospital_id)
-        hospitals = [h for h in hospitals if h.hospital_id != exclude_id]
+        # Exclude the referring hospital so it doesn't recommend itself
+        if req.referring_hospital_id is not None:
+            exclude_id = str(req.referring_hospital_id)
+            hospitals = [h for h in hospitals if h.hospital_id != exclude_id]
 
-    engine = ReferralEngine(
-        hospitals,
-        config=EngineConfig(
-            radius_km=16,
-            top_k=5,
-            stale_half_life_hours=6,
-            default_tmax_minutes=60,
-        ),
-    )
+        engine = ReferralEngine(
+            hospitals,
+            config=EngineConfig(
+                radius_km=16,
+                top_k=5,
+                stale_half_life_hours=6,
+                default_tmax_minutes=60,
+            ),
+        )
 
-    patient = PatientCase(
-        lat=req.lat,
-        lon=req.lon,
-        referral_reason=req.referral_reason.lower(),
-        severity=req.severity.lower(),
-        stability=req.stability.lower(),
-        at_time=now,
-    )
+        patient = PatientCase(
+            lat=req.lat,
+            lon=req.lon,
+            referral_reason=req.referral_reason.lower(),
+            severity=req.severity.lower(),
+            stability=req.stability.lower(),
+            at_time=now,
+        )
 
-    result = engine.rank(patient)
+        result = engine.rank(patient)
+        print(f"[RECOMMEND] Engine ranked in {time.time()-t0:.2f}s, "
+              f"{len(result.get('recommendations', []))} results")
 
-    # Post-process: inject GPS coordinates so the frontend map can display pins.
-    hospital_coords = {h.hospital_id: (h.lat, h.lon) for h in hospitals}
-    for rec in result.get("recommendations", []):
-        coords = hospital_coords.get(rec["hospital_id"])
-        if coords:
-            rec["hospital_lat"] = coords[0]
-            rec["hospital_lon"] = coords[1]
+        # Post-process: inject GPS coordinates so the frontend map can display pins.
+        hospital_coords = {h.hospital_id: (h.lat, h.lon) for h in hospitals}
+        for rec in result.get("recommendations", []):
+            coords = hospital_coords.get(rec["hospital_id"])
+            if coords:
+                rec["hospital_lat"] = coords[0]
+                rec["hospital_lon"] = coords[1]
 
-    return result
+        print(f"[RECOMMEND] Total time: {time.time()-t0:.2f}s")
+        return result
+
+    except Exception as e:
+        print(f"[RECOMMEND] ERROR after {time.time()-t0:.2f}s: {type(e).__name__}: {e}")
+        raise HTTPException(status_code=500, detail=f"Recommendation engine error: {str(e)}")
 
 
 # ---------------------------------------------------------------------------
@@ -595,9 +609,17 @@ def health():
     except Exception as e:
         db_status = f"error: {e}"
 
+    from services.email_service import _get_smtp_config
+    _, _, smtp_user, smtp_password, _ = _get_smtp_config()
+
     return {
         "status": "ok",
         "database": db_status,
         "engine": "referral_engine.py (untouched)",
         "google_maps": "configured" if GOOGLE_MAPS_API_KEY else "not configured (using Haversine fallback)",
+        "email": {
+            "smtp_user": f"set ({smtp_user[:3]}...)" if smtp_user else "EMPTY",
+            "smtp_password": f"set ({len(smtp_password)} chars)" if smtp_password else "EMPTY",
+            "enabled": bool(smtp_user and smtp_password),
+        },
     }

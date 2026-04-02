@@ -220,28 +220,31 @@ function ReferralFormContent() {
         setEngineResponse(null);
 
         try {
-            // Use the referring physician's hospital GPS as patient location.
-            // In production this is fetched from the logged-in user's hospital record.
-            // For now, use a known Accra location (Downtown Medical Clinic).
+            // Use the referring physician's hospital GPS as patient location
             const referringHospitalGps = { lat: 5.5913, lng: -0.1786 };
 
-            const response = await recommendApi.rank({
+            const payload = {
                 lat: referringHospitalGps.lat,
                 lon: referringHospitalGps.lng,
                 referral_reason: (formData.referral_reason || 'general') as ReferralReason,
                 severity: formData.severity || 'medium',
                 stability: formData.stability || 'stable',
                 referring_hospital_id: user?.hospital_id ? parseInt(user.hospital_id) : undefined,
-            });
+            };
+            console.log('[HRS] Recommend request:', JSON.stringify(payload));
+
+            const response = await recommendApi.rank(payload);
 
             setEngineResponse(response);
         } catch (err) {
             console.error('Engine API error:', err);
-            setEngineError(
-                err instanceof Error
+            // Surface the actual error type for debugging
+            const errorMsg = err instanceof TypeError
+                ? `Network error: ${err.message}. Check browser console Network tab for details.`
+                : err instanceof Error
                     ? err.message
-                    : 'Could not reach the referral engine. Please ensure the backend is running.'
-            );
+                    : 'Could not reach the referral engine.';
+            setEngineError(errorMsg);
         } finally {
             setEngineLoading(false);
         }
