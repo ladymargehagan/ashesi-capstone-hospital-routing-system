@@ -19,6 +19,7 @@ For Gmail, use an App Password (not your regular password):
 from __future__ import annotations
 
 import os
+import re
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -69,6 +70,13 @@ def send_email(to_email: str, subject: str, html_body: str) -> bool:
         msg["Subject"] = subject
         msg["From"] = smtp_from
         msg["To"] = to_email
+        msg["Reply-To"] = smtp_user
+        msg["X-Mailer"] = "HRS Notification Service"
+
+        # Add plain-text version (reduces spam score significantly)
+        plain_text = re.sub(r'<[^>]+>', '', html_body)
+        plain_text = re.sub(r'\s+', ' ', plain_text).strip()
+        msg.attach(MIMEText(plain_text, "plain"))
         msg.attach(MIMEText(html_body, "html"))
 
         print(f"[EMAIL] Connecting to {smtp_host}:{smtp_port} as {smtp_user}...")
