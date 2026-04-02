@@ -29,15 +29,20 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# SMTP config from environment
-SMTP_HOST = os.getenv("SMTP_HOST", "smtp.gmail.com")
+# SMTP config from environment — strip whitespace to avoid invisible chars
+SMTP_HOST = os.getenv("SMTP_HOST", "smtp.gmail.com").strip()
 SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
-SMTP_USER = os.getenv("SMTP_USER", "")
-SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "")
-SMTP_FROM = os.getenv("SMTP_FROM", SMTP_USER)
+SMTP_USER = os.getenv("SMTP_USER", "").strip()
+SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "").strip()
+SMTP_FROM = os.getenv("SMTP_FROM", SMTP_USER).strip()
 
 # Feature flag: disable email if SMTP not configured
 EMAIL_ENABLED = bool(SMTP_USER and SMTP_PASSWORD)
+
+# Startup diagnostic — shows in Render logs
+print(f"[EMAIL] Config at startup: SMTP_USER={'set (' + SMTP_USER[:3] + '...)' if SMTP_USER else 'EMPTY'}, "
+      f"SMTP_PASSWORD={'set (' + str(len(SMTP_PASSWORD)) + ' chars)' if SMTP_PASSWORD else 'EMPTY'}, "
+      f"SMTP_HOST={SMTP_HOST}, EMAIL_ENABLED={EMAIL_ENABLED}")
 
 
 def send_email(to_email: str, subject: str, html_body: str) -> bool:
