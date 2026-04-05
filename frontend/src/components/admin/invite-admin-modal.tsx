@@ -26,9 +26,7 @@ export function InviteAdminModal({ open, onClose, hospitals }: InviteAdminModalP
     const [copied, setCopied] = useState(false);
     const toast = useToast();
 
-    // Only show active and pending hospitals (or just active)
-    // Actually, admins should be invited to active hospitals, but pending is fine too.
-    const activeHospitals = hospitals.filter(h => h.status === 'active' || h.status === 'pending');
+    const activeHospitals = hospitals.filter(h => h.status === 'active');
 
     const handleInvite = async (e: React.FormEvent) => {
         e.preventDefault();
