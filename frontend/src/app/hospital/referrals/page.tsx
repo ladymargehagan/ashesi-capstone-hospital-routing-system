@@ -8,9 +8,7 @@ import { HospitalReferralsTable } from '@/components/hospital/referrals-table';
 import { useAuth } from '@/hooks/use-auth';
 import { referralsApi } from '@/lib/api-client';
 import { Referral } from '@/types';
-import { Search, FileText, Clock, CheckCircle, Loader2, Plus } from 'lucide-react';
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
+import { Search, FileText, Clock, CheckCircle, Loader2 } from 'lucide-react';
 
 export default function HospitalReferralsPage() {
     const { user } = useAuth();
@@ -60,17 +58,9 @@ export default function HospitalReferralsPage() {
 
     return (
         <div>
-            <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Referral Management</h1>
-                    <p className="text-gray-500">Review incoming referrals or create a new referral on behalf of your hospital team</p>
-                </div>
-                <Link href="/hospital/referrals/create">
-                    <Button className="bg-primary hover:bg-secondary">
-                        <Plus className="h-4 w-4 mr-2" />
-                        New Referral
-                    </Button>
-                </Link>
+            <div className="mb-6">
+                <h1 className="text-2xl font-bold text-gray-900">Referral Management</h1>
+                <p className="text-gray-500">Review and manage incoming referrals for your hospital</p>
             </div>
 
             {/* Stats */}
