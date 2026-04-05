@@ -289,7 +289,7 @@ export const usersApi = {
     togglePhysicianAvailability: (physicianId: string, availability: boolean) =>
         apiFetch<{ success: boolean }>(
             `/api/users/physicians/${physicianId}/availability`,
-            { method: 'PATCH', body: JSON.stringify({ availability }) },
+            { method: 'PUT', body: JSON.stringify({ availability }) },
         ),
 
     listPhysicians: (params?: { hospital_id?: string; status?: string }) => {

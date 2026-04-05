@@ -83,7 +83,7 @@ def list_physicians(
     return get_all_physicians(hospital_id, status)
 
 
-@router.patch("/physicians/{physician_id}/availability")
+@router.put("/physicians/{physician_id}/availability")
 def update_physician_availability(
     physician_id: int,
     req: PhysicianAvailabilityUpdate,
