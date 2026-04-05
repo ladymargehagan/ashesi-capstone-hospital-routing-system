@@ -185,29 +185,25 @@ export function HospitalPhysiciansTab({ physicians, onStatusChanged }: HospitalP
                                 </TableCell>
                                 <TableCell>
                                     {physician.status === 'active' ? (
-                                        <button
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
                                             onClick={() => handleToggleAvailability(physician)}
                                             disabled={availabilityLoading === physician.id}
-                                            className="cursor-pointer disabled:cursor-wait"
+                                            className={
+                                                availabilityLoading === physician.id
+                                                    ? 'border-gray-200 text-gray-500'
+                                                    : physician.availability
+                                                        ? 'border-green-300 bg-green-50 text-green-700 hover:bg-green-100'
+                                                        : 'border-gray-300 bg-gray-50 text-gray-600 hover:bg-gray-100'
+                                            }
                                         >
                                             {availabilityLoading === physician.id ? (
-                                                <Badge variant="outline" className="bg-gray-50 text-gray-500 border-gray-200">
-                                                    <Loader2 className="h-3 w-3 animate-spin mr-1" />
-                                                    Updating...
-                                                </Badge>
+                                                <><Loader2 className="h-3 w-3 animate-spin mr-1" /> Updating...</>
                                             ) : (
-                                                <Badge
-                                                    variant="outline"
-                                                    className={
-                                                        physician.availability
-                                                            ? 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100'
-                                                            : 'bg-gray-100 text-gray-600 border-gray-200 hover:bg-gray-200'
-                                                    }
-                                                >
-                                                    {physician.availability ? 'On Call' : 'Off Call'}
-                                                </Badge>
+                                                physician.availability ? 'On Call' : 'Off Call'
                                             )}
-                                        </button>
+                                        </Button>
                                     ) : (
                                         <span className="text-xs text-gray-400">N/A</span>
                                     )}
