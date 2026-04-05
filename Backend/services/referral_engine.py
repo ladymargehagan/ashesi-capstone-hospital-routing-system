@@ -201,9 +201,11 @@ class TravelTimeProvider:
     # Each tuple is (start_hour_inclusive, end_hour_exclusive): speed_kmh
     # ------------------------------------------------------------------
     _ACCRA_HOURLY_SPEED: List[Tuple[Tuple[int, int], float]] = [
-        ((7, 9),   15.0),   # heavy morning rush: Lapaz, Circle, Adabraka
-        ((12, 14), 22.0),   # midday moderate congestion
-        ((17, 20), 12.0),   # worst evening rush: Kasoa corridor, Spintex
+        ((7, 9),   15.0),   # morning commuter rush: Lapaz, Circle, Adabraka
+        ((10, 12), 12.0),   # primary midday peak (Agyapong & Ojo, 2018)
+        ((12, 14), 18.0),   # brief midday lull between peaks
+        ((14, 16), 15.0),   # secondary afternoon peak (Agyapong & Ojo, 2018)
+        ((17, 20), 12.0),   # evening rush: Kasoa corridor, Spintex
         ((20, 22), 20.0),   # post-rush thinning out
     ]
     _ACCRA_DEFAULT_SPEED: float = 30.0  # free-flow / late night
