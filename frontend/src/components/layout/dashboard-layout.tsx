@@ -35,7 +35,7 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-background">
             <Header />
             <Sidebar role={role} />
             <main className="pt-16 pl-64">

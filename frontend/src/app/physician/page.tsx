@@ -77,7 +77,7 @@ export default function PhysicianDashboard() {
                     <h1 className="text-2xl font-bold text-gray-900">Physician Dashboard</h1>
                     <p className="text-gray-500">{user?.full_name}</p>
                 </div>
-                <Link href="/physician/referral">
+                <Link href="/physician/referral?voice=1">
                     <Button className="bg-primary hover:bg-secondary">
                         <Plus className="h-4 w-4 mr-2" />
                         New Referral

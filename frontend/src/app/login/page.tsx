@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Activity, Loader2, ArrowLeft, Stethoscope } from 'lucide-react';
+import { ForceLight } from '@/components/theme/force-light';
 
 export default function LoginPage() {
     const [email, setEmail] = useState('');
@@ -60,6 +61,7 @@ export default function LoginPage() {
 
     return (
         <div className="min-h-screen flex">
+            <ForceLight />
             {/* Left panel — branding */}
             <div className="hidden lg:flex lg:w-1/2 relative bg-gradient-to-br from-primary via-primary to-secondary items-center justify-center p-12">
                 <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)', backgroundSize: '32px 32px' }} />

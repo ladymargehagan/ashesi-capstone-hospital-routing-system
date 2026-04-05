@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Activity, Loader2, ArrowLeft, Stethoscope, CheckCircle2, ShieldCheck, Building2 } from 'lucide-react';
+import { ForceLight } from '@/components/theme/force-light';
 import { hospitalsApi } from '@/lib/api-client';
 import { supabase } from '@/lib/supabase';
 
@@ -238,6 +239,7 @@ function RegisterForm() {
     if (inviteLoading) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-slate-50">
+                <ForceLight />
                 <div className="text-center">
                     <Loader2 className="h-10 w-10 animate-spin text-purple-600 mx-auto mb-4" />
                     <p className="text-slate-500">Validating your invite link...</p>
@@ -250,6 +252,7 @@ function RegisterForm() {
     if (inviteToken && inviteError) {
         return (
             <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
+                <ForceLight />
                 <Card className="w-full max-w-md shadow-xl shadow-slate-200/60 border-red-100 text-center">
                     <CardContent className="pt-10 pb-8">
                         <div className="mx-auto mb-6 h-16 w-16 rounded-2xl bg-gradient-to-br from-red-500 to-orange-500 flex items-center justify-center shadow-lg shadow-red-200/50">
@@ -272,6 +275,7 @@ function RegisterForm() {
     if (success) {
         return (
             <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
+                <ForceLight />
                 <Card className="w-full max-w-md shadow-xl shadow-slate-200/60 border-slate-100 text-center">
                     <CardContent className="pt-10 pb-8">
                         <div className={`mx-auto mb-6 h-16 w-16 rounded-2xl flex items-center justify-center shadow-lg ${isAdminInvite ? 'bg-gradient-to-br from-purple-600 to-indigo-600 shadow-purple-200/50' : 'bg-gradient-to-br from-emerald-500 to-teal-500 shadow-emerald-200/50'}`}>
@@ -302,6 +306,7 @@ function RegisterForm() {
     if (isAdminInvite) {
         return (
             <div className="min-h-screen flex">
+                <ForceLight />
                 {/* Left panel — purple admin branding */}
                 <div className="hidden lg:flex lg:w-2/5 relative bg-gradient-to-br from-purple-700 via-purple-800 to-indigo-900 items-center justify-center p-12">
                     <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)', backgroundSize: '32px 32px' }} />
@@ -432,6 +437,7 @@ function RegisterForm() {
     // ================================================================
     return (
         <div className="min-h-screen flex">
+            <ForceLight />
             {/* Left panel — branding */}
             <div className="hidden lg:flex lg:w-2/5 relative bg-gradient-to-br from-primary via-primary to-secondary items-center justify-center p-12">
                 <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)', backgroundSize: '32px 32px' }} />

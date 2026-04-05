@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Activity, Shield, Clock, Users, ArrowRight, Stethoscope, Building2, FileText, Bell, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { ForceLight } from '@/components/theme/force-light';
 
 const carouselImages = [
   '/images/doctor-1.png',
@@ -24,6 +25,7 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen relative overflow-hidden bg-[#E8F1FF]">
+      <ForceLight />
       {/* Decorative medical dot pattern */}
       <div className="absolute inset-0 z-0 bg-[radial-gradient(#116BF8_1.5px,transparent_1.5px)] [background-size:28px_28px] opacity-[0.06] pointer-events-none" />
       

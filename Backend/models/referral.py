@@ -194,6 +194,20 @@ def check_physician_exists_and_active(physician_id: int) -> bool:
         return cur.fetchone() is not None
 
 
+def fetch_physician_context(physician_id: int):
+    with db_cursor() as cur:
+        cur.execute(
+            """
+            SELECT p.physician_id, p.status, u.hospital_id, u.full_name
+            FROM physicians p
+            JOIN users u ON p.user_id = u.user_id
+            WHERE p.physician_id = %s
+            """,
+            (physician_id,),
+        )
+        return cur.fetchone()
+
+
 def insert_attachment(
     referral_id: int, file_name: str, file_path: str, file_type: str, file_size_bytes: int, uploaded_by: int
 ) -> int:

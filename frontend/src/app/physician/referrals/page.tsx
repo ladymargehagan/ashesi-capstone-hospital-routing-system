@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -15,9 +16,11 @@ import { Search, Plus, Loader2, ArrowUpRight, ArrowDownLeft, Clock, CheckCircle,
 import { useAuth } from '@/hooks/use-auth';
 import { ReferralOutcomesChart } from '@/components/physician/referral-outcomes-chart';
 import { StatsCard } from '@/components/stats-card';
+import { VoiceReferralCard } from '@/components/referrals/voice-referral-card';
 
 export default function ReferralsPage() {
     const { user } = useAuth();
+    const searchParams = useSearchParams();
     const [activeTab, setActiveTab] = useState('outgoing');
     const [searchQuery, setSearchQuery] = useState('');
     const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -69,13 +72,19 @@ export default function ReferralsPage() {
                     <h1 className="text-2xl font-bold text-gray-900">Referral Management</h1>
                     <p className="text-gray-500">Track outgoing referrals and manage patients assigned to you</p>
                 </div>
-                <Link href="/physician/referral">
+                <Link href="/physician/referral?voice=1">
                     <Button className="bg-primary hover:bg-secondary">
                         <Plus className="h-4 w-4 mr-2" />
                         New Referral
                     </Button>
                 </Link>
             </div>
+
+            <VoiceReferralCard
+                className="mb-6"
+                autoOpen={searchParams.get('voice') === '1'}
+                targetHref="/physician/referral?voice=1"
+            />
 
             {/* Filters */}
             <div className="flex items-center gap-4 mb-6">

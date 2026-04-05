@@ -16,6 +16,7 @@ from models.referral import (
     fetch_referral_status_info,
     assign_referral_to_physician,
     check_physician_exists_and_active,
+    fetch_physician_context,
     fetch_attachments,
     fetch_attachment_by_id,
     insert_transit_update,
@@ -226,11 +227,33 @@ def get_single_referral(referral_id: int) -> Optional[dict]:
     return _row_to_referral(row, details=details, patient=patient, attachments=attachments)
 
 
-def process_create_referral(req_data: dict) -> dict:
+def process_create_referral(req_data: dict, actor_user: dict | None = None) -> dict:
     from api import _load_hospitals_from_db
     from services.referral_engine import ReferralEngine, EngineConfig, PatientCase
     from core.db import db_cursor
     from controllers.patient_controller import create_new_patient
+
+    actor_role = actor_user.get("role") if actor_user else "physician"
+    actor_hospital_id = str(actor_user.get("hospital_id")) if actor_user else None
+    referring_physician_id = int(req_data["referring_physician_id"])
+    valid_referral_reasons = {"cardiac", "general", "obstetric", "respiratory", "seizure", "stroke", "trauma"}
+    normalized_referral_reason = str(req_data.get("referral_reason") or "").strip().lower()
+    if normalized_referral_reason not in valid_referral_reasons:
+        normalized_referral_reason = "general"
+    req_data["referral_reason"] = normalized_referral_reason
+    req_data["severity"] = str(req_data.get("severity") or "medium").strip().lower() or "medium"
+    req_data["stability"] = str(req_data.get("stability") or "stable").strip().lower() or "stable"
+    req_data["urgency_level"] = str(req_data.get("urgency_level") or "routine").strip().lower() or "routine"
+
+    if not check_physician_exists_and_active(referring_physician_id):
+        return {"error": True, "code": 400, "message": "Selected referring physician is not active"}
+
+    if actor_role == "hospital_admin":
+        physician_ctx = fetch_physician_context(referring_physician_id)
+        if not physician_ctx:
+            return {"error": True, "code": 400, "message": "Selected referring physician was not found"}
+        if actor_hospital_id != str(physician_ctx.get("hospital_id")):
+            return {"error": True, "code": 403, "message": "Hospital admins may only create referrals for physicians in their own hospital"}
     
     # Check if this is a new patient onboarding
     patient_id = req_data.get("patient_id")
@@ -251,8 +274,8 @@ def process_create_referral(req_data: dict) -> dict:
                 params.append(pid_str)
             if not conditions:
                 # Fallback check by name and dob
-                conditions.append("(first_name = %s AND last_name = %s AND date_of_birth = %s)")
-                params.extend([pd.get("first_name"), pd.get("last_name"), pd.get("date_of_birth")])
+                conditions.append("(full_name = %s AND date_of_birth = %s)")
+                params.extend([pd.get("full_name"), pd.get("date_of_birth")])
             
             cur.execute(query + " OR ".join(conditions) + " LIMIT 1", params)
             existing_row = cur.fetchone()
@@ -330,7 +353,7 @@ def process_create_referral(req_data: dict) -> dict:
         print(f"[WARN] Email notification failed: {e}")
 
     log_action(
-        req_data["referring_physician_id"],
+        actor_user["id"] if actor_user else req_data["referring_physician_id"],
         "referral_created",
         entity_type="referral",
         entity_id=int(referral_id),
@@ -339,6 +362,8 @@ def process_create_referral(req_data: dict) -> dict:
             "receiving_hospital_id": req_data["receiving_hospital_id"],
             "referral_reason": req_data["referral_reason"],
             "severity": req_data["severity"],
+            "actor_role": actor_role,
+            "recorded_referring_physician_id": referring_physician_id,
         },
     )
 

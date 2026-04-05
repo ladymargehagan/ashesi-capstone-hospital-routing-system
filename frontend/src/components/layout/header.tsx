@@ -14,11 +14,13 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { NotificationInboxPopover } from '@/components/ui/notification-inbox-popover';
-import { Building2, LogOut, User } from 'lucide-react';
+import { Building2, LogOut, Moon, Sun, User } from 'lucide-react';
+import { useTheme } from '@/components/theme/theme-provider';
 
 export function Header() {
     const { user, logout } = useAuth();
     const router = useRouter();
+    const { theme, toggleTheme } = useTheme();
 
     const handleLogout = () => {
         logout();
@@ -45,7 +47,7 @@ export function Header() {
 
     return (
         <>
-            <header className="fixed top-0 left-0 right-0 h-16 border-b bg-white z-50">
+            <header className="fixed top-0 left-0 right-0 h-16 border-b border-border bg-card/95 backdrop-blur z-50">
                 <div className="flex items-center justify-between h-full px-6">
                     {/* Logo */}
                     <Link href="/" className="flex items-center gap-2">
@@ -53,13 +55,24 @@ export function Header() {
                             <Building2 className="h-5 w-5 text-white" />
                         </div>
                         <div>
-                            <span className="font-semibold text-gray-900">Healthcare Referral System</span>
-                            <p className="text-xs text-gray-500">Patient Referral Management Platform</p>
+                            <span className="font-semibold text-foreground">Healthcare Referral System</span>
+                            <p className="text-xs text-muted-foreground">Patient Referral Management Platform</p>
                         </div>
                     </Link>
 
                     {/* Right side */}
                     <div className="flex items-center gap-4">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="icon"
+                            className="rounded-full border-border bg-background/80"
+                            onClick={toggleTheme}
+                            aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+                        >
+                            {theme === 'dark' ? <Sun className="h-4 w-4 text-amber-400" /> : <Moon className="h-4 w-4 text-slate-700" />}
+                        </Button>
+
                         {/* Notifications */}
                         <NotificationInboxPopover />
 
@@ -74,7 +87,7 @@ export function Header() {
                                     </Avatar>
                                     <div className="text-left hidden sm:block">
                                         <p className="text-sm font-medium">{user?.full_name || 'User'}</p>
-                                        <p className="text-xs text-gray-500">{getHospitalName() || getRoleLabel()}</p>
+                                        <p className="text-xs text-muted-foreground">{getHospitalName() || getRoleLabel()}</p>
                                     </div>
                                 </Button>
                             </DropdownMenuTrigger>

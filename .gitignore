@@ -52,3 +52,6 @@ Backend/tests/
 .pytest_cache/
 how-to-run-server.md
 "Applied Capstone Lady-M Hagan Final Draft (1).pdf"
+AGENT.md
+docs/ai_referral_intake_agent_prd.md
+docs/CHANGE_CONSTELLATION.md

@@ -11,7 +11,6 @@ import {
     Building2,
     UserCheck,
     Bed,
-    Stethoscope,
     ClipboardList
 } from 'lucide-react';
 
@@ -34,7 +33,6 @@ const hospitalNavItems: NavItem[] = [
     { title: 'Dashboard', href: '/hospital', icon: LayoutDashboard },
     { title: 'Referrals', href: '/hospital/referrals', icon: FileText },
     { title: 'Physicians', href: '/hospital/physicians', icon: UserCheck },
-    { title: 'Specialists', href: '/hospital/specialists', icon: Stethoscope },
     { title: 'Resources', href: '/hospital/resources', icon: Bed },
 ];
 
@@ -53,12 +51,23 @@ export function Sidebar({ role }: { role: UserRole }) {
             ? hospitalNavItems
             : adminNavItems;
 
+    const isRouteActive = (href: string) => {
+        if (pathname === href) {
+            return true;
+        }
+
+        if (href === '/physician' || href === '/hospital' || href === '/admin') {
+            return false;
+        }
+
+        return pathname.startsWith(`${href}/`);
+    };
+
     return (
-        <aside className="fixed left-0 top-16 h-[calc(100vh-4rem)] w-64 border-r bg-white">
+        <aside className="fixed left-0 top-16 h-[calc(100vh-4rem)] w-64 border-r border-border bg-card">
             <nav className="flex flex-col gap-1 p-4">
                 {navItems.map((item) => {
-                    const isActive = pathname === item.href ||
-                        (item.href !== '/physician' && item.href !== '/hospital' && item.href !== '/admin' && pathname.startsWith(item.href));
+                    const isActive = isRouteActive(item.href);
 
                     return (
                         <Link
@@ -67,8 +76,8 @@ export function Sidebar({ role }: { role: UserRole }) {
                             className={cn(
                                 'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
                                 isActive
-                                    ? 'bg-[#C4D8E5]/30 text-secondary'
-                                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                                    ? 'bg-primary/10 text-foreground shadow-[inset_4px_0_0_0_var(--color-primary)]'
+                                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                             )}
                         >
                             <item.icon className="h-5 w-5" />

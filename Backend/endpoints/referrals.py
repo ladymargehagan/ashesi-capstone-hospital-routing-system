@@ -120,12 +120,14 @@ def get_referral(
 @router.post("")
 def create_referral(
     req: CreateReferral,
-    current_user: dict = Depends(require_role("physician")),
+    current_user: dict = Depends(require_role("physician", "hospital_admin")),
 ):
-    """Create a referral. Physicians only."""
+    """Create a referral."""
     # Convert the validated Pydantic model into a plain dictionary 
     # to pass down to the controller logic.
-    result = process_create_referral(req.model_dump())
+    result = process_create_referral(req.model_dump(), current_user)
+    if result.get("error"):
+        raise HTTPException(status_code=result.get("code", 400), detail=result["message"])
     return result
 
 

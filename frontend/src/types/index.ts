@@ -36,7 +36,6 @@ export interface Physician {
     grade?: string;
     work_schedule?: Record<string, unknown>;
     digital_signature_path?: string;
-    availability: boolean;
     status: 'active' | 'pending' | 'rejected';
     created_at: string;
     updated_at?: string;
@@ -50,7 +49,7 @@ export interface Physician {
 // Hospital types (maps to HOSPITALS table)
 export type HospitalLevel = 'teaching' | 'regional' | 'district' | 'polyclinic' | 'health_centre' | 'chps';
 export type HospitalOwnership = 'public' | 'private' | 'faith_based' | 'military' | 'quasi_government';
-export type HospitalStatus = 'active' | 'inactive';
+export type HospitalStatus = 'active' | 'pending' | 'rejected';
 
 // Hospital interface
 export interface Hospital {
@@ -75,8 +74,6 @@ export interface Patient {
     id: string;
     physician_id: string;
     patient_identifier: string;
-    first_name: string;
-    last_name: string;
     full_name: string;
     date_of_birth?: string;
     sex?: 'male' | 'female' | 'other';
@@ -172,8 +169,7 @@ export interface ReferralDetails {
 export interface ReferralFormData {
     // Patient Details
     patient_id: string;
-    first_name: string;
-    last_name: string;
+    full_name: string;
     date_of_birth: string;
     sex: 'male' | 'female' | 'other';
     address: string;
@@ -303,6 +299,58 @@ export interface EngineResponse {
     };
     warnings: string[];
     recommendations: EngineRecommendation[];
+}
+
+export interface AiReferralStructuredData {
+    full_name?: string | null;
+    date_of_birth?: string | null;
+    sex?: 'male' | 'female' | 'other' | null;
+    address?: string | null;
+    nhis_number?: string | null;
+    nhis_status?: 'Active' | 'Expired' | 'None' | null;
+    contact_number?: string | null;
+    presenting_complaint?: string | null;
+    clinical_history?: string | null;
+    examination_findings?: string | null;
+    working_diagnosis?: string | null;
+    investigations_done?: string | null;
+    treatment_given?: string | null;
+    reason_for_referral?: string | null;
+    referral_reason?: ReferralReason | null;
+    urgency_level?: 'routine' | 'urgent' | 'emergency' | null;
+    severity?: ReferralSeverity | null;
+    stability?: ReferralStability | null;
+    known_allergies?: string | null;
+    pre_existing_conditions?: string | null;
+    vital_signs?: ReferralFormData['vital_signs'] | null;
+}
+
+export interface AiReferralStructureResponse {
+    transcript: string;
+    normalized_transcript: string;
+    structured_data: AiReferralStructuredData;
+    meta: {
+        detected_fields: string[];
+        missing_fields: string[];
+        patient_age?: number | null;
+    };
+    warnings: string[];
+}
+
+export interface AiReferralSessionResponse {
+    token: string;
+    expires_in_seconds: number;
+    websocket_url: string;
+    streaming_defaults: {
+        sample_rate: number;
+        speech_model: string;
+        domain?: string;
+        format_turns?: boolean;
+        min_turn_silence?: number;
+        max_turn_silence?: number;
+        vad_threshold?: number;
+        prompt?: string;
+    };
 }
 
 // Notification interface (maps to NOTIFICATIONS table)

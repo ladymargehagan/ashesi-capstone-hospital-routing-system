@@ -8,7 +8,14 @@
  */
 
 import { supabase } from '@/lib/supabase';
-import { EngineResponse, ReferralReason, ReferralSeverity, ReferralStability } from '@/types';
+import {
+    AiReferralSessionResponse,
+    AiReferralStructureResponse,
+    EngineResponse,
+    ReferralReason,
+    ReferralSeverity,
+    ReferralStability,
+} from '@/types';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -108,7 +115,7 @@ export const hospitalsApi = {
             }
         ),
 
-    create: (data: Record<string, any>) =>
+    create: (data: Record<string, unknown>) =>
         apiFetch<{ success: boolean; hospital_id: string; invite_token?: string }>(
             '/api/hospitals',
             { method: 'POST', body: JSON.stringify(data) }
@@ -194,7 +201,7 @@ export const referralsApi = {
     },
 
     getTransitUpdates: (id: string | number) =>
-        apiFetch<any>(`/api/referrals/${id}/transit-updates`),
+        apiFetch<unknown>(`/api/referrals/${id}/transit-updates`),
     
     addTransitUpdate: (id: string | number, text: string) =>
         apiFetch<{ success: boolean; update_id: number }>(`/api/referrals/${id}/transit-updates`, {
@@ -256,10 +263,10 @@ export const patientsApi = {
 
 export const healthApi = {
     getSummary: () =>
-        apiFetch<any[]>('/api/health/summary'),
+        apiFetch<unknown[]>('/api/health/summary'),
 
     getHospitalSummary: (id: string) =>
-        apiFetch<any>(`/api/health/summary/${id}`),
+        apiFetch<unknown>(`/api/health/summary/${id}`),
 
     runAudit: () =>
         apiFetch<{ success: boolean; alerts_generated: number; summary: string }>(
@@ -268,7 +275,7 @@ export const healthApi = {
         ),
 
     getAlerts: () =>
-        apiFetch<any[]>('/api/health/alerts'),
+        apiFetch<unknown[]>('/api/health/alerts'),
 };
 
 export const usersApi = {
@@ -284,12 +291,6 @@ export const usersApi = {
         apiFetch<{ success: boolean }>(
             `/api/users/${id}/status`,
             { method: 'PUT', body: JSON.stringify({ status }) },
-        ),
-
-    togglePhysicianAvailability: (physicianId: string, availability: boolean) =>
-        apiFetch<{ success: boolean }>(
-            `/api/users/physicians/${physicianId}/availability`,
-            { method: 'PUT', body: JSON.stringify({ availability }) },
         ),
 
     listPhysicians: (params?: { hospital_id?: string; status?: string }) => {
@@ -386,6 +387,55 @@ export const recommendApi = {
             '/api/recommend',
             { method: 'POST', body: JSON.stringify(data) },
         ),
+};
+
+// ---------------------------------------------------------------------------
+// AI referral intake
+// ---------------------------------------------------------------------------
+
+async function routeFetch<T = unknown>(path: string, options: RequestInit = {}): Promise<T> {
+    const res = await fetch(path, {
+        headers: {
+            ...(!(options.body instanceof FormData) ? { 'Content-Type': 'application/json' } : {}),
+            ...((options.headers as Record<string, string>) || {}),
+        },
+        ...options,
+    });
+
+    if (!res.ok) {
+        const body = await res.json().catch(() => ({ detail: res.statusText }));
+        throw new Error(typeof body.detail === 'string' ? body.detail : `Route error ${res.status}`);
+    }
+
+    return res.json();
+}
+
+export const aiReferralsApi = {
+    createSession: (data?: { expires_in_seconds?: number; max_session_duration_seconds?: number }) =>
+        routeFetch<AiReferralSessionResponse>(
+            '/api/ai-referrals/session',
+            { method: 'POST', body: JSON.stringify(data || {}) },
+        ),
+
+    structureTranscript: (data: {
+        transcript: string;
+        patient_context?: Record<string, unknown>;
+        partial_form?: Record<string, unknown>;
+    }) =>
+        routeFetch<AiReferralStructureResponse>(
+            '/api/ai-referrals/structure',
+            { method: 'POST', body: JSON.stringify(data) },
+        ),
+
+    transcribeAudio: async (audioBlob: Blob) => {
+        const formData = new FormData();
+        formData.append('audio', audioBlob, 'voice-referral.webm');
+
+        return routeFetch<{ transcript: string; transcript_id: string; status: string }>(
+            '/api/ai-referrals/transcribe',
+            { method: 'POST', body: formData },
+        );
+    },
 };
 
 // ---------------------------------------------------------------------------
