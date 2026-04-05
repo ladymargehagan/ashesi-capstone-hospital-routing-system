@@ -251,8 +251,8 @@ def process_create_referral(req_data: dict) -> dict:
                 params.append(pid_str)
             if not conditions:
                 # Fallback check by name and dob
-                conditions.append("(full_name = %s AND date_of_birth = %s)")
-                params.extend([pd.get("full_name"), pd.get("date_of_birth")])
+                conditions.append("(first_name = %s AND last_name = %s AND date_of_birth = %s)")
+                params.extend([pd.get("first_name"), pd.get("last_name"), pd.get("date_of_birth")])
             
             cur.execute(query + " OR ".join(conditions) + " LIMIT 1", params)
             existing_row = cur.fetchone()

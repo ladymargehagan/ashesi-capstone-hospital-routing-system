@@ -24,7 +24,8 @@ router = APIRouter(prefix="/api/patients", tags=["patients"])
 class CreatePatient(BaseModel):
     physician_id: int
     patient_identifier: str
-    full_name: str
+    first_name: str
+    last_name: str
     date_of_birth: Optional[str] = None
     sex: Optional[str] = None
     nhis_number: Optional[str] = None

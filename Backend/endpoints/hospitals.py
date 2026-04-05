@@ -26,7 +26,6 @@ class HospitalProfileUpdate(BaseModel):
     license_number: Optional[str] = None
     address: Optional[str] = None
     level: Optional[str] = None
-    type: Optional[str] = None
     ownership: Optional[str] = None
     operating_hours: Optional[str] = None
     contact_phone: Optional[str] = None
@@ -47,7 +46,6 @@ class HospitalFlagCreate(BaseModel):
 class HospitalCreate(BaseModel):
     name: str
     level: str
-    type: str
     ownership: str
     address: str
     contact_phone: Optional[str] = None

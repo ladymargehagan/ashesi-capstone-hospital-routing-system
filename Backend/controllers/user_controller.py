@@ -27,7 +27,6 @@ def _row_to_user(row) -> dict:
         "hospital_id": str(row["hospital_id"]) if row.get("hospital_id") else None,
         "hospital_name": row.get("hospital_name"),
         "phone_number": row.get("phone_number"),
-        "auth_provider": row.get("auth_provider", "local"),
         "profile_picture_url": row.get("profile_picture_url"),
         "status": row["status"],
         "created_at": row["created_at"].isoformat() if row.get("created_at") else None,

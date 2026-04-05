@@ -7,7 +7,7 @@ def fetch_user_for_login(email: str):
         cur.execute(
             """
             SELECT u.user_id, u.email, u.password_hash, u.full_name, u.phone_number,
-                   u.hospital_id, u.status, u.auth_provider, u.profile_picture_url,
+                   u.hospital_id, u.status, u.profile_picture_url,
                    r.role_name, u.created_at, u.updated_at,
                    h.name AS hospital_name, h.address AS hospital_address,
                    h.contact_phone,
@@ -47,8 +47,8 @@ def insert_pending_user(email: str, password_hash: Optional[str], role_id: int, 
         cur.execute(
             """
             INSERT INTO users (email, password_hash, role_id, first_name, last_name,
-                               phone_number, hospital_id, auth_provider, status, auth_uid)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, 'local', 'pending', %s)
+                               phone_number, hospital_id, status, auth_uid)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, 'pending', %s)
             RETURNING user_id
             """,
             (email, password_hash, role_id, first_name, last_name, phone_number, hospital_id, auth_uid),
@@ -70,59 +70,6 @@ def insert_pending_physician(user_id: int, license_number: str, title: Optional[
         return cur.fetchone()["physician_id"]
 
 
-def fetch_user_by_google_id(google_id: str):
-    with db_cursor() as cur:
-        cur.execute(
-            """
-            SELECT u.*, r.role_name
-            FROM users u JOIN role r ON u.role_id = r.role_id
-            WHERE u.google_id = %s
-            """,
-            (google_id,),
-        )
-        return cur.fetchone()
-
-
-def fetch_user_by_email_google(email: str):
-    with db_cursor() as cur:
-        cur.execute(
-            """
-            SELECT u.*, r.role_name
-            FROM users u JOIN role r ON u.role_id = r.role_id
-            WHERE u.email = %s
-            """,
-            (email,),
-        )
-        return cur.fetchone()
-
-
-def link_google_account(user_id: int, google_id: str, profile_picture_url: Optional[str]):
-    with db_cursor() as cur:
-        cur.execute(
-            """
-            UPDATE users SET google_id = %s, auth_provider = 'google',
-                   profile_picture_url = COALESCE(profile_picture_url, %s),
-                   updated_at = CURRENT_TIMESTAMP
-            WHERE user_id = %s
-            """,
-            (google_id, profile_picture_url, user_id),
-        )
-
-
-def insert_google_user(email: str, role_id: int, first_name: str, last_name: str, phone_number: Optional[str], hospital_id: Optional[int], google_id: str, profile_picture_url: Optional[str]) -> int:
-    with db_cursor() as cur:
-        cur.execute(
-            """
-            INSERT INTO users (email, password_hash, role_id, first_name, last_name,
-                               phone_number, hospital_id, google_id,
-                               auth_provider, profile_picture_url, status)
-            VALUES (%s, NULL, %s, %s, %s, %s, %s, %s, 'google', %s, 'pending')
-            RETURNING user_id
-            """,
-            (email, role_id, first_name, last_name, phone_number, hospital_id, google_id, profile_picture_url),
-        )
-        return cur.fetchone()["user_id"]
-
 
 def fetch_user_by_auth_uid(auth_uid: str):
     """Look up a user by their Supabase auth UUID."""
@@ -130,7 +77,7 @@ def fetch_user_by_auth_uid(auth_uid: str):
         cur.execute(
             """
             SELECT u.user_id, u.email, u.full_name, u.phone_number,
-                   u.hospital_id, u.status, u.auth_provider,
+                   u.hospital_id, u.status,
                    u.profile_picture_url, r.role_name, u.created_at,
                    h.name AS hospital_name, h.address AS hospital_address,
                    h.contact_phone,
@@ -160,7 +107,7 @@ def fetch_user_by_id_complete(user_id: int):
         cur.execute(
             """
             SELECT u.user_id, u.email, u.full_name, u.phone_number,
-                   u.hospital_id, u.status, u.auth_provider,
+                   u.hospital_id, u.status,
                    u.profile_picture_url, r.role_name, u.created_at,
                    h.name AS hospital_name, h.address AS hospital_address,
                    h.contact_phone,

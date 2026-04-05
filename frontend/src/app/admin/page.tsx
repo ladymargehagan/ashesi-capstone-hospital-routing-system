@@ -11,7 +11,7 @@ import { HospitalHealthTable } from '@/components/admin/hospital-health-table';
 import { AuditAlertsBox } from '@/components/admin/audit-alerts-box';
 import { hospitalsApi, usersApi, healthApi } from '@/lib/api-client';
 import { Hospital, Physician } from '@/types';
-import { Building2, Users, CheckCircle, Clock, Search, Loader2, Stethoscope, Activity, Plus, ShieldAlert, Sparkles } from 'lucide-react';
+import { Building2, Users, Search, Loader2, Stethoscope, Activity, Plus, ShieldAlert, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/toast-provider';
 
@@ -54,7 +54,6 @@ export default function AdminDashboard() {
 
     useEffect(() => { loadData(); }, []);
 
-    const pendingPhysicians = physicians.filter(p => p.status === 'pending');
     const activePhysicians = physicians.filter(p => p.status === 'active');
 
     // Filter based on search
@@ -84,31 +83,24 @@ export default function AdminDashboard() {
             {/* Header */}
             <div className="mb-6">
                 <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
-                <p className="text-gray-500">Manage physician registrations and view the hospital network</p>
+                <p className="text-gray-500">Manage the hospital network and monitor system health</p>
             </div>
 
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                <StatsCard
-                    title="Pending Doctors"
-                    value={pendingPhysicians.length}
-                    description="Awaiting approval"
-                    icon={Clock}
-                    iconColor="text-amber-600"
-                />
-                <StatsCard
-                    title="Active Doctors"
-                    value={activePhysicians.length}
-                    description="Verified & active"
-                    icon={Stethoscope}
-                    iconColor="text-green-600"
-                />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 <StatsCard
                     title="Total Hospitals"
                     value={hospitals.length}
                     description="In the network"
                     icon={Building2}
                     iconColor="text-primary"
+                />
+                <StatsCard
+                    title="Active Physicians"
+                    value={activePhysicians.length}
+                    description="Verified & active"
+                    icon={Stethoscope}
+                    iconColor="text-green-600"
                 />
                 <StatsCard
                     title="Total Physicians"
@@ -122,7 +114,7 @@ export default function AdminDashboard() {
             {/* Content Section */}
             <div className="bg-white rounded-lg border p-6">
                 <h2 className="text-lg font-semibold mb-1">System Overview</h2>
-                <p className="text-sm text-gray-500 mb-4">Approve doctor registrations and browse the hospital directory</p>
+                <p className="text-sm text-gray-500 mb-4">Onboard hospitals, browse the physician directory, and monitor system health</p>
 
                 {/* Tabs with Search */}
                 <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -131,11 +123,6 @@ export default function AdminDashboard() {
                             <TabsTrigger value="physicians">
                                 <Activity className="h-4 w-4 mr-1.5" />
                                 Physicians ({physicians.length})
-                                {pendingPhysicians.length > 0 && (
-                                    <span className="ml-2 h-5 min-w-5 px-1.5 rounded-full bg-amber-500 text-white text-xs font-bold flex items-center justify-center">
-                                        {pendingPhysicians.length}
-                                    </span>
-                                )}
                             </TabsTrigger>
                             <TabsTrigger value="hospitals">
                                 <Building2 className="h-4 w-4 mr-1.5" />
@@ -181,7 +168,7 @@ export default function AdminDashboard() {
                     </div>
 
                     <TabsContent value="physicians" className="mt-0">
-                        <PhysiciansTable physicians={filteredPhysicians} onStatusChanged={loadData} />
+                        <PhysiciansTable physicians={filteredPhysicians} />
                     </TabsContent>
 
                     <TabsContent value="hospitals" className="mt-0">

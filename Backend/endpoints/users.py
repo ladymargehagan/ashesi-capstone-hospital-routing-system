@@ -64,9 +64,23 @@ def list_users(
 def update_user_status(
     user_id: int,
     req: UserStatusUpdate,
-    current_user: dict = Depends(require_role("super_admin")),
+    current_user: dict = Depends(require_role("hospital_admin")),
 ):
-    """Approve or reject a user. Super admin only."""
+    """Approve or reject a physician. Hospital admin only (scoped to own hospital)."""
+    from core.db import db_cursor
+
+    # Hospital admins can only approve physicians at their own hospital
+    with db_cursor() as cur:
+        cur.execute(
+            "SELECT hospital_id FROM users WHERE user_id = %s",
+            (user_id,),
+        )
+        row = cur.fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail="User not found")
+    if str(row["hospital_id"]) != str(current_user.get("hospital_id")):
+        raise HTTPException(status_code=403, detail="You can only manage physicians at your own hospital")
+
     result = change_user_status(user_id, req.status)
     if result.get("error"):
         raise HTTPException(status_code=404, detail=result["message"])

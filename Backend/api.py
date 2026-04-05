@@ -482,8 +482,11 @@ def maps_key():
 def physician_stats(physician_id: int):
     """Return dashboard stats for a physician."""
     with db_cursor() as cur:
-        # Get physician's hospital_id
-        cur.execute("SELECT hospital_id FROM physicians WHERE physician_id = %s", (physician_id,))
+        # Get physician's hospital_id (lives on users table)
+        cur.execute(
+            "SELECT u.hospital_id FROM physicians p JOIN users u ON p.user_id = u.user_id WHERE p.physician_id = %s",
+            (physician_id,),
+        )
         phys = cur.fetchone()
 
         cur.execute("SELECT COUNT(*) as count FROM patients WHERE physician_id = %s", (physician_id,))

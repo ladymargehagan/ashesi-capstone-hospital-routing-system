@@ -75,6 +75,8 @@ export interface Patient {
     id: string;
     physician_id: string;
     patient_identifier: string;
+    first_name: string;
+    last_name: string;
     full_name: string;
     date_of_birth?: string;
     sex?: 'male' | 'female' | 'other';
@@ -170,7 +172,8 @@ export interface ReferralDetails {
 export interface ReferralFormData {
     // Patient Details
     patient_id: string;
-    full_name: string;
+    first_name: string;
+    last_name: string;
     date_of_birth: string;
     sex: 'male' | 'female' | 'other';
     address: string;

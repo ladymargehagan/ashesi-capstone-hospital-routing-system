@@ -55,7 +55,8 @@ def fetch_patient_by_id(patient_id: int):
 def insert_patient(
     physician_id: int,
     patient_identifier: str,
-    full_name: str,
+    first_name: str,
+    last_name: str,
     date_of_birth: Optional[str] = None,
     sex: Optional[str] = None,
     nhis_number: Optional[str] = None,
@@ -69,14 +70,14 @@ def insert_patient(
         cur.execute(
             """
             INSERT INTO patients
-                (physician_id, patient_identifier, full_name,
+                (physician_id, patient_identifier, first_name, last_name,
                  date_of_birth, sex, nhis_number, nhis_status, contact_number,
                  address, next_of_kin_name, next_of_kin_contact)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING patient_id
             """,
             (physician_id, patient_identifier,
-             full_name, date_of_birth, sex, nhis_number,
+             first_name, last_name, date_of_birth, sex, nhis_number,
              nhis_status, contact_number, address,
              next_of_kin_name, next_of_kin_contact),
         )

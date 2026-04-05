@@ -109,7 +109,8 @@ function ReferralFormContent() {
 
     const [formData, setFormData] = useState<Partial<ReferralFormData>>({
         patient_id: preselectedPatient?.id || '',
-        full_name: preselectedPatient?.full_name || '',
+        first_name: preselectedPatient?.first_name || '',
+        last_name: preselectedPatient?.last_name || '',
         date_of_birth: preselectedPatient?.date_of_birth || '',
         sex: preselectedPatient?.sex || 'male',
         address: preselectedPatient?.address || '',
@@ -153,7 +154,8 @@ function ReferralFormContent() {
             setFormData({
                 ...formData,
                 patient_id: '-1',
-                full_name: '',
+                first_name: '',
+                last_name: '',
                 date_of_birth: '',
                 sex: 'male',
                 address: '',
@@ -171,7 +173,8 @@ function ReferralFormContent() {
             setFormData({
                 ...formData,
                 patient_id: String(patient.id),
-                full_name: patient.full_name,
+                first_name: patient.first_name,
+                last_name: patient.last_name,
                 date_of_birth: patient.date_of_birth || '',
                 sex: patient.sex || 'male',
                 address: patient.address || '',
@@ -317,7 +320,8 @@ function ReferralFormContent() {
                 vital_signs: formData.vital_signs,
                 patient_details: formData.patient_id === '-1' ? {
                     patient_identifier: `PAT-${Date.now()}`,
-                    full_name: formData.full_name,
+                    first_name: formData.first_name,
+                    last_name: formData.last_name,
                     date_of_birth: formData.date_of_birth,
                     sex: formData.sex,
                     address: formData.address,
@@ -454,11 +458,20 @@ function ReferralFormContent() {
 
                         <fieldset disabled={formData.patient_id !== '-1'} className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label htmlFor="fullName">Full Name <span className="text-red-500">*</span></Label>
+                                <Label htmlFor="firstName">First Name <span className="text-red-500">*</span></Label>
                                 <Input
-                                    id="fullName"
-                                    value={formData.full_name}
-                                    onChange={(e) => handleInputChange('full_name', e.target.value)}
+                                    id="firstName"
+                                    value={formData.first_name}
+                                    onChange={(e) => handleInputChange('first_name', e.target.value)}
+                                    required
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="lastName">Last Name <span className="text-red-500">*</span></Label>
+                                <Input
+                                    id="lastName"
+                                    value={formData.last_name}
+                                    onChange={(e) => handleInputChange('last_name', e.target.value)}
                                     required
                                 />
                             </div>

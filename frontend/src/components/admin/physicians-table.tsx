@@ -11,21 +11,15 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { usersApi } from '@/lib/api-client';
-import { Check, X, Loader2, Search } from 'lucide-react';
-import { useToast } from '@/components/ui/toast-provider';
+import { Search } from 'lucide-react';
 
 interface PhysiciansTableProps {
     physicians: Physician[];
-    onStatusChanged?: () => void;
 }
 
-export function PhysiciansTable({ physicians, onStatusChanged }: PhysiciansTableProps) {
-    const [actionLoading, setActionLoading] = useState<string | null>(null);
-    const toast = useToast();
+export function PhysiciansTable({ physicians }: PhysiciansTableProps) {
     const [nameFilter, setNameFilter] = useState('');
     const [hospitalFilter, setHospitalFilter] = useState('all');
     const [specFilter, setSpecFilter] = useState('all');
@@ -46,20 +40,6 @@ export function PhysiciansTable({ physicians, onStatusChanged }: PhysiciansTable
             rejected: 'bg-red-100 text-red-700',
         };
         return styles[status] || styles.pending;
-    };
-
-    const handleAction = async (physician: Physician, action: 'approve' | 'reject') => {
-        if (!physician.user_id) return;
-        setActionLoading(physician.id);
-        try {
-            const status = action === 'approve' ? 'active' : 'rejected';
-            await usersApi.updateStatus(physician.user_id, status);
-            onStatusChanged?.();
-        } catch (err) {
-            toast.error(err instanceof Error ? err.message : `Failed to ${action} physician`);
-        } finally {
-            setActionLoading(null);
-        }
     };
 
     // Sort: pending first, then active, then rejected
@@ -138,19 +118,18 @@ export function PhysiciansTable({ physicians, onStatusChanged }: PhysiciansTable
                     <TableHead>Hospital</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Registered</TableHead>
-                    <TableHead>Actions</TableHead>
                 </TableRow>
             </TableHeader>
             <TableBody>
                 {filtered.length === 0 ? (
                     <TableRow>
-                        <TableCell colSpan={7} className="text-center text-gray-500 py-8">
+                        <TableCell colSpan={6} className="text-center text-gray-500 py-8">
                             No physicians found matching filters
                         </TableCell>
                     </TableRow>
                 ) : (
                     filtered.map((physician) => (
-                        <TableRow key={physician.id} className={physician.status === 'pending' ? 'bg-amber-50/40' : ''}>
+                        <TableRow key={physician.id}>
                             <TableCell className="font-medium">
                                 {physician.title ? `${physician.title} ` : ''}{physician.full_name || physician.email || '—'}
                             </TableCell>
@@ -167,34 +146,6 @@ export function PhysiciansTable({ physicians, onStatusChanged }: PhysiciansTable
                                 </Badge>
                             </TableCell>
                             <TableCell className="text-gray-500 text-sm">{formatDate(physician.created_at)}</TableCell>
-                            <TableCell>
-                                {actionLoading === physician.id ? (
-                                    <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
-                                ) : physician.status === 'pending' ? (
-                                    <div className="flex items-center gap-1">
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            className="text-green-600 hover:text-green-700 hover:bg-green-50"
-                                            onClick={() => handleAction(physician, 'approve')}
-                                        >
-                                            <Check className="h-4 w-4 mr-1" />
-                                            Approve
-                                        </Button>
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                                            onClick={() => handleAction(physician, 'reject')}
-                                        >
-                                            <X className="h-4 w-4 mr-1" />
-                                            Reject
-                                        </Button>
-                                    </div>
-                                ) : (
-                                    <span className="text-xs text-gray-400">—</span>
-                                )}
-                            </TableCell>
                         </TableRow>
                     ))
                 )}
