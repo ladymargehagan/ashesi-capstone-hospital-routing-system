@@ -6,17 +6,18 @@ import { StatsCard } from '@/components/stats-card';
 import { HospitalsTable } from '@/components/admin/hospitals-table';
 import { hospitalsApi } from '@/lib/api-client';
 import { Hospital } from '@/types';
-import { Building2, CheckCircle, Clock, Search, Loader2, UserPlus } from 'lucide-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Building2, CheckCircle, Search, Loader2, Plus, UserPlus, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { InviteAdminModal } from '@/components/admin/invite-admin-modal';
+import { AddHospitalModal } from '@/components/admin/add-hospital-modal';
 
 export default function HospitalsPage() {
     const [searchQuery, setSearchQuery] = useState('');
-    const [statusFilter, setStatusFilter] = useState('all');
+    const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
     const [hospitals, setHospitals] = useState<Hospital[]>([]);
     const [loading, setLoading] = useState(true);
     const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
     const fetchHospitals = useCallback(() => {
         hospitalsApi.list()
@@ -29,13 +30,13 @@ export default function HospitalsPage() {
         fetchHospitals();
     }, [fetchHospitals]);
 
-    const pendingHospitals = hospitals.filter(h => h.status === 'pending');
     const activeHospitals = hospitals.filter(h => h.status === 'active');
+    const inactiveHospitals = hospitals.filter(h => h.status === 'inactive');
 
     const getFilteredHospitals = () => {
         let list = hospitals;
-        if (statusFilter === 'pending') list = pendingHospitals;
         if (statusFilter === 'active') list = activeHospitals;
+        if (statusFilter === 'inactive') list = inactiveHospitals;
 
         if (searchQuery) {
             list = list.filter(h =>
@@ -61,15 +62,24 @@ export default function HospitalsPage() {
             <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900">Hospitals</h1>
-                    <p className="text-gray-500">Manage and review hospital applications</p>
+                    <p className="text-gray-500">Manage hospitals in the network</p>
                 </div>
-                <Button 
-                    className="bg-primary hover:bg-secondary text-white shrink-0" 
-                    onClick={() => setIsInviteModalOpen(true)}
-                >
-                    <UserPlus className="h-4 w-4 mr-2" />
-                    Invite Hospital Admin
-                </Button>
+                <div className="flex items-center gap-3">
+                    <Button
+                        variant="outline"
+                        onClick={() => setIsInviteModalOpen(true)}
+                    >
+                        <UserPlus className="h-4 w-4 mr-2" />
+                        Invite Hospital Admin
+                    </Button>
+                    <Button
+                        className="bg-primary hover:bg-secondary text-white"
+                        onClick={() => setIsAddModalOpen(true)}
+                    >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Hospital
+                    </Button>
+                </div>
             </div>
 
             {/* Stats */}
@@ -82,64 +92,64 @@ export default function HospitalsPage() {
                     iconColor="text-primary"
                 />
                 <StatsCard
-                    title="Pending Approval"
-                    value={pendingHospitals.length}
-                    description="Awaiting review"
-                    icon={Clock}
-                    iconColor="text-amber-600"
-                />
-                <StatsCard
                     title="Active"
                     value={activeHospitals.length}
                     description="Currently active"
                     icon={CheckCircle}
                     iconColor="text-green-600"
                 />
+                <StatsCard
+                    title="Inactive"
+                    value={inactiveHospitals.length}
+                    description="Pending setup or deactivated"
+                    icon={AlertCircle}
+                    iconColor="text-amber-600"
+                />
             </div>
 
             {/* Table Section */}
             <div className="bg-white rounded-lg border p-6">
-                <Tabs value={statusFilter} onValueChange={setStatusFilter}>
-                    <div className="flex items-center justify-between mb-4">
-                        <TabsList>
-                            <TabsTrigger value="all">
-                                All ({hospitals.length})
-                            </TabsTrigger>
-                            <TabsTrigger value="pending">
-                                Pending ({pendingHospitals.length})
-                            </TabsTrigger>
-                            <TabsTrigger value="active">
-                                Active ({activeHospitals.length})
-                            </TabsTrigger>
-                        </TabsList>
-
-                        <div className="relative w-64">
-                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                            <Input
-                                placeholder="Search hospitals..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="pl-9"
-                            />
-                        </div>
+                <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                        {(['all', 'active', 'inactive'] as const).map((filter) => (
+                            <Button
+                                key={filter}
+                                variant={statusFilter === filter ? 'default' : 'ghost'}
+                                size="sm"
+                                onClick={() => setStatusFilter(filter)}
+                                className={statusFilter === filter ? 'bg-primary text-white' : ''}
+                            >
+                                {filter === 'all' ? `All (${hospitals.length})` :
+                                 filter === 'active' ? `Active (${activeHospitals.length})` :
+                                 `Inactive (${inactiveHospitals.length})`}
+                            </Button>
+                        ))}
                     </div>
 
-                    <TabsContent value="all" className="mt-0">
-                        <HospitalsTable hospitals={getFilteredHospitals()} onStatusChanged={fetchHospitals} />
-                    </TabsContent>
-                    <TabsContent value="pending" className="mt-0">
-                        <HospitalsTable hospitals={getFilteredHospitals()} onStatusChanged={fetchHospitals} />
-                    </TabsContent>
-                    <TabsContent value="active" className="mt-0">
-                        <HospitalsTable hospitals={getFilteredHospitals()} onStatusChanged={fetchHospitals} />
-                    </TabsContent>
-                </Tabs>
+                    <div className="relative w-64">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                        <Input
+                            placeholder="Search hospitals..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="pl-9"
+                        />
+                    </div>
+                </div>
+
+                <HospitalsTable hospitals={getFilteredHospitals()} onStatusChanged={fetchHospitals} />
             </div>
 
             <InviteAdminModal
                 open={isInviteModalOpen}
                 onClose={() => setIsInviteModalOpen(false)}
                 hospitals={hospitals}
+            />
+
+            <AddHospitalModal
+                open={isAddModalOpen}
+                onClose={() => setIsAddModalOpen(false)}
+                onAdded={fetchHospitals}
             />
         </div>
     );
