@@ -312,6 +312,12 @@ export const usersApi = {
             `/api/users/${id}/role`,
             { method: 'PUT', body: JSON.stringify({ role, hospital_id: hospitalId ? parseInt(hospitalId) : null }) },
         ),
+
+    togglePhysicianAvailability: (id: string, availability: boolean) =>
+        apiFetch<{ success: boolean; physician_id: string; availability: boolean }>(
+            `/api/users/physicians/${id}/availability`,
+            { method: 'PUT', body: JSON.stringify({ availability }) },
+        ),
 };
 
 // ---------------------------------------------------------------------------
