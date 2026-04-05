@@ -10,6 +10,7 @@ from models.user import (
     fetch_physicians,
     update_user_profile_in_db,
     update_physician_profile_in_db,
+    toggle_physician_availability_in_db,
     fetch_user_role,
     update_user_role_in_db
 )
@@ -44,6 +45,7 @@ def _row_to_physician(row) -> dict:
         "specialization": row.get("specialization"),
         "department": row.get("department"),
         "grade": row.get("grade"),
+        "availability": row.get("availability", False),
         "status": row["status"],
         "created_at": row["created_at"].isoformat() if row.get("created_at") else None,
         "full_name": row.get("full_name"),
@@ -59,6 +61,18 @@ def get_all_users(role: Optional[str] = None, status: Optional[str] = None) -> l
 def get_all_physicians(hospital_id: Optional[int] = None, status: Optional[str] = None) -> list[dict]:
     rows = fetch_physicians(hospital_id, status)
     return [_row_to_physician(r) for r in rows]
+
+
+def toggle_physician_availability(physician_id: int, availability: bool, actor_user_id: int) -> dict:
+    success = toggle_physician_availability_in_db(physician_id, availability)
+    if not success:
+        return {"error": True, "message": "Physician not found"}
+    log_action(
+        actor_user_id, "physician_availability_toggled",
+        entity_type="physician", entity_id=physician_id,
+        details={"availability": availability},
+    )
+    return {"success": True, "physician_id": str(physician_id), "availability": availability}
 
 
 def change_user_status(user_id: int, status: str) -> dict:

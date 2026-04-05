@@ -13,6 +13,7 @@ from controllers.user_controller import (
     get_all_users,
     get_all_physicians,
     change_user_status,
+    toggle_physician_availability,
     modify_user_profile,
     change_user_role,
 )
@@ -36,6 +37,10 @@ class UserProfileUpdate(BaseModel):
     specialization: Optional[str] = None
     department: Optional[str] = None
     grade: Optional[str] = None
+
+
+class PhysicianAvailabilityUpdate(BaseModel):
+    availability: bool
 
 
 class UserRoleUpdate(BaseModel):
@@ -76,6 +81,19 @@ def list_physicians(
 ):
     """List physicians with user and hospital info."""
     return get_all_physicians(hospital_id, status)
+
+
+@router.patch("/physicians/{physician_id}/availability")
+def update_physician_availability(
+    physician_id: int,
+    req: PhysicianAvailabilityUpdate,
+    current_user: dict = Depends(require_role("hospital_admin", "super_admin")),
+):
+    """Toggle physician on-call availability. Hospital admin only."""
+    result = toggle_physician_availability(physician_id, req.availability, current_user["id"])
+    if result.get("error"):
+        raise HTTPException(status_code=404, detail=result["message"])
+    return result
 
 
 @router.put("/{user_id}/profile")

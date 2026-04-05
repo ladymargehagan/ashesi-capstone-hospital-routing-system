@@ -86,6 +86,15 @@ def update_physician_profile_in_db(user_id: int, updates: list, params: list):
         )
 
 
+def toggle_physician_availability_in_db(physician_id: int, availability: bool) -> bool:
+    with db_cursor() as cur:
+        cur.execute(
+            "UPDATE physicians SET availability = %s, updated_at = CURRENT_TIMESTAMP WHERE physician_id = %s RETURNING physician_id",
+            (availability, physician_id),
+        )
+        return cur.fetchone() is not None
+
+
 def fetch_user_role(user_id: int) -> Optional[str]:
     with db_cursor() as cur:
         cur.execute(

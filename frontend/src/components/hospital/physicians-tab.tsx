@@ -25,6 +25,7 @@ interface HospitalPhysiciansTabProps {
 
 export function HospitalPhysiciansTab({ physicians, onStatusChanged }: HospitalPhysiciansTabProps) {
     const [actionLoading, setActionLoading] = useState<string | null>(null);
+    const [availabilityLoading, setAvailabilityLoading] = useState<string | null>(null);
     const toast = useToast();
     const [nameFilter, setNameFilter] = useState('');
     const [specFilter, setSpecFilter] = useState('all');
@@ -59,6 +60,21 @@ export function HospitalPhysiciansTab({ physicians, onStatusChanged }: HospitalP
             toast.error(err instanceof Error ? err.message : `Failed to ${action} physician`);
         } finally {
             setActionLoading(null);
+        }
+    };
+
+    const handleToggleAvailability = async (physician: Physician) => {
+        setAvailabilityLoading(physician.id);
+        try {
+            await usersApi.togglePhysicianAvailability(physician.id, !physician.availability);
+            toast.success(
+                `Dr. ${physician.full_name || physician.email} is now ${!physician.availability ? 'available' : 'unavailable'}`
+            );
+            onStatusChanged?.();
+        } catch (err) {
+            toast.error(err instanceof Error ? err.message : 'Failed to toggle availability');
+        } finally {
+            setAvailabilityLoading(null);
         }
     };
 
@@ -134,6 +150,7 @@ export function HospitalPhysiciansTab({ physicians, onStatusChanged }: HospitalP
                         <TableHead>Department</TableHead>
                         <TableHead>Rank</TableHead>
                         <TableHead>Status</TableHead>
+                        <TableHead>Availability</TableHead>
                         <TableHead>Registered</TableHead>
                         <TableHead>Actions</TableHead>
                     </TableRow>
@@ -141,7 +158,7 @@ export function HospitalPhysiciansTab({ physicians, onStatusChanged }: HospitalP
                 <TableBody>
                     {filtered.length === 0 ? (
                         <TableRow>
-                            <TableCell colSpan={8} className="text-center text-gray-500 py-8">
+                            <TableCell colSpan={9} className="text-center text-gray-500 py-8">
                                 No physicians found
                             </TableCell>
                         </TableRow>
@@ -165,6 +182,35 @@ export function HospitalPhysiciansTab({ physicians, onStatusChanged }: HospitalP
                                     <Badge className={getStatusBadge(physician.status)}>
                                         {physician.status}
                                     </Badge>
+                                </TableCell>
+                                <TableCell>
+                                    {physician.status === 'active' ? (
+                                        <button
+                                            onClick={() => handleToggleAvailability(physician)}
+                                            disabled={availabilityLoading === physician.id}
+                                            className="cursor-pointer disabled:cursor-wait"
+                                        >
+                                            {availabilityLoading === physician.id ? (
+                                                <Badge variant="outline" className="bg-gray-50 text-gray-500 border-gray-200">
+                                                    <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                                                    Updating...
+                                                </Badge>
+                                            ) : (
+                                                <Badge
+                                                    variant="outline"
+                                                    className={
+                                                        physician.availability
+                                                            ? 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100'
+                                                            : 'bg-gray-100 text-gray-600 border-gray-200 hover:bg-gray-200'
+                                                    }
+                                                >
+                                                    {physician.availability ? 'On Call' : 'Off Call'}
+                                                </Badge>
+                                            )}
+                                        </button>
+                                    ) : (
+                                        <span className="text-xs text-gray-400">N/A</span>
+                                    )}
                                 </TableCell>
                                 <TableCell className="text-gray-500 text-sm">{formatDate(physician.created_at)}</TableCell>
                                 <TableCell>

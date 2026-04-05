@@ -36,6 +36,7 @@ export interface Physician {
     grade?: string;
     work_schedule?: Record<string, unknown>;
     digital_signature_path?: string;
+    availability: boolean;
     status: 'active' | 'pending' | 'rejected';
     created_at: string;
     updated_at?: string;

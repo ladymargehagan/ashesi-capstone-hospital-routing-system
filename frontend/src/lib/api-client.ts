@@ -286,6 +286,12 @@ export const usersApi = {
             { method: 'PUT', body: JSON.stringify({ status }) },
         ),
 
+    togglePhysicianAvailability: (physicianId: string, availability: boolean) =>
+        apiFetch<{ success: boolean }>(
+            `/api/users/physicians/${physicianId}/availability`,
+            { method: 'PATCH', body: JSON.stringify({ availability }) },
+        ),
+
     listPhysicians: (params?: { hospital_id?: string; status?: string }) => {
         const qs = new URLSearchParams();
         if (params?.hospital_id) qs.set('hospital_id', params.hospital_id);
