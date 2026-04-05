@@ -49,7 +49,7 @@ export interface Physician {
 // Hospital types (maps to HOSPITALS table)
 export type HospitalLevel = 'teaching' | 'regional' | 'district' | 'polyclinic' | 'health_centre' | 'chps';
 export type HospitalOwnership = 'public' | 'private' | 'faith_based' | 'military' | 'quasi_government';
-export type HospitalStatus = 'active' | 'pending' | 'rejected';
+export type HospitalStatus = 'active' | 'pending' | 'rejected' | 'inactive';
 
 // Hospital interface
 export interface Hospital {
