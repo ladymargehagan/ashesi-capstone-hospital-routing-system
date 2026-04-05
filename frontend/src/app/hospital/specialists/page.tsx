@@ -21,9 +21,17 @@ export default function HospitalSpecialistsPage() {
         usersApi.listPhysicians({ hospital_id: user.hospital_id, status: 'active' })
             .then((data) => {
                 const physicians = data as unknown as Physician[];
-                // Only show physicians who have a real specialization
+                // Only show physicians with a non-generalist specialization
+                const GENERALIST = new Set([
+                    'General Practice',
+                    'Emergency Medicine',
+                    'Internal Medicine',
+                    'Surgery (General)',
+                ]);
                 const withSpec = physicians.filter(
-                    p => p.specialization && p.specialization.trim() !== ''
+                    p => p.specialization
+                        && p.specialization.trim() !== ''
+                        && !GENERALIST.has(p.specialization)
                 );
                 setSpecialists(withSpec);
             })

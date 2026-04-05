@@ -235,7 +235,8 @@ def _load_hospitals_from_db(now: datetime) -> list[Hospital]:
             for r in all_resources:
                 resources_by_hospital[str(r["hospital_id"])].append(r)
 
-            # Batch load physician specializations (active physicians with a specialization)
+            # Batch load physician specializations (active, non-generalist only)
+            from core.constants import GENERALIST_SPECIALIZATIONS
             cur.execute(
                 """
                 SELECT p.specialization, p.availability, u.hospital_id, u.full_name
@@ -245,8 +246,9 @@ def _load_hospitals_from_db(now: datetime) -> list[Hospital]:
                   AND p.status = 'active'
                   AND p.specialization IS NOT NULL
                   AND p.specialization != ''
+                  AND p.specialization NOT IN %s
                 """,
-                (hospital_ids,)
+                (hospital_ids, tuple(GENERALIST_SPECIALIZATIONS))
             )
             all_specialists = cur.fetchall()
             specialists_by_hospital = defaultdict(list)
@@ -559,6 +561,7 @@ def hospital_stats(hospital_id: int):
         )
         total_resources = cur.fetchone()["count"]
 
+        from core.constants import GENERALIST_SPECIALIZATIONS
         cur.execute(
             """
             SELECT COUNT(*) as count FROM physicians p
@@ -567,8 +570,9 @@ def hospital_stats(hospital_id: int):
               AND p.status = 'active'
               AND p.specialization IS NOT NULL
               AND p.specialization != ''
+              AND p.specialization NOT IN %s
             """,
-            (hospital_id,),
+            (hospital_id, tuple(GENERALIST_SPECIALIZATIONS)),
         )
         total_specialists = cur.fetchone()["count"]
 

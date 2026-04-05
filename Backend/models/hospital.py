@@ -36,9 +36,8 @@ def fetch_hospital_resources(hospital_id: int):
 
 
 def fetch_hospital_specialists(hospital_id: int):
-    """Return physicians with a specialization at this hospital, shaped like
-    the old specialists table for backward compatibility with the hospital
-    profile endpoint."""
+    """Return physicians with a non-generalist specialization at this hospital."""
+    from core.constants import GENERALIST_SPECIALIZATIONS
     with db_cursor() as cur:
         cur.execute(
             """
@@ -51,9 +50,10 @@ def fetch_hospital_specialists(hospital_id: int):
               AND p.status = 'active'
               AND p.specialization IS NOT NULL
               AND p.specialization != ''
+              AND p.specialization NOT IN %s
             ORDER BY p.specialization
             """,
-            (hospital_id,),
+            (hospital_id, tuple(GENERALIST_SPECIALIZATIONS)),
         )
         return cur.fetchall()
 
