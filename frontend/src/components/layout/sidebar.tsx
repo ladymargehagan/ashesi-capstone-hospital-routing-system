@@ -11,7 +11,8 @@ import {
     Building2,
     UserCheck,
     Bed,
-    ClipboardList
+    ClipboardList,
+    Stethoscope
 } from 'lucide-react';
 
 interface NavItem {
@@ -33,6 +34,7 @@ const hospitalNavItems: NavItem[] = [
     { title: 'Dashboard', href: '/hospital', icon: LayoutDashboard },
     { title: 'Referrals', href: '/hospital/referrals', icon: FileText },
     { title: 'Physicians', href: '/hospital/physicians', icon: UserCheck },
+    { title: 'Specialists', href: '/hospital/specialists', icon: Stethoscope },
     { title: 'Resources', href: '/hospital/resources', icon: Bed },
 ];
 
