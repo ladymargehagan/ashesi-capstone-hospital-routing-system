@@ -235,9 +235,17 @@ def _load_hospitals_from_db(now: datetime) -> list[Hospital]:
             for r in all_resources:
                 resources_by_hospital[str(r["hospital_id"])].append(r)
 
-            # Batch load specialists
+            # Batch load physician specializations (active physicians with a specialization)
             cur.execute(
-                "SELECT * FROM specialists WHERE hospital_id IN %s",
+                """
+                SELECT p.specialization, p.availability, u.hospital_id, u.full_name
+                FROM physicians p
+                JOIN users u ON p.user_id = u.user_id
+                WHERE u.hospital_id IN %s
+                  AND p.status = 'active'
+                  AND p.specialization IS NOT NULL
+                  AND p.specialization != ''
+                """,
                 (hospital_ids,)
             )
             all_specialists = cur.fetchall()
@@ -277,13 +285,17 @@ def _load_hospitals_from_db(now: datetime) -> list[Hospital]:
                         operational=r.get("is_available") if r.get("is_available") is not None else True,
                     )
 
-                # Load specialists as capabilities
+                # Load physician specializations as capabilities
                 specialist_rows = specialists_by_hospital.get(hospital_id, [])
                 for s in specialist_rows:
-                    spec_name = s["specialty"].replace(" ", "_")
+                    spec_name = s["specialization"].replace(" ", "_")
                     capabilities.add(spec_name)
+                    # A physician with availability=True counts as on-call
+                    existing = resources.get(spec_name)
+                    if existing and existing.on_call:
+                        continue  # already have an on-call specialist for this
                     resources[spec_name] = ResourceState(
-                        on_call=s.get("on_call_available", False),
+                        on_call=bool(s.get("availability", False)),
                     )
 
                 last_update = now - timedelta(hours=2)  # default
@@ -548,7 +560,14 @@ def hospital_stats(hospital_id: int):
         total_resources = cur.fetchone()["count"]
 
         cur.execute(
-            "SELECT COUNT(*) as count FROM specialists WHERE hospital_id = %s",
+            """
+            SELECT COUNT(*) as count FROM physicians p
+            JOIN users u ON p.user_id = u.user_id
+            WHERE u.hospital_id = %s
+              AND p.status = 'active'
+              AND p.specialization IS NOT NULL
+              AND p.specialization != ''
+            """,
             (hospital_id,),
         )
         total_specialists = cur.fetchone()["count"]

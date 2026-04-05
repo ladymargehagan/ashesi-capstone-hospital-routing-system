@@ -36,9 +36,23 @@ def fetch_hospital_resources(hospital_id: int):
 
 
 def fetch_hospital_specialists(hospital_id: int):
+    """Return physicians with a specialization at this hospital, shaped like
+    the old specialists table for backward compatibility with the hospital
+    profile endpoint."""
     with db_cursor() as cur:
         cur.execute(
-            "SELECT specialty, specialist_name, on_call_available FROM specialists WHERE hospital_id = %s",
+            """
+            SELECT p.specialization AS specialty,
+                   u.full_name     AS specialist_name,
+                   p.availability  AS on_call_available
+            FROM physicians p
+            JOIN users u ON p.user_id = u.user_id
+            WHERE u.hospital_id = %s
+              AND p.status = 'active'
+              AND p.specialization IS NOT NULL
+              AND p.specialization != ''
+            ORDER BY p.specialization
+            """,
             (hospital_id,),
         )
         return cur.fetchall()

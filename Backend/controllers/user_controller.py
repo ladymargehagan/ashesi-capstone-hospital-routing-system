@@ -82,11 +82,6 @@ def change_user_status(user_id: int, status: str) -> dict:
     # If this user is a physician, also update the PHYSICIANS table
     update_physician_status_in_db(user_id, status)
 
-    # When a physician is approved, auto-register their specialization
-    # in the specialists table so the routing algorithm can use it.
-    if status == "active":
-        _sync_physician_to_specialists(user_id)
-
     # Send notification email for status changes
     if status in ("active", "rejected"):
         full_name = fetch_user_name_by_id(user_id)
@@ -103,46 +98,6 @@ def change_user_status(user_id: int, status: str) -> dict:
     return {"success": True, "user_id": str(user_id), "status": status}
 
 
-def _sync_physician_to_specialists(user_id: int):
-    """When a physician is approved, ensure their specialization appears in the
-    specialists table for their hospital. Skips if no specialization or if an
-    entry for that specialty already exists at the hospital."""
-    from core.db import db_cursor
-    from models.specialist import insert_specialist
-
-    with db_cursor() as cur:
-        cur.execute(
-            """
-            SELECT p.specialization, u.hospital_id, u.full_name
-            FROM physicians p
-            JOIN users u ON p.user_id = u.user_id
-            WHERE p.user_id = %s
-            """,
-            (user_id,),
-        )
-        row = cur.fetchone()
-
-    if not row or not row["specialization"] or not row["hospital_id"]:
-        return
-
-    specialty = row["specialization"]
-    hospital_id = row["hospital_id"]
-    name = row["full_name"]
-
-    # Check if this specialty already exists at the hospital
-    with db_cursor() as cur:
-        cur.execute(
-            "SELECT specialist_id FROM specialists WHERE hospital_id = %s AND specialty = %s",
-            (hospital_id, specialty),
-        )
-        if cur.fetchone():
-            return  # already registered
-
-    try:
-        insert_specialist(hospital_id, specialty, specialist_name=name, on_call_available=False)
-        print(f"[INFO] Auto-registered specialist: {specialty} at hospital {hospital_id}")
-    except Exception as e:
-        print(f"[WARN] Failed to auto-register specialist: {e}")
 
 
 def modify_user_profile(user_id: int, data: dict) -> dict:

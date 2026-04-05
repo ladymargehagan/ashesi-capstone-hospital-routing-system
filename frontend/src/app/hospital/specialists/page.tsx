@@ -2,14 +2,14 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks/use-auth';
-import { specialistsApi } from '@/lib/api-client';
-import { SpecialistsTab } from '@/components/hospital/specialists-tab';
-import { Specialist } from '@/types';
+import { usersApi } from '@/lib/api-client';
+import { Physician } from '@/types';
 import { Loader2 } from 'lucide-react';
+import { SpecialistsTab } from '@/components/hospital/specialists-tab';
 
 export default function HospitalSpecialistsPage() {
     const { user } = useAuth();
-    const [specialists, setSpecialists] = useState<Specialist[]>([]);
+    const [specialists, setSpecialists] = useState<Physician[]>([]);
     const [loading, setLoading] = useState(true);
 
     const fetchSpecialists = useCallback(() => {
@@ -18,8 +18,15 @@ export default function HospitalSpecialistsPage() {
             return;
         }
         setLoading(true);
-        specialistsApi.list(user.hospital_id)
-            .then((data) => setSpecialists(data as unknown as Specialist[]))
+        usersApi.listPhysicians({ hospital_id: user.hospital_id, status: 'active' })
+            .then((data) => {
+                const physicians = data as unknown as Physician[];
+                // Only show physicians who have a real specialization
+                const withSpec = physicians.filter(
+                    p => p.specialization && p.specialization.trim() !== ''
+                );
+                setSpecialists(withSpec);
+            })
             .catch((err) => console.error('Failed to load specialists:', err))
             .finally(() => setLoading(false));
     }, [user?.hospital_id]);
@@ -39,11 +46,13 @@ export default function HospitalSpecialistsPage() {
     return (
         <div>
             <div className="mb-6">
-                <h1 className="text-2xl font-bold text-gray-900">Specialist Management</h1>
-                <p className="text-gray-500">View and manage hospital specialists</p>
+                <h1 className="text-2xl font-bold text-gray-900">Specialists</h1>
+                <p className="text-gray-500">
+                    Physicians at your hospital who have a specialization. Toggle their availability to signal capability to the routing algorithm.
+                </p>
             </div>
 
-            <SpecialistsTab specialists={specialists} onSpecialistUpdated={fetchSpecialists} />
+            <SpecialistsTab specialists={specialists} onUpdated={fetchSpecialists} />
         </div>
     );
 }
