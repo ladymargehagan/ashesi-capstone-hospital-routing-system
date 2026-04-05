@@ -32,6 +32,7 @@ DB_USER = os.getenv("DB_USER", "postgres")
 DB_PASS = os.getenv("DB_PASS", "Stacks4lyf")
 DB_HOST = os.getenv("DB_HOST", "localhost")
 DB_PORT = os.getenv("DB_PORT", "5432")
+DB_SSLMODE = os.getenv("DB_SSLMODE", "prefer")
 
 # Lazy-initialised connection pool (min 1, max 10)
 _pool: pool.SimpleConnectionPool | None = None
@@ -46,7 +47,7 @@ def _get_pool() -> pool.SimpleConnectionPool:
             _pool = pool.SimpleConnectionPool(
                 1, 10,
                 dbname=DB_NAME, user=DB_USER, password=DB_PASS,
-                host=DB_HOST, port=DB_PORT,
+                host=DB_HOST, port=DB_PORT, sslmode=DB_SSLMODE,
             )
     return _pool
 
