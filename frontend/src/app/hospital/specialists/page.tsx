@@ -13,7 +13,11 @@ export default function HospitalSpecialistsPage() {
     const [loading, setLoading] = useState(true);
 
     const fetchSpecialists = useCallback(() => {
-        if (!user?.hospital_id) return;
+        if (!user?.hospital_id) {
+            setLoading(false);
+            return;
+        }
+        setLoading(true);
         specialistsApi.list(user.hospital_id)
             .then((data) => setSpecialists(data as unknown as Specialist[]))
             .catch((err) => console.error('Failed to load specialists:', err))
