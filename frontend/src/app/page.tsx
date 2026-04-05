@@ -3,9 +3,9 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Activity, Shield, Clock, Users, ArrowRight, Stethoscope, Building2, FileText, Bell, MapPin } from 'lucide-react';
+import { Activity, Shield, Clock, Users, ArrowRight, Stethoscope, Building2, FileText, Bell, MapPin, Sun, Moon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { ForceLight } from '@/components/theme/force-light';
+import { useTheme } from '@/components/theme/theme-provider';
 
 const carouselImages = [
   '/images/doctor-1.png',
@@ -15,6 +15,7 @@ const carouselImages = [
 
 export default function LandingPage() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const { theme, toggleTheme } = useTheme();
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -24,17 +25,16 @@ export default function LandingPage() {
   }, []);
 
   return (
-    <div className="min-h-screen relative overflow-hidden bg-[#E8F1FF]">
-      <ForceLight />
+    <div className="min-h-screen relative overflow-hidden bg-[#E8F1FF] dark:bg-background">
       {/* Decorative medical dot pattern */}
-      <div className="absolute inset-0 z-0 bg-[radial-gradient(#116BF8_1.5px,transparent_1.5px)] [background-size:28px_28px] opacity-[0.06] pointer-events-none" />
-      
+      <div className="absolute inset-0 z-0 bg-[radial-gradient(#116BF8_1.5px,transparent_1.5px)] [background-size:28px_28px] opacity-[0.06] dark:opacity-[0.08] pointer-events-none" />
+
       {/* Ambient background glows */}
-      <div className="absolute top-[-10%] left-[20%] w-[800px] h-[800px] z-0 bg-white/70 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute top-[-10%] left-[20%] w-[800px] h-[800px] z-0 bg-white/70 dark:bg-primary/5 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute bottom-[20%] right-[-10%] w-[600px] h-[600px] z-0 bg-[#21BCEE]/10 rounded-full blur-[120px] pointer-events-none" />
 
       {/* ── Navigation ── */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/70 backdrop-blur-xl border-b border-white/50 shadow-sm">
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border shadow-sm">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center shadow-md">
@@ -49,7 +49,20 @@ export default function LandingPage() {
             <a href="#coverage" className="hover:text-primary transition-colors">Coverage</a>
             <a href="#how-it-works" className="hover:text-primary transition-colors">How It Works</a>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="rounded-full border-border bg-background/80"
+              onClick={toggleTheme}
+              aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+            >
+              {theme === 'dark'
+                ? <Sun className="h-4 w-4 text-amber-400" />
+                : <Moon className="h-4 w-4 text-slate-700" />
+              }
+            </Button>
             <Link href="/login">
               <Button variant="ghost" className="text-sm font-semibold text-foreground hover:text-primary">
                 Log In
@@ -69,7 +82,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             {/* Left: Elevated Card */}
-            <div className="bg-white p-10 md:p-14 rounded-3xl shadow-xl shadow-primary/5 border border-border">
+            <div className="bg-card p-10 md:p-14 rounded-3xl shadow-xl shadow-primary/5 border border-border">
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-foreground leading-[1.1]">
                 Smarter, Faster
                 <br />
@@ -80,7 +93,7 @@ export default function LandingPage() {
               <p className="mt-6 text-lg text-foreground/70 leading-relaxed">
                 The Hospital Routing System streamlines patient referrals across Greater Accra's healthcare network — ensuring the right patient reaches the right facility, without delay.
               </p>
-              
+
               <div className="mt-10 flex flex-col sm:flex-row items-center gap-4">
                 <Link href="/register" className="w-full sm:w-auto">
                   <Button size="lg" className="w-full text-base px-8 py-7 rounded-2xl bg-gradient-to-r from-secondary via-primary to-accent hover:opacity-90 transition-opacity shadow-lg shadow-primary/20 font-bold text-white group overflow-hidden relative">
@@ -131,11 +144,12 @@ export default function LandingPage() {
                     className="object-cover"
                     priority={index === 0}
                   />
-                  {/* Subtle gradient overlay to match premium aesthetic */}
-                  <div className="absolute inset-0 bg-gradient-to-tr from-secondary/60 mix-blend-multiply via-primary/30 to-transparent" />
+                  {/* Light mode: branded colour wash; dark mode: deep navy overlay so images integrate with the dark UI */}
+                  <div className="absolute inset-0 bg-gradient-to-tr from-secondary/60 mix-blend-multiply via-primary/30 to-transparent dark:hidden" />
+                  <div className="absolute inset-0 bg-gradient-to-tr from-slate-900/75 via-primary/20 to-transparent hidden dark:block" />
                 </div>
               ))}
-              
+
               {/* Carousel Indicators */}
               <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-3">
                 {carouselImages.map((_, idx) => (
@@ -155,10 +169,10 @@ export default function LandingPage() {
       </section>
 
       {/* ── Accra Map Section ── */}
-      <section id="coverage" className="py-24 bg-white relative overflow-hidden">
+      <section id="coverage" className="py-24 bg-background relative overflow-hidden">
         {/* Decorative Background Blob */}
         <div className="absolute top-0 right-0 -mr-40 -mt-40 w-[600px] h-[600px] bg-accent/10 rounded-full blur-[100px] pointer-events-none" />
-        
+
         <div className="max-w-[1400px] mx-auto px-6 relative z-10">
           <div className="grid lg:grid-cols-[1.5fr_1fr] gap-12 items-center">
             {/* Map Imagery */}
@@ -168,11 +182,11 @@ export default function LandingPage() {
                   src="/images/Ghanamap.svg"
                   alt="Accra City Map Base"
                   fill
-                  className="object-contain opacity-90 drop-shadow-md"
+                  className="object-contain opacity-90 drop-shadow-md dark:opacity-60 dark:brightness-75"
                 />
-                
+
                 {/* Header Overlay */}
-                <div className="absolute top-4 left-4 z-20 bg-white/40 backdrop-blur-md p-3 rounded-2xl border border-white/50">
+                <div className="absolute top-4 left-4 z-20 bg-background/60 backdrop-blur-md p-3 rounded-2xl border border-border">
                   <h3 className="text-xl md:text-3xl font-black text-secondary tracking-tight">ACCRA</h3>
                   <p className="text-primary font-bold tracking-widest text-[10px] md:text-xs">HOSPITAL NETWORK</p>
                 </div>
@@ -193,27 +207,27 @@ export default function LandingPage() {
                 <div className="absolute w-full h-full z-20 pointer-events-none">
                     <div className="absolute top-[62%] left-[26%] flex flex-col items-center -translate-x-1/2 -translate-y-1/2">
                         <div className="w-3 h-3 md:w-5 md:h-5 bg-primary rounded-full border-2 border-white shadow-lg flex items-center justify-center"><div className="w-1 h-1 md:w-2 md:h-2 bg-white rounded-full"></div></div>
-                        <span className="mt-1 text-[8px] md:text-[10px] font-bold text-secondary bg-white/90 px-1.5 py-0.5 rounded shadow-sm">Korle Bu Teaching</span>
+                        <span className="mt-1 text-[8px] md:text-[10px] font-bold text-secondary dark:text-foreground bg-background/90 px-1.5 py-0.5 rounded shadow-sm border border-border">Korle Bu Teaching</span>
                     </div>
-                    
+
                     <div className="absolute top-[45%] left-[40%] flex flex-col items-center -translate-x-1/2 -translate-y-1/2">
                         <div className="w-4 h-4 md:w-6 md:h-6 bg-secondary rounded-full border-2 border-white shadow-lg flex items-center justify-center"><div className="w-1.5 h-1.5 md:w-2.5 md:h-2.5 bg-primary rounded-full"></div></div>
-                        <span className="mt-1 text-[8px] md:text-[11px] font-extrabold text-primary bg-white/90 px-2 py-0.5 rounded shadow-sm border border-primary/20">Ridge Hospital</span>
+                        <span className="mt-1 text-[8px] md:text-[11px] font-extrabold text-primary bg-background/90 px-2 py-0.5 rounded shadow-sm border border-primary/20">Ridge Hospital</span>
                     </div>
-                    
+
                     <div className="absolute top-[60%] left-[53%] flex flex-col items-center -translate-x-1/2 -translate-y-1/2">
                         <div className="w-3 h-3 md:w-4 md:h-4 bg-primary rounded-full border-2 border-white shadow-lg flex items-center justify-center"><div className="w-1 h-1 md:w-1.5 md:h-1.5 bg-white rounded-full"></div></div>
-                        <span className="mt-1 text-[8px] md:text-[10px] font-bold text-secondary bg-white/90 px-1.5 py-0.5 rounded shadow-sm">37 Military</span>
+                        <span className="mt-1 text-[8px] md:text-[10px] font-bold text-secondary dark:text-foreground bg-background/90 px-1.5 py-0.5 rounded shadow-sm border border-border">37 Military</span>
                     </div>
-                    
+
                     <div className="absolute top-[52%] left-[68%] flex flex-col items-center -translate-x-1/2 -translate-y-1/2">
                         <div className="w-3 h-3 md:w-5 md:h-5 bg-primary rounded-full border-2 border-white shadow-lg flex items-center justify-center"><div className="w-1 h-1 md:w-2 md:h-2 bg-white rounded-full"></div></div>
-                        <span className="mt-1 text-[8px] md:text-[10px] font-bold text-secondary bg-white/90 px-1.5 py-0.5 rounded shadow-sm">La General</span>
+                        <span className="mt-1 text-[8px] md:text-[10px] font-bold text-secondary dark:text-foreground bg-background/90 px-1.5 py-0.5 rounded shadow-sm border border-border">La General</span>
                     </div>
-                    
+
                     <div className="absolute top-[78%] left-[60%] flex flex-col items-center -translate-x-1/2 -translate-y-1/2">
                         <div className="w-3 h-3 md:w-4 md:h-4 bg-primary rounded-full border-2 border-white shadow-lg flex items-center justify-center"><div className="w-1 h-1 md:w-1.5 md:h-1.5 bg-white rounded-full"></div></div>
-                        <span className="mt-1 text-[8px] md:text-[10px] font-bold text-secondary bg-white/90 px-1.5 py-0.5 rounded shadow-sm">LEKMA</span>
+                        <span className="mt-1 text-[8px] md:text-[10px] font-bold text-secondary dark:text-foreground bg-background/90 px-1.5 py-0.5 rounded shadow-sm border border-border">LEKMA</span>
                     </div>
                 </div>
             </div>
@@ -286,7 +300,7 @@ export default function LandingPage() {
             ].map((f, i) => (
                <div
                 key={i}
-                className="group bg-white rounded-3xl p-8 border border-border shadow-sm hover:shadow-xl hover:shadow-primary/5 transition-all duration-300 hover:-translate-y-1"
+                className="group bg-card rounded-3xl p-8 border border-border shadow-sm hover:shadow-xl hover:shadow-primary/5 transition-all duration-300 hover:-translate-y-1"
               >
                 <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-secondary via-primary to-accent flex items-center justify-center mb-6 shadow-lg shadow-primary/20">
                   <f.icon className="h-6 w-6 text-white" />
@@ -300,7 +314,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── How It Works ── */}
-      <section id="how-it-works" className="py-24 bg-white">
+      <section id="how-it-works" className="py-24 bg-background">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center max-w-2xl mx-auto mb-20">
             <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground">
@@ -314,7 +328,7 @@ export default function LandingPage() {
           <div className="grid md:grid-cols-3 gap-12 max-w-6xl mx-auto relative mt-16">
             {/* Connecting Line (Desktop) */}
             <div className="hidden md:block absolute top-[2.25rem] left-[15%] right-[15%] h-1 bg-gradient-to-r from-secondary via-primary to-accent opacity-30 rounded-full" />
-            
+
             {[
               {
                 step: '01',
@@ -335,8 +349,8 @@ export default function LandingPage() {
                 icon: Activity,
               },
             ].map((s, i) => (
-              <div key={i} className="relative z-10 bg-white p-8 rounded-3xl border border-border shadow-md shadow-primary/5 text-center transition-transform hover:-translate-y-2 group">
-                <div className="h-20 w-20 mx-auto rounded-full bg-gradient-to-br from-secondary/5 via-primary/10 to-accent/20 flex items-center justify-center mb-6 text-primary font-bold text-2xl border-4 border-white shadow-lg shadow-primary/10 group-hover:scale-110 transition-transform">
+              <div key={i} className="relative z-10 bg-card p-8 rounded-3xl border border-border shadow-md shadow-primary/5 text-center transition-transform hover:-translate-y-2 group">
+                <div className="h-20 w-20 mx-auto rounded-full bg-gradient-to-br from-secondary/5 via-primary/10 to-accent/20 flex items-center justify-center mb-6 text-primary font-bold text-2xl border-4 border-border shadow-lg shadow-primary/10 group-hover:scale-110 transition-transform">
                   {s.step}
                 </div>
                 <h3 className="text-xl font-extrabold text-foreground mb-3">{s.title}</h3>
@@ -348,7 +362,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── Footer ── */}
-      <footer className="bg-secondary pt-16 pb-8 border-t border-secondary/80">
+      <footer className="bg-secondary dark:bg-card pt-16 pb-8 border-t border-secondary/80 dark:border-border">
         <div className="max-w-7xl mx-auto px-6">
            <div className="grid md:grid-cols-2 gap-10 mb-12 items-center">
              <div>
@@ -356,20 +370,20 @@ export default function LandingPage() {
                   <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center">
                     <Activity className="h-6 w-6 text-white" />
                   </div>
-                  <span className="text-2xl font-bold tracking-tight text-white">
+                  <span className="text-2xl font-bold tracking-tight text-white dark:text-foreground">
                     HRS
                   </span>
                </div>
-               <p className="text-white/60 text-sm max-w-sm leading-relaxed">
+               <p className="text-white/60 dark:text-muted-foreground text-sm max-w-sm leading-relaxed">
                  A comprehensive software platform built for optimizing resource allocation and reducing referral latency across Greater Accra.
                </p>
              </div>
              <div className="flex md:justify-end">
              </div>
            </div>
-           
-          <div className="border-t border-white/10 pt-8 flex flex-col items-center justify-center">
-            <p className="text-white/40 text-sm font-medium tracking-wide">
+
+          <div className="border-t border-white/10 dark:border-border pt-8 flex flex-col items-center justify-center">
+            <p className="text-white/40 dark:text-muted-foreground text-sm font-medium tracking-wide">
               &copy; 2026 HRS
             </p>
           </div>

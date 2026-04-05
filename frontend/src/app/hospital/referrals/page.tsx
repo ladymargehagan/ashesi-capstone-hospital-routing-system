@@ -11,7 +11,6 @@ import { Referral } from '@/types';
 import { Search, FileText, Clock, CheckCircle, Loader2, Plus } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { VoiceReferralCard } from '@/components/referrals/voice-referral-card';
 
 export default function HospitalReferralsPage() {
     const { user } = useAuth();
@@ -66,15 +65,13 @@ export default function HospitalReferralsPage() {
                     <h1 className="text-2xl font-bold text-gray-900">Referral Management</h1>
                     <p className="text-gray-500">Review incoming referrals or create a new referral on behalf of your hospital team</p>
                 </div>
-                <Link href="/hospital/referrals/create?voice=1">
+                <Link href="/hospital/referrals/create">
                     <Button className="bg-primary hover:bg-secondary">
                         <Plus className="h-4 w-4 mr-2" />
                         New Referral
                     </Button>
                 </Link>
             </div>
-
-            <VoiceReferralCard className="mb-6" targetHref="/hospital/referrals/create?voice=1" />
 
             {/* Stats */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
