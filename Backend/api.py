@@ -58,10 +58,10 @@ app = FastAPI(
 )
 
 cors_origins = [
-    origin.strip()
+    origin.strip().rstrip('/')
     for origin in os.getenv(
         "CORS_ORIGINS",
-        "http://localhost:3000,http://127.0.0.1:3000"
+        "http://localhost:3000,http://127.0.0.1:3000,https://ashesi-capstone-hospital-routing-sy.vercel.app"
     ).split(",")
     if origin.strip()
 ]
