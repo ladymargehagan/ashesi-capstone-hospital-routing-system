@@ -43,6 +43,7 @@ export function PatientsTable({ patients }: PatientsTableProps) {
 
     return (
         <>
+            <div className="overflow-x-auto">
             <Table>
                 <TableHeader>
                     <TableRow>
@@ -83,6 +84,7 @@ export function PatientsTable({ patients }: PatientsTableProps) {
                     ))}
                 </TableBody>
             </Table>
+            </div>
 
             <PatientDetailsModal
                 patient={selectedPatient}

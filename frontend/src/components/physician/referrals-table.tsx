@@ -66,6 +66,7 @@ export function ReferralsTable({ referrals, onStatusChanged }: ReferralsTablePro
 
     return (
         <>
+            <div className="overflow-x-auto">
             <Table>
                 <TableHeader>
                     <TableRow>
@@ -120,6 +121,7 @@ export function ReferralsTable({ referrals, onStatusChanged }: ReferralsTablePro
                     )}
                 </TableBody>
             </Table>
+            </div>
 
             <ReferralDetailsModal
                 referral={selectedReferral}

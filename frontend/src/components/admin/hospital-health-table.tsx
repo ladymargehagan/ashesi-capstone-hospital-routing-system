@@ -35,6 +35,7 @@ export function HospitalHealthTable({ healthData }: HospitalHealthTableProps) {
     };
 
     return (
+        <div className="overflow-x-auto">
         <Table>
             <TableHeader>
                 <TableRow>
@@ -104,5 +105,6 @@ export function HospitalHealthTable({ healthData }: HospitalHealthTableProps) {
                 )}
             </TableBody>
         </Table>
+        </div>
     );
 }

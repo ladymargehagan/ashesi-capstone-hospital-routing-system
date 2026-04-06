@@ -91,12 +91,12 @@ export default function HospitalReferralsPage() {
             {/* Filters & Table */}
             <Card>
                 <CardHeader>
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
                         <div>
                             <CardTitle className="text-lg">Patient Referrals</CardTitle>
                             <CardDescription>{filteredReferrals.length} referrals found</CardDescription>
                         </div>
-                        <div className="relative w-64">
+                        <div className="relative w-full sm:w-64">
                             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                             <Input
                                 placeholder="Search referrals..."

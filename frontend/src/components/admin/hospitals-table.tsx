@@ -64,6 +64,7 @@ export function HospitalsTable({ hospitals, onStatusChanged }: HospitalsTablePro
         level.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
 
     return (
+        <div className="overflow-x-auto">
         <Table>
             <TableHeader>
                 <TableRow>
@@ -122,5 +123,6 @@ export function HospitalsTable({ hospitals, onStatusChanged }: HospitalsTablePro
                 )}
             </TableBody>
         </Table>
+        </div>
     );
 }

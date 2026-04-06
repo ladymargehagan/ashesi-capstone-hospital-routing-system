@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { Header } from '@/components/layout/header';
@@ -15,6 +15,7 @@ interface DashboardLayoutProps {
 export function DashboardLayout({ children, role }: DashboardLayoutProps) {
     const { user, loading } = useAuth();
     const router = useRouter();
+    const [sidebarOpen, setSidebarOpen] = useState(false);
 
     useEffect(() => {
         if (!loading && !user) {
@@ -36,10 +37,10 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
 
     return (
         <div className="min-h-screen bg-background">
-            <Header />
-            <Sidebar role={role} />
-            <main className="pt-16 pl-64">
-                <div className="p-6">
+            <Header onMenuClick={() => setSidebarOpen(prev => !prev)} />
+            <Sidebar role={role} isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+            <main className="pt-16 lg:pl-64">
+                <div className="p-4 sm:p-6">
                     {children}
                 </div>
             </main>

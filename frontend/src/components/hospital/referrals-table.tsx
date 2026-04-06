@@ -60,6 +60,7 @@ export function HospitalReferralsTable({ referrals, onStatusChanged }: HospitalR
 
     return (
         <>
+            <div className="overflow-x-auto">
             <Table>
                 <TableHeader>
                     <TableRow>
@@ -127,6 +128,7 @@ export function HospitalReferralsTable({ referrals, onStatusChanged }: HospitalR
                     )}
                 </TableBody>
             </Table>
+            </div>
 
             <ReferralDetailsModal
                 referral={selectedReferral}

@@ -67,7 +67,7 @@ export default function ReferralsPage() {
     return (
         <div>
             {/* Header */}
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex flex-wrap items-start justify-between gap-3 mb-6">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900">Referral Management</h1>
                     <p className="text-gray-500">Track outgoing referrals and manage patients assigned to you</p>

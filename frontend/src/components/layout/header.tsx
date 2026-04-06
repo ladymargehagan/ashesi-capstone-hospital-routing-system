@@ -14,10 +14,10 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { NotificationInboxPopover } from '@/components/ui/notification-inbox-popover';
-import { Building2, LogOut, Moon, Sun, User } from 'lucide-react';
+import { Building2, LogOut, Menu, Moon, Sun, User } from 'lucide-react';
 import { useTheme } from '@/components/theme/theme-provider';
 
-export function Header() {
+export function Header({ onMenuClick }: { onMenuClick?: () => void }) {
     const { user, logout } = useAuth();
     const router = useRouter();
     const { theme, toggleTheme } = useTheme();
@@ -48,17 +48,32 @@ export function Header() {
     return (
         <>
             <header className="fixed top-0 left-0 right-0 h-16 border-b border-border bg-card/95 backdrop-blur z-50">
-                <div className="flex items-center justify-between h-full px-6">
-                    {/* Logo */}
-                    <Link href="/" className="flex items-center gap-2">
-                        <div className="h-9 w-9 rounded-lg bg-primary flex items-center justify-center">
-                            <Building2 className="h-5 w-5 text-white" />
-                        </div>
-                        <div>
-                            <span className="font-semibold text-foreground">Healthcare Referral System</span>
-                            <p className="text-xs text-muted-foreground">Patient Referral Management Platform</p>
-                        </div>
-                    </Link>
+                <div className="flex items-center justify-between h-full px-4 sm:px-6">
+                    <div className="flex items-center gap-2">
+                        {/* Hamburger — mobile only */}
+                        {onMenuClick && (
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="lg:hidden -ml-1"
+                                onClick={onMenuClick}
+                                aria-label="Open navigation menu"
+                            >
+                                <Menu className="h-5 w-5" />
+                            </Button>
+                        )}
+                        {/* Logo */}
+                        <Link href="/" className="flex items-center gap-2">
+                            <div className="h-9 w-9 rounded-lg bg-primary flex items-center justify-center shrink-0">
+                                <Building2 className="h-5 w-5 text-white" />
+                            </div>
+                            <div className="hidden sm:block">
+                                <span className="font-semibold text-foreground">Healthcare Referral System</span>
+                                <p className="text-xs text-muted-foreground">Patient Referral Management Platform</p>
+                            </div>
+                        </Link>
+                    </div>
 
                     {/* Right side */}
                     <div className="flex items-center gap-4">

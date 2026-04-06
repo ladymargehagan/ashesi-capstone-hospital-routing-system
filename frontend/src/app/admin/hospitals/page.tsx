@@ -64,7 +64,7 @@ export default function HospitalsPage() {
                     <h1 className="text-2xl font-bold text-gray-900">Hospitals</h1>
                     <p className="text-gray-500">Manage hospitals in the network</p>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-3">
                     <Button
                         variant="outline"
                         onClick={() => setIsInviteModalOpen(true)}

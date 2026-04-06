@@ -109,6 +109,7 @@ export function PhysiciansTable({ physicians }: PhysiciansTableProps) {
                 </Select>
             </div>
 
+            <div className="overflow-x-auto">
             <Table>
             <TableHeader>
                 <TableRow>
@@ -151,6 +152,7 @@ export function PhysiciansTable({ physicians }: PhysiciansTableProps) {
                 )}
             </TableBody>
         </Table>
+        </div>
         </div>
     );
 }

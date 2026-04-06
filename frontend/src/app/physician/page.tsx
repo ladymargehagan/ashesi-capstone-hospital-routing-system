@@ -72,7 +72,7 @@ export default function PhysicianDashboard() {
     return (
         <div>
             {/* Header */}
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex flex-wrap items-start justify-between gap-3 mb-6">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900">Physician Dashboard</h1>
                     <p className="text-gray-500">{user?.full_name}</p>
