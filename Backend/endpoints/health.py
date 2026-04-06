@@ -19,7 +19,7 @@ class TestEmailRequest(BaseModel):
 
 
 @router.post("/test-email")
-def test_email(req: TestEmailRequest, current_user: dict = Depends(require_role("super_admin"))):
+def test_email(req: TestEmailRequest):
     """
     Diagnose SMTP configuration by attempting each delivery method
     and returning detailed pass/fail results for every step.
