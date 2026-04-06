@@ -8,6 +8,7 @@ don't need separate patient fetches.
 from __future__ import annotations
 
 import os
+import traceback
 from pathlib import Path
 
 from fastapi import APIRouter, HTTPException, UploadFile, File, Depends
@@ -123,12 +124,16 @@ def create_referral(
     current_user: dict = Depends(require_role("physician", "hospital_admin")),
 ):
     """Create a referral."""
-    # Convert the validated Pydantic model into a plain dictionary 
-    # to pass down to the controller logic.
-    result = process_create_referral(req.model_dump(), current_user)
-    if result.get("error"):
-        raise HTTPException(status_code=result.get("code", 400), detail=result["message"])
-    return result
+    try:
+        result = process_create_referral(req.model_dump(), current_user)
+        if result.get("error"):
+            raise HTTPException(status_code=result.get("code", 400), detail=result["message"])
+        return result
+    except HTTPException:
+        raise
+    except Exception as exc:
+        print(f"[ERROR] create_referral unhandled exception:\n{traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=f"Referral creation failed: {exc}")
 
 
 @router.put("/{referral_id}/status")
@@ -141,16 +146,22 @@ def update_referral_status(
     if req.status in ["approved", "rejected"] and current_user.get("role") == "physician":
         raise HTTPException(status_code=403, detail="Physicians cannot approve or reject referrals.")
 
-    result = modify_referral_status(
-        referral_id,
-        req.status,
-        reason=req.reason,
-        outcome=req.outcome,
-        outcome_notes=req.outcome_notes,
-    )
-    if result.get("error"):
-        raise HTTPException(status_code=result.get("code", 400), detail=result["message"])
-    return result
+    try:
+        result = modify_referral_status(
+            referral_id,
+            req.status,
+            reason=req.reason,
+            outcome=req.outcome,
+            outcome_notes=req.outcome_notes,
+        )
+        if result.get("error"):
+            raise HTTPException(status_code=result.get("code", 400), detail=result["message"])
+        return result
+    except HTTPException:
+        raise
+    except Exception as exc:
+        print(f"[ERROR] update_referral_status unhandled exception:\n{traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=f"Status update failed: {exc}")
 
 
 # ---- attachment routes ----
