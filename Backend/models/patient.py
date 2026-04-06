@@ -66,18 +66,19 @@ def insert_patient(
     next_of_kin_name: Optional[str] = None,
     next_of_kin_contact: Optional[str] = None,
 ) -> int:
+    full_name = f"{first_name} {last_name}".strip()
     with db_cursor() as cur:
         cur.execute(
             """
             INSERT INTO patients
-                (physician_id, patient_identifier, first_name, last_name,
+                (physician_id, patient_identifier, full_name, first_name, last_name,
                  date_of_birth, sex, nhis_number, nhis_status, contact_number,
                  address, next_of_kin_name, next_of_kin_contact)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING patient_id
             """,
             (physician_id, patient_identifier,
-             first_name, last_name, date_of_birth, sex, nhis_number,
+             full_name, first_name, last_name, date_of_birth, sex, nhis_number,
              nhis_status, contact_number, address,
              next_of_kin_name, next_of_kin_contact),
         )
