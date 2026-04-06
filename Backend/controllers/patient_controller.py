@@ -39,11 +39,20 @@ def get_patient_details(patient_id: int) -> Optional[dict]:
 
 def create_new_patient(data: dict) -> dict:
     """Validate data and insert a new patient."""
+    # Support both split first_name/last_name and a combined full_name
+    first_name = data.get("first_name") or ""
+    last_name = data.get("last_name") or ""
+    if not first_name and not last_name:
+        full_name = (data.get("full_name") or "").strip()
+        parts = full_name.rsplit(" ", 1)
+        first_name = parts[0] if parts else full_name
+        last_name = parts[1] if len(parts) > 1 else ""
+
     patient_id = insert_patient(
         physician_id=data["physician_id"],
         patient_identifier=data["patient_identifier"],
-        first_name=data["first_name"],
-        last_name=data["last_name"],
+        first_name=first_name,
+        last_name=last_name,
         date_of_birth=data.get("date_of_birth"),
         sex=data.get("sex"),
         nhis_number=data.get("nhis_number"),
