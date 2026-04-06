@@ -19,8 +19,11 @@ from dotenv import load_dotenv
 load_dotenv()  # reads Backend/.env
 from typing import Optional
 
-from fastapi import FastAPI, HTTPException
+import traceback
+
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
 from services.referral_engine import (
@@ -73,6 +76,22 @@ app.add_middleware(
     allow_headers=["*"],
     allow_credentials=True,
 )
+
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    """
+    Catch-all for unhandled exceptions.
+    Without this, Starlette's CORSMiddleware does not add CORS headers to
+    raw 500 responses, causing the browser to report a CORS error instead of
+    the actual server error.
+    """
+    print(f"[ERROR] Unhandled {type(exc).__name__} on {request.method} {request.url}:\n{traceback.format_exc()}")
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal server error. Check server logs for details."},
+    )
+
 
 # Mount route modules
 app.include_router(auth_router)

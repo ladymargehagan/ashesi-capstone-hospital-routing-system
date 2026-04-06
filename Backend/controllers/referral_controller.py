@@ -324,26 +324,33 @@ def process_create_referral(req_data: dict, actor_user: dict | None = None) -> d
 
     routing_metadata_json = json.dumps(res.get("recommendations", []))
 
-    referral_id = insert_referral(
-        req_data["patient_id"], req_data["referring_physician_id"], req_data["referring_hospital_id"],
-        req_data["receiving_hospital_id"], req_data["severity"], req_data["stability"],
-        req_data["referral_reason"], req_data.get("estimated_arrival_minutes"), json.dumps(routing_queue),
-        urgency_level=req_data.get("urgency_level", "routine"),
-        known_allergies=req_data.get("known_allergies"),
-        pre_existing_conditions=req_data.get("pre_existing_conditions"),
-        incident_lat=req_data.get("incident_lat"), incident_lon=req_data.get("incident_lon"),
-        routing_metadata=routing_metadata_json
-    )
+    try:
+        referral_id = insert_referral(
+            req_data["patient_id"], req_data["referring_physician_id"], req_data["referring_hospital_id"],
+            req_data["receiving_hospital_id"], req_data["severity"], req_data["stability"],
+            req_data["referral_reason"], req_data.get("estimated_arrival_minutes"), json.dumps(routing_queue),
+            urgency_level=req_data.get("urgency_level", "routine"),
+            known_allergies=req_data.get("known_allergies"),
+            pre_existing_conditions=req_data.get("pre_existing_conditions"),
+            incident_lat=req_data.get("incident_lat"), incident_lon=req_data.get("incident_lon"),
+            routing_metadata=routing_metadata_json
+        )
+    except Exception as e:
+        print(f"[ERROR] insert_referral failed: {type(e).__name__}: {e}")
+        return {"error": True, "code": 500, "message": f"Failed to save referral: {e}"}
 
-    vitals_json = json.dumps(req_data["vital_signs"]) if req_data.get("vital_signs") else None
-
-    insert_referral_details(
-        referral_id, req_data["presenting_complaint"], req_data.get("clinical_history"),
-        req_data.get("initial_diagnosis"), req_data.get("current_condition"), req_data.get("clinical_summary"),
-        req_data.get("examination_findings"), req_data.get("working_diagnosis"), req_data.get("reason_for_referral"),
-        req_data.get("investigations_done"), req_data.get("treatment_given"), req_data.get("additional_notes"),
-        req_data.get("required_specialist"), req_data.get("required_facility"), vitals_json
-    )
+    try:
+        vitals_json = json.dumps(req_data["vital_signs"]) if req_data.get("vital_signs") else None
+        insert_referral_details(
+            referral_id, req_data["presenting_complaint"], req_data.get("clinical_history"),
+            req_data.get("initial_diagnosis"), req_data.get("current_condition"), req_data.get("clinical_summary"),
+            req_data.get("examination_findings"), req_data.get("working_diagnosis"), req_data.get("reason_for_referral"),
+            req_data.get("investigations_done"), req_data.get("treatment_given"), req_data.get("additional_notes"),
+            req_data.get("required_specialist"), req_data.get("required_facility"), vitals_json
+        )
+    except Exception as e:
+        print(f"[ERROR] insert_referral_details failed for referral {referral_id}: {type(e).__name__}: {e}")
+        return {"error": True, "code": 500, "message": f"Referral saved but details failed: {e}"}
 
     try:
         p = fetch_patient_by_id(req_data["patient_id"])
