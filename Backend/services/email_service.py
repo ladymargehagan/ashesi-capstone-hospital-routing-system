@@ -58,6 +58,10 @@ def send_email(to_email: str, subject: str, html_body: str) -> bool:
     Send an HTML email. Returns True on success, False on failure.
     Reads SMTP config fresh from env each call so that config changes
     after module import are picked up (important on Render).
+
+    Always tries SSL on port 465 first — port 587 (STARTTLS) is blocked
+    on Render's hosting infrastructure. Falls back to STARTTLS on 587
+    only if 465 explicitly fails, so local development still works.
     """
     smtp_host, smtp_port, smtp_user, smtp_password, smtp_from = _get_smtp_config()
 
@@ -79,29 +83,27 @@ def send_email(to_email: str, subject: str, html_body: str) -> bool:
         msg.attach(MIMEText(plain_text, "plain"))
         msg.attach(MIMEText(html_body, "html"))
 
-        print(f"[EMAIL] Connecting to {smtp_host}:{smtp_port} as {smtp_user}...")
-
-        # Try SSL on port 465 first (works on Render where port 587 is blocked),
-        # fall back to STARTTLS on 587
-        if smtp_port == 465:
-            with smtplib.SMTP_SSL(smtp_host, smtp_port, timeout=10) as server:
+        def _send_ssl(port: int):
+            print(f"[EMAIL] Trying SSL on {smtp_host}:{port}...")
+            with smtplib.SMTP_SSL(smtp_host, port, timeout=10) as server:
                 server.login(smtp_user, smtp_password)
                 server.sendmail(smtp_user, to_email, msg.as_string())
-        else:
-            try:
-                with smtplib.SMTP(smtp_host, smtp_port, timeout=10) as server:
-                    server.starttls()
-                    server.login(smtp_user, smtp_password)
-                    server.sendmail(smtp_user, to_email, msg.as_string())
-            except OSError as e:
-                if "Network is unreachable" in str(e) or e.errno == 101:
-                    # Port 587 blocked (common on Render free tier) — retry with SSL on 465
-                    print(f"[EMAIL] Port {smtp_port} blocked, retrying with SSL on 465...")
-                    with smtplib.SMTP_SSL(smtp_host, 465, timeout=10) as server:
-                        server.login(smtp_user, smtp_password)
-                        server.sendmail(smtp_user, to_email, msg.as_string())
-                else:
-                    raise
+
+        def _send_starttls(port: int):
+            print(f"[EMAIL] Trying STARTTLS on {smtp_host}:{port}...")
+            with smtplib.SMTP(smtp_host, port, timeout=10) as server:
+                server.starttls()
+                server.login(smtp_user, smtp_password)
+                server.sendmail(smtp_user, to_email, msg.as_string())
+
+        # Always try 465/SSL first — reliable on Render and Gmail.
+        # Fall back to the configured port via STARTTLS (useful for local dev on 587).
+        try:
+            _send_ssl(465)
+        except Exception as ssl_err:
+            fallback_port = smtp_port if smtp_port != 465 else 587
+            print(f"[EMAIL] SSL/465 failed ({type(ssl_err).__name__}: {ssl_err}), retrying STARTTLS on {fallback_port}...")
+            _send_starttls(fallback_port)
 
         print(f"[EMAIL] Sent: {subject} → {to_email}")
         return True
