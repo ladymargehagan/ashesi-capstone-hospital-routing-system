@@ -178,7 +178,7 @@ class TestValidation:
         assert r.status_code == 422
 
     def test_update_user_status_missing_status(self):
-        _override_user(FAKE_SUPER_ADMIN)
+        _override_user(FAKE_HOSPITAL_ADMIN)
         r = client.put("/api/users/1/status", json={})
         assert r.status_code == 422
 

@@ -14,7 +14,8 @@ def test_valid_registration():
     """A complete valid payload should succeed."""
     req = DoctorRegisterRequest(
         auth_uid="550e8400-e29b-41d4-a716-446655440000",
-        full_name="Test Doctor",
+        first_name="Test",
+        last_name="Doctor",
         email="test@hrs.gh",
         phone_number="0501234567",
         hospital_id=1,
@@ -28,7 +29,8 @@ def test_missing_auth_uid():
     """auth_uid is required (from Supabase signup)."""
     with pytest.raises(ValidationError) as exc:
         DoctorRegisterRequest(
-            full_name="Test Doctor",
+            first_name="Test",
+            last_name="Doctor",
             email="test@hrs.gh",
             hospital_id=1,
             license_number="MDC-123",
@@ -37,6 +39,7 @@ def test_missing_auth_uid():
 
 
 def test_missing_full_name():
+    """first_name and last_name are both required."""
     with pytest.raises(ValidationError):
         DoctorRegisterRequest(
             auth_uid="550e8400-e29b-41d4-a716-446655440000",
@@ -50,7 +53,8 @@ def test_missing_license_number():
     with pytest.raises(ValidationError):
         DoctorRegisterRequest(
             auth_uid="550e8400-e29b-41d4-a716-446655440000",
-            full_name="Test Doctor",
+            first_name="Test",
+            last_name="Doctor",
             email="test@hrs.gh",
             hospital_id=1,
         )
@@ -59,7 +63,8 @@ def test_missing_license_number():
 def test_email_validation():
     base_data = {
         "auth_uid": "550e8400-e29b-41d4-a716-446655440000",
-        "full_name": "Test Doctor",
+        "first_name": "Test",
+        "last_name": "Doctor",
         "hospital_id": 1,
         "license_number": "MDC-123",
     }
@@ -80,7 +85,8 @@ def test_optional_fields_default_to_none():
     """phone_number, title, specialization, department, grade are optional."""
     req = DoctorRegisterRequest(
         auth_uid="550e8400-e29b-41d4-a716-446655440000",
-        full_name="Test Doctor",
+        first_name="Test",
+        last_name="Doctor",
         email="test@hrs.gh",
         hospital_id=1,
         license_number="MDC-123",
