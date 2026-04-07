@@ -45,6 +45,7 @@ ghs_facilities.csv
 seed_production.py
 Backend/seed_production.py
 Backend/seed_demo.py
+Backend/seed_specialists.py
 
 # Custom Reports
 system_architecture_report.md
