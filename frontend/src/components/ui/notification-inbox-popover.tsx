@@ -95,7 +95,7 @@ function NotificationRow({ notification: n, onMarkRead }: NotificationRowProps) 
         !n.is_read ? "bg-[#C4D8E5]/30/60" : ""
       }`}
     >
-      <div className={`mt-0.5 shrink-0 ${meta.color}`}>
+      <div className={`mt-0.5 shrink-0 ${meta.color}`} aria-hidden="true">
         <Icon size={17} />
       </div>
       <div className="min-w-0 flex-1">
@@ -107,7 +107,7 @@ function NotificationRow({ notification: n, onMarkRead }: NotificationRowProps) 
         </p>
       </div>
       {!n.is_read && (
-        <span className="mt-2 size-2 shrink-0 rounded-full bg-[#C4D8E5]/300" />
+        <span className="mt-2 size-2 shrink-0 rounded-full bg-[#C4D8E5]/300" aria-label="Unread" />
       )}
     </button>
   );

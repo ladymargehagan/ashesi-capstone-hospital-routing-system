@@ -112,6 +112,7 @@ export function ReferralsTable({ referrals, onStatusChanged }: ReferralsTablePro
                                         variant="ghost"
                                         size="sm"
                                         onClick={() => setSelectedReferral(referral)}
+                                        aria-label={`View referral details for ${referral.patient_name}`}
                                     >
                                         <Eye className="h-4 w-4" />
                                     </Button>

@@ -142,6 +142,11 @@ function RegisterForm() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        // Step 1 of doctor registration — advance to step 2 via form submit
+        if (step === 1) {
+            handleNextStep();
+            return;
+        }
         if (!isAdminInvite && !hospitalId) {
             setError('Please select your hospital');
             return;
@@ -371,38 +376,38 @@ function RegisterForm() {
                                 <div className="space-y-4">
                                     <div className="grid grid-cols-2 gap-3">
                                         <div className="space-y-2">
-                                            <Label htmlFor="firstName">First Name *</Label>
-                                            <Input id="firstName" placeholder="Kwame" value={firstName} onChange={(e) => setFirstName(e.target.value)} className="h-11" />
+                                            <Label htmlFor="adminFirstName">First Name *</Label>
+                                            <Input id="adminFirstName" autoComplete="given-name" placeholder="Kwame" value={firstName} onChange={(e) => setFirstName(e.target.value)} className="h-11" />
                                         </div>
                                         <div className="space-y-2">
-                                            <Label htmlFor="lastName">Last Name *</Label>
-                                            <Input id="lastName" placeholder="Mensah" value={lastName} onChange={(e) => setLastName(e.target.value)} className="h-11" />
+                                            <Label htmlFor="adminLastName">Last Name *</Label>
+                                            <Input id="adminLastName" autoComplete="family-name" placeholder="Mensah" value={lastName} onChange={(e) => setLastName(e.target.value)} className="h-11" />
                                         </div>
                                     </div>
                                     {nameError && <p className="text-xs text-red-500">{nameError}</p>}
 
                                     <div className="space-y-2">
-                                        <Label htmlFor="regEmail">Email Address</Label>
-                                        <Input id="regEmail" type="email" value={email} disabled className="h-11 bg-slate-100 text-slate-500" />
+                                        <Label htmlFor="adminEmail">Email Address</Label>
+                                        <Input id="adminEmail" type="email" autoComplete="email" value={email} disabled className="h-11 bg-slate-100 text-slate-500" />
                                         <p className="text-xs text-slate-400">Set by your invitation — cannot be changed</p>
                                     </div>
 
                                     <div className="space-y-2">
-                                        <Label htmlFor="phone">Phone Number</Label>
-                                        <Input id="phone" placeholder="+233 24 123 4567" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} className="h-11" />
+                                        <Label htmlFor="adminPhone">Phone Number</Label>
+                                        <Input id="adminPhone" autoComplete="tel" placeholder="+233 24 123 4567" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} className="h-11" />
                                     </div>
 
                                     <div className="grid grid-cols-2 gap-3">
                                         <div className="space-y-2">
-                                            <Label htmlFor="regPassword">Password *</Label>
-                                            <Input id="regPassword" type="password" placeholder="Min 8 chars, 1 uppercase, 1 special char" value={password} onChange={(e) => { setPassword(e.target.value); setPasswordError(''); }} className={`h-11 ${passwordError ? 'border-red-500' : ''}`} />
+                                            <Label htmlFor="adminPassword">Password *</Label>
+                                            <Input id="adminPassword" type="password" autoComplete="new-password" placeholder="Min 8 chars, 1 uppercase, 1 special char" value={password} onChange={(e) => { setPassword(e.target.value); setPasswordError(''); }} className={`h-11 ${passwordError ? 'border-red-500' : ''}`} />
                                             <p className="text-[10px] text-slate-500 leading-tight">
                                                 Required: Minimum 8 characters, 1 uppercase, 1 lowercase, 1 number, and 1 special character.
                                             </p>
                                         </div>
                                         <div className="space-y-2">
-                                            <Label htmlFor="confirm">Confirm Password *</Label>
-                                            <Input id="confirm" type="password" placeholder="Repeat password" value={confirmPassword} onChange={(e) => { setConfirmPassword(e.target.value); setPasswordError(''); }} className={`h-11 ${passwordError ? 'border-red-500' : ''}`} />
+                                            <Label htmlFor="adminConfirm">Confirm Password *</Label>
+                                            <Input id="adminConfirm" type="password" autoComplete="new-password" placeholder="Repeat password" value={confirmPassword} onChange={(e) => { setConfirmPassword(e.target.value); setPasswordError(''); }} className={`h-11 ${passwordError ? 'border-red-500' : ''}`} />
                                         </div>
                                     </div>
                                     {passwordError && <p className="text-xs text-red-500">{passwordError}</p>}
@@ -514,17 +519,17 @@ function RegisterForm() {
                                         <div className="grid grid-cols-2 gap-3">
                                             <div className="space-y-2">
                                                 <Label htmlFor="firstName">First Name *</Label>
-                                                <Input id="firstName" placeholder="Kwame" value={firstName} onChange={(e) => setFirstName(e.target.value)} required className="h-11" />
+                                                <Input id="firstName" autoComplete="given-name" placeholder="Kwame" value={firstName} onChange={(e) => setFirstName(e.target.value)} required className="h-11" />
                                             </div>
                                             <div className="space-y-2">
                                                 <Label htmlFor="lastName">Last Name *</Label>
-                                                <Input id="lastName" placeholder="Mensah" value={lastName} onChange={(e) => setLastName(e.target.value)} required className="h-11" />
+                                                <Input id="lastName" autoComplete="family-name" placeholder="Mensah" value={lastName} onChange={(e) => setLastName(e.target.value)} required className="h-11" />
                                             </div>
                                         </div>
                                         {nameError && <p className="text-xs text-red-500">{nameError}</p>}
                                         <div className="space-y-2">
                                             <Label htmlFor="regEmail">Email Address *</Label>
-                                            <Input id="regEmail" type="email" placeholder="kwame.mensah@hospital.gov.gh" value={email} onChange={(e) => { setEmail(e.target.value); setEmailError(''); }} required className={`h-11 ${emailError ? 'border-red-500' : ''}`} />
+                                            <Input id="regEmail" type="email" autoComplete="email" placeholder="kwame.mensah@hospital.gov.gh" value={email} onChange={(e) => { setEmail(e.target.value); setEmailError(''); }} required className={`h-11 ${emailError ? 'border-red-500' : ''}`} />
                                             {emailError && <p className="text-xs text-red-500">{emailError}</p>}
                                         </div>
                                         <div className="space-y-2">
@@ -534,20 +539,19 @@ function RegisterForm() {
                                         <div className="grid grid-cols-2 gap-3">
                                             <div className="space-y-2">
                                                 <Label htmlFor="regPassword">Password *</Label>
-                                                <Input id="regPassword" type="password" placeholder="Min 8 chars, 1 uppercase, 1 special char" value={password} onChange={(e) => { setPassword(e.target.value); setPasswordError(''); }} required className={`h-11 ${passwordError ? 'border-red-500' : ''}`} />
+                                                <Input id="regPassword" type="password" autoComplete="new-password" placeholder="Min 8 chars, 1 uppercase, 1 special char" value={password} onChange={(e) => { setPassword(e.target.value); setPasswordError(''); }} required className={`h-11 ${passwordError ? 'border-red-500' : ''}`} />
                                                 <p className="text-[10px] text-slate-500 leading-tight">
                                                     Required: Minimum 8 characters, 1 uppercase, 1 lowercase, 1 number, and 1 special character.
                                                 </p>
                                             </div>
                                             <div className="space-y-2">
                                                 <Label htmlFor="confirm">Confirm Password *</Label>
-                                                <Input id="confirm" type="password" placeholder="Repeat password" value={confirmPassword} onChange={(e) => { setConfirmPassword(e.target.value); setPasswordError(''); }} required className={`h-11 ${passwordError ? 'border-red-500' : ''}`} />
+                                                <Input id="confirm" type="password" autoComplete="new-password" placeholder="Repeat password" value={confirmPassword} onChange={(e) => { setConfirmPassword(e.target.value); setPasswordError(''); }} required className={`h-11 ${passwordError ? 'border-red-500' : ''}`} />
                                             </div>
                                         </div>
                                         {passwordError && <p className="text-xs text-red-500">{passwordError}</p>}
                                         <Button
-                                            type="button"
-                                            onClick={handleNextStep}
+                                            type="submit"
                                             className="w-full h-11 rounded-xl bg-gradient-to-r from-primary to-secondary/80 hover:from-secondary hover:to-secondary shadow-md shadow-primary/20/50 font-semibold mt-2"
                                         >
                                             Continue to Professional Info
@@ -559,12 +563,15 @@ function RegisterForm() {
                                     <>
                                         {/* Hospital selection with search */}
                                         <div className="space-y-2">
-                                            <Label>Select Your Hospital *</Label>
+                                            <Label htmlFor="hospitalSearch">Select Your Hospital *</Label>
                                             <Input
+                                                id="hospitalSearch"
                                                 placeholder="Search hospitals..."
                                                 value={hospitalSearch}
                                                 onChange={(e) => setHospitalSearch(e.target.value)}
                                                 className="h-11"
+                                                aria-autocomplete="list"
+                                                aria-haspopup="listbox"
                                             />
                                             <div className="max-h-40 overflow-y-auto border border-slate-200 rounded-xl bg-white">
                                                 {filteredHospitals.length === 0 ? (

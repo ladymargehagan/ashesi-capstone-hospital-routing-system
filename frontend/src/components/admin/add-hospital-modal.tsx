@@ -105,7 +105,7 @@ export function AddHospitalModal({ open, onClose, onAdded }: AddHospitalModalPro
                                     value={`${window.location.origin}/register?invite=${successData.invite_token}`} 
                                     className="bg-white font-mono text-xs"
                                 />
-                                <Button size="icon" variant="outline" onClick={handleCopy}>
+                                <Button size="icon" variant="outline" onClick={handleCopy} aria-label="Copy invite link">
                                     {copied ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4 text-gray-600" />}
                                 </Button>
                             </div>
@@ -133,21 +133,23 @@ export function AddHospitalModal({ open, onClose, onAdded }: AddHospitalModalPro
                 <form onSubmit={handleSubmit} className="space-y-6 py-4">
                     <div className="space-y-4">
                         <div>
-                            <Label>Hospital Name <span className="text-red-500">*</span></Label>
-                            <Input 
-                                required 
-                                value={formData.name} 
-                                onChange={e => setFormData({...formData, name: e.target.value})} 
+                            <Label htmlFor="hosp-name">Hospital Name <span className="text-red-500">*</span></Label>
+                            <Input
+                                id="hosp-name"
+                                required
+                                value={formData.name}
+                                onChange={e => setFormData({...formData, name: e.target.value})}
                                 placeholder="E.g., Korle-Bu Teaching Hospital"
                             />
                         </div>
-                        
+
                         <div>
-                            <Label>Street Address <span className="text-red-500">*</span></Label>
-                            <Input 
-                                required 
-                                value={formData.address} 
-                                onChange={e => setFormData({...formData, address: e.target.value})} 
+                            <Label htmlFor="hosp-address">Street Address <span className="text-red-500">*</span></Label>
+                            <Input
+                                id="hosp-address"
+                                required
+                                value={formData.address}
+                                onChange={e => setFormData({...formData, address: e.target.value})}
                                 placeholder="E.g., 1 Guggisberg Ave, Accra"
                             />
                             <p className="text-xs text-gray-500 mt-1">Address will be dynamically geocoded to place the hospital on the map.</p>
@@ -155,9 +157,9 @@ export function AddHospitalModal({ open, onClose, onAdded }: AddHospitalModalPro
 
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <Label>Facility Level</Label>
+                                <Label htmlFor="hosp-level">Facility Level</Label>
                                 <Select value={formData.level} onValueChange={v => setFormData({...formData, level: v})}>
-                                    <SelectTrigger>
+                                    <SelectTrigger id="hosp-level">
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -171,9 +173,9 @@ export function AddHospitalModal({ open, onClose, onAdded }: AddHospitalModalPro
                                 </Select>
                             </div>
                             <div>
-                                <Label>Ownership</Label>
+                                <Label htmlFor="hosp-ownership">Ownership</Label>
                                 <Select value={formData.ownership} onValueChange={v => setFormData({...formData, ownership: v})}>
-                                    <SelectTrigger>
+                                    <SelectTrigger id="hosp-ownership">
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -186,11 +188,12 @@ export function AddHospitalModal({ open, onClose, onAdded }: AddHospitalModalPro
                                 </Select>
                             </div>
                             <div>
-                                <Label>Admin Email (Optional via form)</Label>
-                                <Input 
-                                    type="email" 
-                                    value={formData.admin_email} 
-                                    onChange={e => setFormData({...formData, admin_email: e.target.value})} 
+                                <Label htmlFor="hosp-admin-email">Admin Email (Optional via form)</Label>
+                                <Input
+                                    id="hosp-admin-email"
+                                    type="email"
+                                    value={formData.admin_email}
+                                    onChange={e => setFormData({...formData, admin_email: e.target.value})}
                                     placeholder="admin@hospital.com"
                                 />
                             </div>
@@ -198,43 +201,47 @@ export function AddHospitalModal({ open, onClose, onAdded }: AddHospitalModalPro
 
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <Label>Contact Phone <span className="text-red-500">*</span></Label>
-                                <Input 
-                                    required 
-                                    value={formData.contact_phone} 
-                                    onChange={e => setFormData({...formData, contact_phone: e.target.value})} 
+                                <Label htmlFor="hosp-phone">Contact Phone <span className="text-red-500">*</span></Label>
+                                <Input
+                                    id="hosp-phone"
+                                    required
+                                    value={formData.contact_phone}
+                                    onChange={e => setFormData({...formData, contact_phone: e.target.value})}
                                     placeholder="+233..."
                                 />
                             </div>
                             <div>
-                                <Label>General Email</Label>
-                                <Input 
-                                    type="email" 
-                                    value={formData.email} 
-                                    onChange={e => setFormData({...formData, email: e.target.value})} 
+                                <Label htmlFor="hosp-email">General Email</Label>
+                                <Input
+                                    id="hosp-email"
+                                    type="email"
+                                    value={formData.email}
+                                    onChange={e => setFormData({...formData, email: e.target.value})}
                                 />
                             </div>
                         </div>
 
                         <div className="border bg-slate-50 p-4 rounded-lg space-y-4">
-                            <Label className="text-slate-800">Initial Capacity Data</Label>
+                            <p className="text-slate-800 text-sm font-medium">Initial Capacity Data</p>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <Label className="text-xs">General Beds</Label>
-                                    <Input 
-                                        type="number" 
+                                    <Label htmlFor="hosp-general-beds" className="text-xs">General Beds</Label>
+                                    <Input
+                                        id="hosp-general-beds"
+                                        type="number"
                                         min="0"
-                                        value={formData.general_beds} 
-                                        onChange={e => setFormData({...formData, general_beds: parseInt(e.target.value) || 0})} 
+                                        value={formData.general_beds}
+                                        onChange={e => setFormData({...formData, general_beds: parseInt(e.target.value) || 0})}
                                     />
                                 </div>
                                 <div>
-                                    <Label className="text-xs">ICU Beds</Label>
-                                    <Input 
-                                        type="number" 
+                                    <Label htmlFor="hosp-icu-beds" className="text-xs">ICU Beds</Label>
+                                    <Input
+                                        id="hosp-icu-beds"
+                                        type="number"
                                         min="0"
-                                        value={formData.icu_beds} 
-                                        onChange={e => setFormData({...formData, icu_beds: parseInt(e.target.value) || 0})} 
+                                        value={formData.icu_beds}
+                                        onChange={e => setFormData({...formData, icu_beds: parseInt(e.target.value) || 0})}
                                     />
                                 </div>
                             </div>

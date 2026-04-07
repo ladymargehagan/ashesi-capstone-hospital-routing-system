@@ -70,6 +70,7 @@ export function PatientsTable({ patients }: PatientsTableProps) {
                                         size="sm"
                                         className="text-gray-600 hover:text-primary"
                                         onClick={() => setSelectedPatient(patient)}
+                                        aria-label={`View details for ${patient.full_name}`}
                                     >
                                         <Eye className="h-4 w-4" />
                                     </Button>

@@ -156,8 +156,10 @@ export default function AdminDashboard() {
                                 </Button>
                             )}
                             <div className="relative w-64">
-                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" aria-hidden="true" />
+                                <label htmlFor="admin-search" className="sr-only">Search hospitals and physicians</label>
                                 <Input
+                                    id="admin-search"
                                     placeholder="Search..."
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}

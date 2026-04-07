@@ -78,6 +78,10 @@ export function Sidebar({ role, isOpen = false, onClose }: SidebarProps) {
                 <div
                     className="fixed inset-0 z-30 bg-black/40 lg:hidden"
                     onClick={onClose}
+                    role="button"
+                    tabIndex={0}
+                    aria-label="Close navigation menu"
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onClose?.(); }}
                 />
             )}
 

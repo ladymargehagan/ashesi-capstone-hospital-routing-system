@@ -98,7 +98,14 @@ export function ResourcesTab({ resources, onResourceUpdated }: ResourcesTabProps
                                         <span>{percentage}% available</span>
                                         <span className="text-gray-500">{occupied} occupied</span>
                                     </div>
-                                    <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                                    <div
+                                        className="w-full h-2 bg-gray-200 rounded-full overflow-hidden"
+                                        role="progressbar"
+                                        aria-valuenow={percentage}
+                                        aria-valuemin={0}
+                                        aria-valuemax={100}
+                                        aria-label={`${getResourceDisplayName(resource.resource_type)}: ${percentage}% available`}
+                                    >
                                         <div
                                             className={`h-full ${getProgressColor(percentage)} transition-all`}
                                             style={{ width: `${percentage}%` }}
