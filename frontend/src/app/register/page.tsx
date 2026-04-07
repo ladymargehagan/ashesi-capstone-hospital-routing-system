@@ -377,11 +377,11 @@ function RegisterForm() {
                                     <div className="grid grid-cols-2 gap-3">
                                         <div className="space-y-2">
                                             <Label htmlFor="adminFirstName">First Name *</Label>
-                                            <Input id="adminFirstName" autoComplete="given-name" placeholder="Kwame" value={firstName} onChange={(e) => setFirstName(e.target.value)} className="h-11" />
+                                            <Input id="adminFirstName" type="text" autoComplete="given-name" placeholder="Kwame" value={firstName} onChange={(e) => setFirstName(e.target.value)} className="h-11" />
                                         </div>
                                         <div className="space-y-2">
                                             <Label htmlFor="adminLastName">Last Name *</Label>
-                                            <Input id="adminLastName" autoComplete="family-name" placeholder="Mensah" value={lastName} onChange={(e) => setLastName(e.target.value)} className="h-11" />
+                                            <Input id="adminLastName" type="text" autoComplete="family-name" placeholder="Mensah" value={lastName} onChange={(e) => setLastName(e.target.value)} className="h-11" />
                                         </div>
                                     </div>
                                     {nameError && <p className="text-xs text-red-500">{nameError}</p>}
@@ -519,11 +519,11 @@ function RegisterForm() {
                                         <div className="grid grid-cols-2 gap-3">
                                             <div className="space-y-2">
                                                 <Label htmlFor="firstName">First Name *</Label>
-                                                <Input id="firstName" autoComplete="given-name" placeholder="Kwame" value={firstName} onChange={(e) => setFirstName(e.target.value)} required className="h-11" />
+                                                <Input id="firstName" type="text" autoComplete="given-name" placeholder="Kwame" value={firstName} onChange={(e) => setFirstName(e.target.value)} required className="h-11" />
                                             </div>
                                             <div className="space-y-2">
                                                 <Label htmlFor="lastName">Last Name *</Label>
-                                                <Input id="lastName" autoComplete="family-name" placeholder="Mensah" value={lastName} onChange={(e) => setLastName(e.target.value)} required className="h-11" />
+                                                <Input id="lastName" type="text" autoComplete="family-name" placeholder="Mensah" value={lastName} onChange={(e) => setLastName(e.target.value)} required className="h-11" />
                                             </div>
                                         </div>
                                         {nameError && <p className="text-xs text-red-500">{nameError}</p>}
