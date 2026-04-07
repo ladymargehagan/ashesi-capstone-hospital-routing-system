@@ -11,7 +11,7 @@ import os
 import traceback
 from pathlib import Path
 
-from fastapi import APIRouter, HTTPException, UploadFile, File, Depends
+from fastapi import APIRouter, BackgroundTasks, HTTPException, UploadFile, File, Depends
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from typing import Optional
@@ -121,11 +121,12 @@ def get_referral(
 @router.post("")
 def create_referral(
     req: CreateReferral,
+    background_tasks: BackgroundTasks,
     current_user: dict = Depends(require_role("physician", "hospital_admin")),
 ):
     """Create a referral."""
     try:
-        result = process_create_referral(req.model_dump(), current_user)
+        result = process_create_referral(req.model_dump(), current_user, background_tasks=background_tasks)
         if result.get("error"):
             raise HTTPException(status_code=result.get("code", 400), detail=result["message"])
         return result
@@ -140,6 +141,7 @@ def create_referral(
 def update_referral_status(
     referral_id: int,
     req: ReferralStatusUpdate,
+    background_tasks: BackgroundTasks,
     current_user: dict = Depends(require_role("hospital_admin", "super_admin", "physician")),
 ):
     """Update referral status (approve, reject, complete, cancel, in_transit)"""
@@ -153,6 +155,7 @@ def update_referral_status(
             reason=req.reason,
             outcome=req.outcome,
             outcome_notes=req.outcome_notes,
+            background_tasks=background_tasks,
         )
         if result.get("error"):
             raise HTTPException(status_code=result.get("code", 400), detail=result["message"])
@@ -190,10 +193,11 @@ async def upload_attachment(
 def assign_referral(
     referral_id: int,
     req: ReferralAssign,
+    background_tasks: BackgroundTasks,
     current_user: dict = Depends(require_role("hospital_admin", "super_admin")),
 ):
     """Assign a referral to a physician (hospital admin action)."""
-    result = handle_referral_assignment(referral_id, req.physician_id, current_user.get("id"))
+    result = handle_referral_assignment(referral_id, req.physician_id, current_user.get("id"), background_tasks=background_tasks)
     if result.get("error"):
         raise HTTPException(status_code=result.get("code", 400), detail=result["message"])
     return result

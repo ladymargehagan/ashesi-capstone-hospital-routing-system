@@ -227,7 +227,7 @@ def get_single_referral(referral_id: int) -> Optional[dict]:
     return _row_to_referral(row, details=details, patient=patient, attachments=attachments)
 
 
-def process_create_referral(req_data: dict, actor_user: dict | None = None) -> dict:
+def process_create_referral(req_data: dict, actor_user: dict | None = None, background_tasks=None) -> dict:
     from api import _load_hospitals_from_db
     from services.referral_engine import ReferralEngine, EngineConfig, PatientCase
     from core.db import db_cursor
@@ -355,7 +355,10 @@ def process_create_referral(req_data: dict, actor_user: dict | None = None) -> d
     try:
         p = fetch_patient_by_id(req_data["patient_id"])
         patient_name = p["full_name"] if p else "Unknown"
-        notify_referral_created(referral_id, patient_name, req_data["receiving_hospital_id"])
+        if background_tasks is not None:
+            background_tasks.add_task(notify_referral_created, referral_id, patient_name, req_data["receiving_hospital_id"])
+        else:
+            notify_referral_created(referral_id, patient_name, req_data["receiving_hospital_id"])
     except Exception as e:
         print(f"[WARN] Email notification failed: {e}")
 
@@ -377,7 +380,7 @@ def process_create_referral(req_data: dict, actor_user: dict | None = None) -> d
     return {"success": True, "referral_id": str(referral_id)}
 
 
-def modify_referral_status(referral_id: int, status: str, reason: str = None, outcome: str = None, outcome_notes: str = None) -> dict:
+def modify_referral_status(referral_id: int, status: str, reason: str = None, outcome: str = None, outcome_notes: str = None, background_tasks=None) -> dict:
     # 'arrived' and 'no_capacity' were missing — both are real states in the lifecycle
     valid_statuses = {"pending", "approved", "rejected", "in_transit", "arrived", "completed", "cancelled", "no_capacity"}
     if status not in valid_statuses:
@@ -419,8 +422,12 @@ def modify_referral_status(referral_id: int, status: str, reason: str = None, ou
                                             "previous_hospital_id": existing["receiving_hospital_id"],
                                             "new_hospital_id": next_hospital_id})
                         try:
-                            notify_referral_created(referral_id, patient_name, next_hospital_id)
-                            notify_referral_status_changed(referral_id, patient_name, "cascaded", physician_user_id)
+                            if background_tasks is not None:
+                                background_tasks.add_task(notify_referral_created, referral_id, patient_name, next_hospital_id)
+                                background_tasks.add_task(notify_referral_status_changed, referral_id, patient_name, "cascaded", physician_user_id)
+                            else:
+                                notify_referral_created(referral_id, patient_name, next_hospital_id)
+                                notify_referral_status_changed(referral_id, patient_name, "cascaded", physician_user_id)
                         except Exception as e:
                             print(f"[WARN] Cascade notification failed: {e}")
 
@@ -440,12 +447,14 @@ def modify_referral_status(referral_id: int, status: str, reason: str = None, ou
                     log_action(physician_user_id, "referral_no_capacity", entity_type="referral",
                                entity_id=referral_id, details={"reason": reason})
                     try:
-                        # Notify the physician with the backup suggestions list
                         backup_msg = ""
                         if backup_suggestions:
                             names = ", ".join(s["hospital_name"] for s in backup_suggestions[:3])
                             backup_msg = f" Suggested alternatives to try: {names}."
-                        _notify_no_capacity(physician_user_id, referral_id, patient_name, backup_msg)
+                        if background_tasks is not None:
+                            background_tasks.add_task(_notify_no_capacity, physician_user_id, referral_id, patient_name, backup_msg)
+                        else:
+                            _notify_no_capacity(physician_user_id, referral_id, patient_name, backup_msg)
                     except Exception as e:
                         print(f"[WARN] No-capacity notification failed: {e}")
 
@@ -494,10 +503,16 @@ def modify_referral_status(referral_id: int, status: str, reason: str = None, ou
     try:
         if info:
             if status == "in_transit":
-                notify_patient_dispatched_and_updates(referral_id, patient_name, "patient_dispatched")
+                if background_tasks is not None:
+                    background_tasks.add_task(notify_patient_dispatched_and_updates, referral_id, patient_name, "patient_dispatched")
+                else:
+                    notify_patient_dispatched_and_updates(referral_id, patient_name, "patient_dispatched")
             else:
-                notify_referral_status_changed(referral_id, patient_name, status, physician_user_id, reason=reason)
-                
+                if background_tasks is not None:
+                    background_tasks.add_task(notify_referral_status_changed, referral_id, patient_name, status, physician_user_id, reason)
+                else:
+                    notify_referral_status_changed(referral_id, patient_name, status, physician_user_id, reason=reason)
+
             log_action(physician_user_id, "referral_status_changed", entity_type="referral",
                        entity_id=referral_id, details={"new_status": status, "reason": reason})
     except Exception as e:
@@ -506,7 +521,7 @@ def modify_referral_status(referral_id: int, status: str, reason: str = None, ou
     return {"success": True, "referral_id": str(referral_id), "status": status}
 
 
-def handle_referral_assignment(referral_id: int, physician_id: int, actor_user_id: int = None) -> dict:
+def handle_referral_assignment(referral_id: int, physician_id: int, actor_user_id: int = None, background_tasks=None) -> dict:
     if not check_referral_exists(referral_id):
         return {"error": True, "code": 404, "message": "Referral not found"}
         
@@ -539,13 +554,23 @@ def handle_referral_assignment(referral_id: int, physician_id: int, actor_user_i
         assigned_name = f"{p_user.get('first_name', '')} {p_user.get('last_name', '')}".strip()
         patient_name = ref_user.get("patient_name", "Unknown")
         try:
-            notify_referral_assigned(
-                referral_id=referral_id,
-                patient_name=patient_name,
-                assigned_physician_user_id=p_user["user_id"],
-                referring_physician_user_id=ref_user["user_id"],
-                assigned_physician_name=assigned_name,
-            )
+            if background_tasks is not None:
+                background_tasks.add_task(
+                    notify_referral_assigned,
+                    referral_id=referral_id,
+                    patient_name=patient_name,
+                    assigned_physician_user_id=p_user["user_id"],
+                    referring_physician_user_id=ref_user["user_id"],
+                    assigned_physician_name=assigned_name,
+                )
+            else:
+                notify_referral_assigned(
+                    referral_id=referral_id,
+                    patient_name=patient_name,
+                    assigned_physician_user_id=p_user["user_id"],
+                    referring_physician_user_id=ref_user["user_id"],
+                    assigned_physician_name=assigned_name,
+                )
         except Exception as e:
             print(f"[WARN] Assignment notification failed: {e}")
             

@@ -426,7 +426,9 @@ function ReferralFormScreenContent({ mode, backHref, submitRedirectHref }: Refer
 
     const handleSelectRecommendation = (recommendation: EngineRecommendation) => {
         setSelectedRecommendation(recommendation);
-        const matchedHospital = activeHospitals.find((hospital) => hospital.name === recommendation.hospital_name);
+        const matchedHospital = activeHospitals.find(
+            (hospital) => String(hospital.id) === String(recommendation.hospital_id),
+        );
         if (matchedHospital) {
             setChosenHospital(matchedHospital);
             setFormData((prev) => ({ ...prev, receiving_hospital_id: matchedHospital.id }));
