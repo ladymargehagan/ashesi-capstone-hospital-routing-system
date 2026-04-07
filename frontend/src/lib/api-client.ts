@@ -167,10 +167,10 @@ export const referralsApi = {
             { method: 'PUT', body: JSON.stringify({ status, ...opts }) },
         ),
 
-    assign: (id: string, physicianId: string) =>
-        apiFetch<{ success: boolean }>(
+    assign: (id: string, physicianId: string, force = false) =>
+        apiFetch<{ success?: boolean; specialization_mismatch?: boolean; warning?: boolean; message?: string; physician_specialization?: string; recommended_specializations?: string[] }>(
             `/api/referrals/${id}/assign`,
-            { method: 'PUT', body: JSON.stringify({ physician_id: parseInt(physicianId) }) },
+            { method: 'PUT', body: JSON.stringify({ physician_id: parseInt(physicianId), force }) },
         ),
 
     uploadAttachment: async (id: string, file: File) => {

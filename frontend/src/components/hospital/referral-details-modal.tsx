@@ -47,6 +47,16 @@ export function ReferralDetailsModal({ referral, open, onClose, onStatusChanged 
     const [newTransitUpdate, setNewTransitUpdate] = useState('');
     const [updateLoading, setUpdateLoading] = useState(false);
 
+    // Tracks status/assignment updates applied in-session without closing the modal
+    const [localOverrides, setLocalOverrides] = useState<Record<string, unknown>>({});
+    // Specialization mismatch warning state
+    const [specMismatch, setSpecMismatch] = useState<{ message: string; physicianId: string } | null>(null);
+
+    // Reset local overrides when modal opens with a new referral
+    useEffect(() => {
+        if (open) setLocalOverrides({});
+    }, [open, referral?.id]);
+
     // Fetch full details when modal opens
     useEffect(() => {
         if (open && referral?.id) {
@@ -79,8 +89,8 @@ export function ReferralDetailsModal({ referral, open, onClose, onStatusChanged 
 
     if (!referral) return null;
 
-    // Merge full fetch data (more complete) over the list entry for display
-    const merged = fullReferral ? { ...referral, ...fullReferral } : referral;
+    // Merge full fetch data over list entry, then apply any in-session overrides
+    const merged = { ...referral, ...(fullReferral ?? {}), ...localOverrides };
     const details = (merged.details || {}) as Partial<ReferralDetails>;
     const attachments = (merged.attachments || []) as Array<{ id: string; file_name: string; file_type: string; file_size_bytes: number }>;
 
@@ -130,20 +140,27 @@ export function ReferralDetailsModal({ referral, open, onClose, onStatusChanged 
 
             await referralsApi.updateStatus(referral.id, status, action === 'reject' && responseNotes ? { reason: responseNotes } : undefined);
             setResponseNotes('');
-            const patientName = referral.patient_name
-                || (referral as unknown as Record<string, { full_name?: string }>).patient?.full_name
-                || 'the patient';
+            const patientName = (merged as any).patient_name || 'the patient';
+
+            // Update status in-place so the modal reflects the new state immediately
+            setLocalOverrides(prev => ({ ...prev, status }));
+            onStatusChanged?.();
+
             if (action === 'accept') {
                 toast.success(`Referral for ${patientName} has been accepted.`, 'Referral Accepted');
             } else if (action === 'reject') {
                 toast.warning(`Referral for ${patientName} has been rejected.`, 'Referral Rejected');
+                onClose(); // Rejection cascades to another hospital — close the modal
+            } else if (action === 'depart') {
+                toast.success('Patient marked as dispatched.', 'In Transit');
+            } else if (action === 'arrive') {
+                toast.success('Patient marked as arrived.', 'Arrived');
             }
-            onStatusChanged?.();
-            onClose();
         } catch (err) {
             const message = err instanceof Error ? err.message : `Failed to ${action} referral`;
             setError(message);
             toast.error(message, 'Action Failed');
+        } finally {
             setLoading(false);
         }
     };
@@ -185,13 +202,13 @@ export function ReferralDetailsModal({ referral, open, onClose, onStatusChanged 
         setLoading(true);
         try {
             await referralsApi.updateStatus(referral.id, 'completed', {
-                outcome: finalOutcomeStatus,          // DB enum value
-                outcome_notes: finalOutcome.trim(),   // Free-text summary
+                outcome: finalOutcomeStatus,
+                outcome_notes: finalOutcome.trim(),
             });
             toast.success('Treatment marked completed and outcome recorded.', 'Completed');
             setShowOutcomeForm(false);
+            setLocalOverrides(prev => ({ ...prev, status: 'completed', outcome: finalOutcomeStatus, outcome_notes: finalOutcome.trim() }));
             onStatusChanged?.();
-            onClose();
         } catch (err) {
             toast.error(err instanceof Error ? err.message : 'Failed to record outcome', 'Error');
         } finally {
@@ -199,12 +216,26 @@ export function ReferralDetailsModal({ referral, open, onClose, onStatusChanged 
         }
     };
 
-    const handleAssign = async (physicianId: string) => {
+    const handleAssign = async (physicianId: string, force = false) => {
         setAssignLoading(true);
+        setSpecMismatch(null);
         try {
-            await referralsApi.assign(referral.id, physicianId);
-            toast.success('Referral assigned to physician.', 'Assigned');
+            const result = await referralsApi.assign(referral.id, physicianId, force);
+
+            if (result.specialization_mismatch && !force) {
+                // Soft warning — show inline confirmation, don't assign yet
+                setSpecMismatch({ message: result.message ?? 'Specialisation mismatch.', physicianId });
+                setAssignLoading(false);
+                return;
+            }
+
+            const assignedPhysician = physicians.find(p => p.id === physicianId);
+            const assignedName = assignedPhysician ? `Dr ${assignedPhysician.full_name || assignedPhysician.license_number}` : 'Physician';
+            toast.success(`${assignedName} assigned to this referral.`, 'Assigned');
             setSelectedPhysicianId('');
+            setSpecMismatch(null);
+            // Update modal in-place to reflect the new assignment
+            setLocalOverrides(prev => ({ ...prev, assigned_physician_id: physicianId, assigned_physician_name: assignedName }));
             onStatusChanged?.();
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Failed to assign referral';
@@ -221,19 +252,26 @@ export function ReferralDetailsModal({ referral, open, onClose, onStatusChanged 
     };
 
     const handleTransitUpdateSubmit = async () => {
-        if (!newTransitUpdate.trim()) return;
-        setUpdateLoading(true);
+        const text = newTransitUpdate.trim();
+        if (!text) return;
+
+        // Optimistic update — show immediately, no waiting for server
+        const optimistic = {
+            update_id: `temp-${Date.now()}`,
+            update_text: text,
+            logged_at: new Date().toISOString(),
+            logger_name: user?.full_name || 'Doctor',
+        };
+        setTransitUpdates(prev => [...prev, optimistic]);
+        setNewTransitUpdate('');
+
         try {
-            await referralsApi.addTransitUpdate(referral.id, newTransitUpdate);
-            // Reload updates
-            const data: any = await referralsApi.getTransitUpdates(referral.id);
-            setTransitUpdates(data.updates || []);
-            setNewTransitUpdate('');
-            toast.success('Condition update posted successfully.');
+            await referralsApi.addTransitUpdate(referral.id, text);
         } catch (err) {
+            // Revert optimistic update on failure
+            setTransitUpdates(prev => prev.filter(u => u.update_id !== optimistic.update_id));
+            setNewTransitUpdate(text);
             toast.error(err instanceof Error ? err.message : 'Failed to post update', 'Error');
-        } finally {
-            setUpdateLoading(false);
         }
     };
 
@@ -256,22 +294,18 @@ export function ReferralDetailsModal({ referral, open, onClose, onStatusChanged 
     // Any admin at the receiving hospital
     const isReceivingAdmin = myRole === 'hospital_admin' && isAtReceivingHospital;
 
-    // --- Action guards ---
-    // Only receiving hospital admin can approve/reject
-    const isPending = referral.status === 'pending' && isReceivingAdmin;
-    // Referring physician marks Patient Dispatched (approved → in_transit)
-    const canDispatch = referral.status === 'approved' && isReferringPhysician;
-    // Referring physician posts live condition updates while patient is in transit
-    const canPostUpdate = referral.status === 'in_transit' && isReferringPhysician;
-    // Everyone involved sees the live transit feed
-    const canSeeTransitFeed = referral.status === 'in_transit' &&
+    // Use merged status so in-session state changes (approve, dispatch, etc.) are reflected immediately
+    const currentStatus = String((merged as any).status || referral.status || '');
+
+    // --- Action guards (all use currentStatus, not stale referral.status) ---
+    const isPending = currentStatus === 'pending' && isReceivingAdmin;
+    const canDispatch = currentStatus === 'approved' && isReferringPhysician;
+    const canPostUpdate = currentStatus === 'in_transit' && isReferringPhysician;
+    const canSeeTransitFeed = currentStatus === 'in_transit' &&
         (isReferringPhysician || isReceivingAdmin || isAssignedPhysician);
-    // Receiving admin OR assigned physician marks patient as Arrived
-    const canMarkArrived = referral.status === 'in_transit' && (isReceivingAdmin || isAssignedPhysician);
-    // ONLY assigned physician OR receiving admin can complete with outcome
-    const canComplete = referral.status === 'arrived' && (isReceivingAdmin || isAssignedPhysician);
-    // Referring physician can flag data inconsistency about the receiving hospital
-    const canFlag = isReferringPhysician && ['approved', 'in_transit', 'arrived'].includes(referral.status);
+    const canMarkArrived = currentStatus === 'in_transit' && (isReceivingAdmin || isAssignedPhysician);
+    const canComplete = currentStatus === 'arrived' && (isReceivingAdmin || isAssignedPhysician);
+    const canFlag = isReferringPhysician && ['approved', 'in_transit', 'arrived'].includes(currentStatus);
 
     const reasonToSpecialtyMap: Record<string, string[]> = {
         cardiac: ['cardiology', 'cardiologist'],
@@ -341,8 +375,8 @@ export function ReferralDetailsModal({ referral, open, onClose, onStatusChanged 
                             </div>
                             <div>
                                 <p className="text-xs text-gray-500 mb-1">Status</p>
-                                <Badge className={getStatusBadge(referral.status)}>
-                                    {formatStatus(referral.status)}
+                                <Badge className={getStatusBadge(currentStatus)}>
+                                    {formatStatus(currentStatus)}
                                 </Badge>
                             </div>
                         </div>
@@ -506,21 +540,21 @@ export function ReferralDetailsModal({ referral, open, onClose, onStatusChanged 
                         )}
 
                         {/* Assign Doctor (hospital admin only) */}
-                        {user?.role === 'hospital_admin' && user?.hospital_id === referral.receiving_hospital_id && ['approved', 'in_transit', 'arrived'].includes(referral.status) && (
+                        {user?.role === 'hospital_admin' && user?.hospital_id === referral.receiving_hospital_id && ['approved', 'in_transit', 'arrived'].includes(currentStatus) && (
                             <div>
                                 <h3 className="text-sm font-semibold text-gray-900 mb-2 flex items-center gap-2">
                                     <UserPlus className="h-4 w-4" />
                                     Assign to Doctor
                                 </h3>
-                                {referral.assigned_physician_name && (
+                                {((merged as any).assigned_physician_name || referral.assigned_physician_name) && (
                                     <p className="text-sm text-green-700 mb-2">
-                                        Currently assigned to: <strong>{referral.assigned_physician_name}</strong>
+                                        Currently assigned to: <strong>{(merged as any).assigned_physician_name || referral.assigned_physician_name}</strong>
                                     </p>
                                 )}
                                 <div className="flex gap-2">
                                     <Select
                                         value={selectedPhysicianId}
-                                        onValueChange={setSelectedPhysicianId}
+                                        onValueChange={(v) => { setSelectedPhysicianId(v); setSpecMismatch(null); }}
                                         disabled={assignLoading}
                                     >
                                         <SelectTrigger className="flex-1">
@@ -529,7 +563,7 @@ export function ReferralDetailsModal({ referral, open, onClose, onStatusChanged 
                                         <SelectContent>
                                             {recommendedPhysicians.length > 0 && (
                                                 <SelectGroup>
-                                                    <SelectLabel>Recommended Specialists</SelectLabel>
+                                                    <SelectLabel>✓ Recommended Specialists</SelectLabel>
                                                     {recommendedPhysicians.map((p) => (
                                                         <SelectItem key={p.id} value={p.id}>
                                                             {p.full_name || p.license_number} — {p.specialization || 'General'}
@@ -549,14 +583,41 @@ export function ReferralDetailsModal({ referral, open, onClose, onStatusChanged 
                                             )}
                                         </SelectContent>
                                     </Select>
-                                    <Button 
-                                        className="bg-primary hover:bg-secondary text-white shrink-0" 
+                                    <Button
+                                        className="bg-primary hover:bg-secondary text-white shrink-0"
                                         onClick={() => handleAssign(selectedPhysicianId)}
                                         disabled={!selectedPhysicianId || assignLoading}
                                     >
-                                        Assign to Doctor
+                                        {assignLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Assign'}
                                     </Button>
                                 </div>
+                                {/* Specialisation mismatch warning */}
+                                {specMismatch && (
+                                    <div className="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm">
+                                        <div className="flex items-start gap-2 text-amber-800">
+                                            <AlertCircle className="h-4 w-4 mt-0.5 shrink-0 text-amber-600" />
+                                            <span>{specMismatch.message}</span>
+                                        </div>
+                                        <div className="flex gap-2 mt-2">
+                                            <Button
+                                                size="sm"
+                                                variant="outline"
+                                                className="border-amber-400 text-amber-800 hover:bg-amber-100"
+                                                onClick={() => handleAssign(specMismatch.physicianId, true)}
+                                                disabled={assignLoading}
+                                            >
+                                                Assign Anyway
+                                            </Button>
+                                            <Button
+                                                size="sm"
+                                                variant="ghost"
+                                                onClick={() => { setSpecMismatch(null); setSelectedPhysicianId(''); }}
+                                            >
+                                                Cancel
+                                            </Button>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         )}
 

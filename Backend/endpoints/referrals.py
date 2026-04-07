@@ -86,6 +86,7 @@ class ReferralStatusUpdate(BaseModel):
 
 class ReferralAssign(BaseModel):
     physician_id: int
+    force: bool = False  # Set True to override specialization mismatch warning
 
 
 # ---- referral routes ----
@@ -197,7 +198,7 @@ def assign_referral(
     current_user: dict = Depends(require_role("hospital_admin", "super_admin")),
 ):
     """Assign a referral to a physician (hospital admin action)."""
-    result = handle_referral_assignment(referral_id, req.physician_id, current_user.get("id"), background_tasks=background_tasks)
+    result = handle_referral_assignment(referral_id, req.physician_id, current_user.get("id"), background_tasks=background_tasks, force=req.force)
     if result.get("error"):
         raise HTTPException(status_code=result.get("code", 400), detail=result["message"])
     return result
@@ -233,10 +234,11 @@ def download_attachment(
 def create_transit_update(
     referral_id: int,
     payload: TransitUpdateIn,
+    background_tasks: BackgroundTasks,
     current_user: dict = Depends(get_current_user),
 ):
     """Submit a live condition update for an in-transit patient."""
-    result = add_transit_update(referral_id, payload.update_text, current_user["id"])
+    result = add_transit_update(referral_id, payload.update_text, current_user["id"], background_tasks=background_tasks)
     if result.get("error"):
         raise HTTPException(status_code=result.get("code", 400), detail=result["message"])
     return result

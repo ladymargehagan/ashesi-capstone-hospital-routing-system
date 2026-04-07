@@ -521,12 +521,54 @@ def modify_referral_status(referral_id: int, status: str, reason: str = None, ou
     return {"success": True, "referral_id": str(referral_id), "status": status}
 
 
-def handle_referral_assignment(referral_id: int, physician_id: int, actor_user_id: int = None, background_tasks=None) -> dict:
+REFERRAL_REASON_TO_SPECIALIZATION = {
+    "cardiac":     ["cardiology", "cardiologist", "cardiac"],
+    "trauma":      ["trauma", "surgery", "surgeon", "emergency", "orthopaedics", "orthopaedic"],
+    "obstetric":   ["obstetrics", "gynaecology", "gynecology", "obgyn", "maternity", "obstetrics & gynaecology"],
+    "respiratory": ["respiratory", "pulmonology", "pulmonologist", "emergency"],
+    "stroke":      ["neurology", "neuro", "neurosurgery", "neurosurgeon", "emergency"],
+    "seizure":     ["neurology", "neuro", "neurosurgery", "emergency"],
+    "general":     [],  # Any physician can handle
+}
+
+
+def handle_referral_assignment(referral_id: int, physician_id: int, actor_user_id: int = None, background_tasks=None, force: bool = False) -> dict:
     if not check_referral_exists(referral_id):
         return {"error": True, "code": 404, "message": "Referral not found"}
-        
+
     if not check_physician_exists_and_active(physician_id):
         return {"error": True, "code": 404, "message": "Physician not found or inactive"}
+
+    # --- Specialization check ---
+    from core.db import db_cursor as _db_cursor
+    with _db_cursor() as cur:
+        cur.execute(
+            """SELECT r.referral_reason, p.specialization
+               FROM referrals r, physicians p
+               WHERE r.referral_id = %s AND p.physician_id = %s""",
+            (referral_id, physician_id),
+        )
+        row = cur.fetchone()
+
+    if row:
+        reason = (row.get("referral_reason") or "general").lower()
+        spec = (row.get("specialization") or "").lower()
+        allowed = REFERRAL_REASON_TO_SPECIALIZATION.get(reason, [])
+        mismatch = allowed and not any(s in spec for s in allowed)
+        if mismatch and not force:
+            return {
+                "specialization_mismatch": True,
+                "warning": True,
+                "physician_specialization": row.get("specialization", "Unknown"),
+                "referral_reason": reason,
+                "recommended_specializations": allowed,
+                "message": (
+                    f"This is a {reason} case but the selected physician specialises in "
+                    f"'{row.get('specialization', 'Unknown')}'. "
+                    f"Recommended specialisations: {', '.join(allowed)}. "
+                    f"Confirm to assign anyway."
+                ),
+            }
 
     assign_referral_to_physician(referral_id, physician_id)
 
@@ -621,7 +663,7 @@ def get_referral_attachments_list(referral_id: int) -> list[dict]:
     ]
 
 
-def add_transit_update(referral_id: int, update_text: str, logged_by: int) -> dict:
+def add_transit_update(referral_id: int, update_text: str, logged_by: int, background_tasks=None) -> dict:
     if not update_text or not update_text.strip():
         return {"error": True, "code": 400, "message": "Update text is required"}
 
@@ -630,17 +672,23 @@ def add_transit_update(referral_id: int, update_text: str, logged_by: int) -> di
 
     try:
         update_id = insert_transit_update(referral_id, update_text.strip(), logged_by)
-        
+
         info = fetch_referral_status_info(referral_id)
         if info:
             patient_name = info["patient_name"] if isinstance(info, dict) else info[1]
             try:
-                notify_patient_dispatched_and_updates(
-                    referral_id, patient_name, "transit_update", update_text=update_text.strip()
-                )
+                if background_tasks is not None:
+                    background_tasks.add_task(
+                        notify_patient_dispatched_and_updates,
+                        referral_id, patient_name, "transit_update", update_text.strip()
+                    )
+                else:
+                    notify_patient_dispatched_and_updates(
+                        referral_id, patient_name, "transit_update", update_text=update_text.strip()
+                    )
             except Exception as e:
                 print(f"[WARN] Failed to notify transit update: {e}")
-                
+
         return {"success": True, "update_id": update_id}
     except Exception as e:
         print(f"[ERROR] add_transit_update failed: {e}")
