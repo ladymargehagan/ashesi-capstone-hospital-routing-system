@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { notificationsApi } from "@/lib/api-client";
-import { Notification } from "@/types";
+import type { Notification as AppNotification } from "@/types";
 
 /**
  * useNotifications — fetches and manages in-app notifications.
@@ -29,7 +29,7 @@ function fireBrowserNotification(title: string, body: string) {
 }
 
 export function useNotifications() {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const prevUnreadCount = useRef<number | null>(null);
@@ -43,7 +43,7 @@ export function useNotifications() {
     setLoading(true);
     try {
       const data = await notificationsApi.list();
-      const typed = data as unknown as Notification[];
+      const typed = data as unknown as AppNotification[];
       setNotifications(typed);
       setUnreadCount(typed.filter((n) => !n.is_read).length);
     } catch {
@@ -65,7 +65,7 @@ export function useNotifications() {
           );
           // Refresh full list so the popover shows the latest items
           notificationsApi.list().then((data) => {
-            setNotifications(data as unknown as Notification[]);
+            setNotifications(data as unknown as AppNotification[]);
           }).catch(() => {});
         }
         prevUnreadCount.current = unread_count;
