@@ -33,10 +33,7 @@ from models.auth import fetch_user_by_auth_uid, fetch_user_by_id_complete
 
 SUPABASE_JWT_SECRET = os.getenv("SUPABASE_JWT_SECRET", "")
 SUPABASE_URL = os.getenv("SUPABASE_URL", "")
-SUPABASE_ANON_KEY = os.getenv(
-    "SUPABASE_ANON_KEY",
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJob3hwcHl2YmRvbndobnJ3bWJzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3MDEwMDUsImV4cCI6MjA5MDI3NzAwNX0.pB_J6i0Db2GWSDNpnXQBe4vIjuJZlTnRrN-xJAvVu3E",
-)
+SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY", "")
 
 # Cache the JWKS public key so we don't fetch it on every request
 _jwks_cache: dict | None = None

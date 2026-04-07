@@ -43,6 +43,8 @@ HRSdb_*.sql
 doctor_credentials.csv
 ghs_facilities.csv
 seed_production.py
+Backend/seed_production.py
+Backend/seed_demo.py
 
 # Custom Reports
 system_architecture_report.md
