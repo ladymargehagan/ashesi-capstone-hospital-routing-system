@@ -433,14 +433,38 @@ export const aiReferralsApi = {
             { method: 'POST', body: JSON.stringify(data) },
         ),
 
-    transcribeAudio: async (audioBlob: Blob) => {
+    transcribeAudio: async (audioBlob: Blob): Promise<{ transcript: string; transcript_id: string; status: string }> => {
         const formData = new FormData();
         formData.append('audio', audioBlob, 'voice-referral.webm');
 
-        return routeFetch<{ transcript: string; transcript_id: string; status: string }>(
+        // Submit the job — returns immediately with a transcript_id
+        const submitted = await routeFetch<{ transcript_id: string; status: string }>(
             '/api/ai-referrals/transcribe',
             { method: 'POST', body: formData },
         );
+
+        // Poll from the frontend — each GET is a single fast request (~200ms)
+        const MAX_ATTEMPTS = 40;
+        const POLL_DELAY_MS = 1500;
+
+        for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+            await new Promise((resolve) => setTimeout(resolve, POLL_DELAY_MS));
+
+            const result = await routeFetch<{ status: string; transcript?: string; transcript_id: string }>(
+                `/api/ai-referrals/transcribe?id=${submitted.transcript_id}`,
+                { method: 'GET' },
+            );
+
+            if (result.status === 'completed') {
+                return {
+                    transcript: result.transcript ?? '',
+                    transcript_id: result.transcript_id,
+                    status: result.status,
+                };
+            }
+        }
+
+        throw new Error('Transcription timed out. Please try again.');
     },
 };
 

@@ -393,10 +393,14 @@ def modify_referral_status(referral_id: int, status: str, reason: str = None, ou
 
     # --- Cascade logic: when a hospital rejects, auto-reroute to the next in the queue ---
     if status == "rejected":
-        routing_queue_str = existing.get("routing_queue")
-        if routing_queue_str:
+        routing_queue_raw = existing.get("routing_queue")
+        if routing_queue_raw is not None and routing_queue_raw != "" and routing_queue_raw != "null":
             try:
-                queue = json.loads(routing_queue_str)
+                # routing_queue may be a Python list (JSONB column) or a JSON string (TEXT column)
+                if isinstance(routing_queue_raw, str):
+                    queue = json.loads(routing_queue_raw)
+                else:
+                    queue = list(routing_queue_raw)
 
                 if queue and len(queue) > 0:
                     # Still have backups — reroute to the next hospital

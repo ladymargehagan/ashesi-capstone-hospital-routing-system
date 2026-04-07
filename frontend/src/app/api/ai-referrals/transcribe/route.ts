@@ -1,15 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 const ASSEMBLYAI_BASE_URL = 'https://api.assemblyai.com';
-const MAX_POLL_ATTEMPTS = 40;
-const POLL_DELAY_MS = 1500;
-
-function sleep(ms: number) {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-}
 
 export const runtime = 'nodejs';
 
+/**
+ * POST — upload audio and submit a transcription job.
+ * Returns {transcript_id, status: "processing"} immediately.
+ * The caller is responsible for polling GET until status === "completed".
+ */
 export async function POST(request: NextRequest) {
     const apiKey = process.env.ASSEMBLYAI_API_KEY?.trim();
     if (!apiKey) {
@@ -23,6 +22,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ detail: 'Audio file is required.' }, { status: 400 });
     }
 
+    // 1. Upload audio
     const uploadResponse = await fetch(`${ASSEMBLYAI_BASE_URL}/v2/upload`, {
         method: 'POST',
         headers: {
@@ -35,10 +35,15 @@ export async function POST(request: NextRequest) {
 
     if (!uploadResponse.ok) {
         const detail = await uploadResponse.text();
-        return NextResponse.json({ detail: `Failed to upload audio to AssemblyAI: ${detail || uploadResponse.statusText}` }, { status: 500 });
+        return NextResponse.json(
+            { detail: `Failed to upload audio to AssemblyAI: ${detail || uploadResponse.statusText}` },
+            { status: 500 },
+        );
     }
 
-    const uploadPayload = await uploadResponse.json();
+    const { upload_url } = await uploadResponse.json();
+
+    // 2. Submit transcription job
     const transcriptResponse = await fetch(`${ASSEMBLYAI_BASE_URL}/v2/transcript`, {
         method: 'POST',
         headers: {
@@ -46,53 +51,76 @@ export async function POST(request: NextRequest) {
             'content-type': 'application/json',
         },
         body: JSON.stringify({
-            audio_url: uploadPayload.upload_url,
+            audio_url: upload_url,
             language_detection: true,
-            speech_models: ['universal-3-pro', 'universal-2'],
+            speech_model: 'universal',
         }),
         cache: 'no-store',
     });
 
     if (!transcriptResponse.ok) {
         const detail = await transcriptResponse.text();
-        return NextResponse.json({ detail: `Failed to queue AssemblyAI transcript: ${detail || transcriptResponse.statusText}` }, { status: 500 });
+        return NextResponse.json(
+            { detail: `Failed to queue AssemblyAI transcript: ${detail || transcriptResponse.statusText}` },
+            { status: 500 },
+        );
     }
 
-    const transcriptPayload = await transcriptResponse.json();
-    const transcriptId = transcriptPayload.id as string | undefined;
+    const { id: transcript_id } = await transcriptResponse.json();
 
-    if (!transcriptId) {
+    if (!transcript_id) {
         return NextResponse.json({ detail: 'AssemblyAI did not return a transcript id.' }, { status: 500 });
     }
 
-    for (let attempt = 0; attempt < MAX_POLL_ATTEMPTS; attempt += 1) {
-        const pollingResponse = await fetch(`${ASSEMBLYAI_BASE_URL}/v2/transcript/${transcriptId}`, {
-            headers: {
-                authorization: apiKey,
-            },
-            cache: 'no-store',
-        });
+    // Return immediately — client polls GET until completed
+    return NextResponse.json({ transcript_id, status: 'processing' });
+}
 
-        if (!pollingResponse.ok) {
-            const detail = await pollingResponse.text();
-            return NextResponse.json({ detail: `Failed to poll AssemblyAI transcript: ${detail || pollingResponse.statusText}` }, { status: 500 });
-        }
-
-        const result = await pollingResponse.json();
-        if (result.status === 'completed') {
-            return NextResponse.json({
-                transcript: typeof result.text === 'string' ? result.text.trim() : '',
-                transcript_id: transcriptId,
-                status: result.status,
-            });
-        }
-
-        if (result.status === 'error') {
-            return NextResponse.json({ detail: `AssemblyAI transcription failed: ${result.error || 'Unknown error'}` }, { status: 500 });
-        }
-
-        await sleep(POLL_DELAY_MS);
+/**
+ * GET ?id=<transcript_id> — check status of a submitted job once.
+ * Returns {status, transcript?} — client polls this until status === "completed".
+ */
+export async function GET(request: NextRequest) {
+    const apiKey = process.env.ASSEMBLYAI_API_KEY?.trim();
+    if (!apiKey) {
+        return NextResponse.json({ detail: 'ASSEMBLYAI_API_KEY is not configured on the frontend server.' }, { status: 500 });
     }
 
-    return NextResponse.json({ detail: 'AssemblyAI transcription timed out before completion.' }, { status: 504 });
+    const transcript_id = request.nextUrl.searchParams.get('id');
+    if (!transcript_id) {
+        return NextResponse.json({ detail: 'transcript id is required (?id=...)' }, { status: 400 });
+    }
+
+    const pollingResponse = await fetch(`${ASSEMBLYAI_BASE_URL}/v2/transcript/${transcript_id}`, {
+        headers: { authorization: apiKey },
+        cache: 'no-store',
+    });
+
+    if (!pollingResponse.ok) {
+        const detail = await pollingResponse.text();
+        return NextResponse.json(
+            { detail: `Failed to poll AssemblyAI transcript: ${detail || pollingResponse.statusText}` },
+            { status: 500 },
+        );
+    }
+
+    const result = await pollingResponse.json();
+
+    if (result.status === 'completed') {
+        return NextResponse.json({
+            status: 'completed',
+            transcript: typeof result.text === 'string' ? result.text.trim() : '',
+            transcript_id,
+        });
+    }
+
+    if (result.status === 'error') {
+        return NextResponse.json(
+            { detail: `AssemblyAI transcription failed: ${result.error || 'Unknown error'}` },
+            { status: 500 },
+        );
+    }
+
+    // Still processing
+    return NextResponse.json({ status: result.status, transcript_id });
 }
