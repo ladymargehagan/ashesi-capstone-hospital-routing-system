@@ -24,7 +24,7 @@ export function ReferralsTable({ referrals, onStatusChanged }: ReferralsTablePro
     const [selectedReferral, setSelectedReferral] = useState<Referral | null>(null);
 
     const formatDate = (dateStr: string) => {
-        return new Date(dateStr).toLocaleDateString('en-US', {
+        return new Date(dateStr).toLocaleDateString('en-GB', {
             day: '2-digit',
             month: '2-digit',
             year: 'numeric'

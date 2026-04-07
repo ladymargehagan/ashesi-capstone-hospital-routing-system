@@ -26,7 +26,7 @@ export function PhysiciansTable({ physicians }: PhysiciansTableProps) {
     const [rankFilter, setRankFilter] = useState('all');
 
     const formatDate = (dateStr: string) => {
-        return new Date(dateStr).toLocaleDateString('en-US', {
+        return new Date(dateStr).toLocaleDateString('en-GB', {
             day: '2-digit',
             month: '2-digit',
             year: 'numeric'

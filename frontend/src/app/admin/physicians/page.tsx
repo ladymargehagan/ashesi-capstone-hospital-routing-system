@@ -133,7 +133,7 @@ export default function PhysiciansPage() {
                                         </Badge>
                                     </TableCell>
                                     <TableCell className="text-gray-600">
-                                        {new Date(physician.created_at).toLocaleDateString('en-US', {
+                                        {new Date(physician.created_at).toLocaleDateString('en-GB', {
                                             day: '2-digit',
                                             month: '2-digit',
                                             year: 'numeric'

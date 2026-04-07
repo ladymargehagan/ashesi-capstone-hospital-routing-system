@@ -32,7 +32,7 @@ export function HospitalPhysiciansTab({ physicians, onStatusChanged }: HospitalP
     const [statusFilter, setStatusFilter] = useState('all');
 
     const formatDate = (dateStr: string) => {
-        return new Date(dateStr).toLocaleDateString('en-US', {
+        return new Date(dateStr).toLocaleDateString('en-GB', {
             day: '2-digit',
             month: '2-digit',
             year: 'numeric'

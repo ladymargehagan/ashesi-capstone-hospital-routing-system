@@ -129,7 +129,7 @@ export default function MyHospitalPage() {
                                                 )}
                                             </div>
                                             <p className="text-xs text-gray-400 mt-0.5">
-                                                Last updated: {new Date(resource.last_updated).toLocaleString()}
+                                                Last updated: {new Date(resource.last_updated).toLocaleString('en-GB')}
                                             </p>
                                         </div>
                                         <Button

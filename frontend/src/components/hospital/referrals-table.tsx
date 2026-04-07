@@ -24,7 +24,7 @@ export function HospitalReferralsTable({ referrals, onStatusChanged }: HospitalR
     const [selectedReferral, setSelectedReferral] = useState<Referral | null>(null);
 
     const formatDate = (dateStr: string) => {
-        return new Date(dateStr).toLocaleDateString('en-US', {
+        return new Date(dateStr).toLocaleDateString('en-GB', {
             day: '2-digit',
             month: '2-digit',
             year: 'numeric'

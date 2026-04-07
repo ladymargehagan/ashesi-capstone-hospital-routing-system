@@ -17,7 +17,7 @@ export function ResourcesTab({ resources, onResourceUpdated }: ResourcesTabProps
     const [selectedResource, setSelectedResource] = useState<Resource | null>(null);
 
     const formatDate = (dateStr: string) => {
-        return new Date(dateStr).toLocaleString('en-US', {
+        return new Date(dateStr).toLocaleString('en-GB', {
             day: '2-digit',
             month: '2-digit',
             year: 'numeric',

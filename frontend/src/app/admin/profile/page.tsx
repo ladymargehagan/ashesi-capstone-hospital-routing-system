@@ -61,7 +61,7 @@ export default function AdminProfilePage() {
 
     const formatDate = (dateStr?: string) => {
         if (!dateStr) return 'N/A';
-        return new Date(dateStr).toLocaleDateString('en-US', {
+        return new Date(dateStr).toLocaleDateString('en-GB', {
             day: '2-digit',
             month: 'long',
             year: 'numeric'

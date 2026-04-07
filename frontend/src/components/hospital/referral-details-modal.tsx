@@ -384,7 +384,7 @@ export function ReferralDetailsModal({ referral, open, onClose, onStatusChanged 
                                     <h3 className="text-sm font-semibold text-green-900">Final Referral Outcome</h3>
                                     {merged.outcome_recorded_at && (
                                         <span className="ml-auto text-[10px] text-green-600">
-                                            Recorded {new Date(String(merged.outcome_recorded_at)).toLocaleString()}
+                                            Recorded {new Date(String(merged.outcome_recorded_at)).toLocaleString('en-GB')}
                                         </span>
                                     )}
                                 </div>
@@ -633,7 +633,7 @@ export function ReferralDetailsModal({ referral, open, onClose, onStatusChanged 
                                                     <div className="flex justify-between items-start mb-1">
                                                         <span className="text-xs font-semibold text-slate-700">{u.logger_name || 'Doctor'}</span>
                                                         <span className="text-[10px] text-slate-400">
-                                                            {new Date(u.logged_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                            {new Date(u.logged_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
                                                         </span>
                                                     </div>
                                                     <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap">{u.update_text}</p>

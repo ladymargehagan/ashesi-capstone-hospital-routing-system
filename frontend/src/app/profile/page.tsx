@@ -78,7 +78,7 @@ export default function ProfilePage() {
     };
 
     const formatDate = (dateStr: string) => {
-        return new Date(dateStr).toLocaleDateString('en-US', {
+        return new Date(dateStr).toLocaleDateString('en-GB', {
             year: 'numeric',
             month: 'long',
             day: 'numeric'

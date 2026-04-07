@@ -128,7 +128,7 @@ export function HospitalDetailsModal({ hospitalId, open, onClose }: HospitalDeta
                                                 <div className="flex justify-between">
                                                     <span className="font-semibold text-amber-900">{flag.category}</span>
                                                     <span className="text-xs text-gray-500">
-                                                        {new Date(flag.created_at).toLocaleDateString()}
+                                                        {new Date(flag.created_at).toLocaleDateString('en-GB')}
                                                     </span>
                                                 </div>
                                                 {flag.notes && <p className="text-gray-700 mt-1 italic text-xs">"{flag.notes}"</p>}

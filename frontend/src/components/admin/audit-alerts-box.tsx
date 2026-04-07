@@ -25,7 +25,7 @@ export function AuditAlertsBox() {
     }, []);
 
     const formatTime = (isoString: string) => {
-        return new Date(isoString).toLocaleString('en-US', {
+        return new Date(isoString).toLocaleString('en-GB', {
             month: 'short', day: 'numeric',
             hour: '2-digit', minute: '2-digit'
         });
