@@ -396,7 +396,27 @@ class ReferralEngine:
         open_now = [h for h in nearby if h.is_open(patient.at_time)]
 
         if not open_now:
-            # All nearby hospitals appear closed — include them anyway with a warning
+            # All nearby hospitals appear closed — try expanding the radius to find
+            # open hospitals further out before falling back to the closed ones.
+            for expanded in [radius * 2, radius * 3]:
+                expanded_candidates = [
+                    h for h in valid_hospitals
+                    if (distance_lookup.get_exact_distance(h.hospital_id) or float("inf")) <= expanded
+                ]
+                open_in_expanded = [h for h in expanded_candidates if h.is_open(patient.at_time)]
+                if open_in_expanded:
+                    warnings.append(
+                        f"All hospitals within {radius:.0f} km appear closed. "
+                        f"Search expanded to {expanded:.0f} km to find open facilities."
+                    )
+                    nearby = expanded_candidates
+                    open_now = open_in_expanded
+                    radius = expanded
+                    break
+
+        if not open_now:
+            # Radius expansion also found nothing open — include closed hospitals
+            # as a last resort so the physician has options to call.
             warnings.append(
                 "All nearby hospitals appear closed. Including them in results — verify availability by phone."
             )
