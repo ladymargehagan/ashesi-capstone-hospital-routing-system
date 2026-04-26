@@ -302,6 +302,7 @@ def _load_hospitals_from_db(now: datetime) -> list[Hospital]:
 
                     resources[engine_name] = ResourceState(
                         quantity=r.get("available_count") or 0,
+                        total_count=r.get("total_count") or 0,
                         on_call=False,
                         operational=r.get("is_available") if r.get("is_available") is not None else True,
                     )

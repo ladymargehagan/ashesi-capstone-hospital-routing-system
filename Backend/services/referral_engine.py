@@ -20,12 +20,22 @@ DAY_NAMES = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday",
 @dataclass
 class ResourceState:
     quantity: int = 0
+    total_count: int = 0
     on_call: bool = False
     operational: bool = False
 
     def is_available(self) -> bool:
         # If any signal looks good, we say the resource is available.
         return self.quantity > 0 or self.on_call or self.operational
+
+    def availability_ratio(self) -> float:
+        # For countable resources, return available/total ratio (depth-aware).
+        # For binary resources (on_call/operational), return 1.0 or 0.0.
+        if self.total_count > 0:
+            return self.quantity / self.total_count
+        if self.on_call or self.operational:
+            return 1.0
+        return 0.0
 
 
 @dataclass
@@ -747,12 +757,13 @@ class ReferralEngine:
 
         for resource_name, weight in required.items():
             state = hospital.resources.get(resource_name, ResourceState())
-            availability = 1.0 if state.is_available() else 0.0
+            availability = state.availability_ratio()
             numerator += weight * availability
             denominator += weight
             breakdown[resource_name] = {
                 "available": availability,
                 "quantity": state.quantity,
+                "total_count": state.total_count,
                 "on_call": state.on_call,
                 "operational": state.operational,
                 "weight": weight,
