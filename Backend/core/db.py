@@ -29,7 +29,7 @@ DATABASE_URL = os.getenv(
 # Individual connection params (avoids URL-encoding issues with special chars)
 DB_NAME = os.getenv("DB_NAME", "postgres")
 DB_USER = os.getenv("DB_USER", "postgres")
-DB_PASS = os.getenv("DB_PASS", "Stacks4lyf")
+DB_PASS = os.getenv("DB_PASS", "")
 DB_HOST = os.getenv("DB_HOST", "localhost")
 DB_PORT = os.getenv("DB_PORT", "5432")
 DB_SSLMODE = os.getenv("DB_SSLMODE", "prefer")

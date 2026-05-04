@@ -1,11 +1,7 @@
 -- ==========================================================================
 -- Migration: Expand HOSPITAL_RESOURCES bed types + fix REFERRALS schema gaps
--- Run this against an existing v2 database.
--- Safe to run multiple times (uses IF NOT EXISTS / idempotent ALTER checks).
 -- ==========================================================================
 
--- 1. Drop the old resource_type CHECK constraint and replace it
---    PostgreSQL requires you to drop and re-add named or unnamed constraints.
 ALTER TABLE hospital_resources
     DROP CONSTRAINT IF EXISTS hospital_resources_resource_type_check;
 
@@ -59,7 +55,7 @@ ALTER TABLE referrals
     ADD COLUMN IF NOT EXISTS outcome_recorded_at TIMESTAMP;
 
 -- 6. Add 'arrived' status to REFERRALS (missing from original CHECK)
---    PostgreSQL: drop and recreate the status check constraint.
+
 ALTER TABLE referrals
     DROP CONSTRAINT IF EXISTS referrals_status_check;
 
@@ -86,5 +82,5 @@ ALTER TABLE notifications
         'account_approved', 'account_rejected'
     ));
 
--- Done.
+
 SELECT 'Migration applied successfully.' AS result;
